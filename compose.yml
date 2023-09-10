@@ -1,0 +1,24 @@
+services:
+  db:
+    build:
+      context: ./docker/db
+      dockerfile: Dockerfile
+    container_name: vocamana-db
+    ports:
+      - "5434:5432"
+    env_file:
+      - ./docker/db/.env
+    volumes:
+      - ./db:/var/lib/postgres/data
+  api:
+    build:
+      context: ./docker/api
+      dockerfile: Dockerfile
+    container_name: vocamana-api
+    depends_on:
+      - db
+    volumes:
+      - ./api:/go/src/api
+    ports:
+      - "8081:8080"
+    tty: true
