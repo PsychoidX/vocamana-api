@@ -9,7 +9,8 @@ services:
     env_file:
       - ./docker/db/.env
     volumes:
-      - ./db:/var/lib/postgres/data
+      - ./db/data:/var/lib/postgres/data
+      - ./db/goose:/root/goose
   api:
     build:
       context: ./docker/api
