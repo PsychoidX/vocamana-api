@@ -10,20 +10,20 @@ type IWordRepository interface {
 	GetWordById(id uint) (model.Word, error)
 }
 
-type wordRepository struct {
+type WordRepository struct {
 	db *sql.DB
 }
 
 func NewWordRepository(db *sql.DB) IWordRepository {
-	return &wordRepository{db}
+	return &WordRepository{db}
 }
 
-func (wr *wordRepository) GetAllWords() ([]model.Word, error) {
+func (wr *WordRepository) GetAllWords() ([]model.Word, error) {
 	// TODO
 	return []model.Word{}, nil
 }
 
-func (wr *wordRepository) GetWordById(id uint) (model.Word, error) {
+func (wr *WordRepository) GetWordById(id uint) (model.Word, error) {
 	// row := wr.db.QueryRow("SELECT id, word, memo, created_at, updated_at FROM WORDS")
 	// err := row.Scan(&word.Id, &word.Memo, &word.CreatedAt, &word.UpdatedAt)
 	// if err != nil {

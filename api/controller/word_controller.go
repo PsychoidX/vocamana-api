@@ -10,20 +10,20 @@ type IWordController interface {
 	GetWordById(c echo.Context) error
 }
 
-type wordController struct {
-	wu usecase.IWordUsecase
+type WordController struct {
+	wu *usecase.WordUsecase
 }
 
-func NewWordController(wu usecase.IWordUsecase) IWordController {
-	return &wordController{wu}
+func NewWordController(wu *usecase.WordUsecase) IWordController {
+	return &WordController{wu}
 }
 
-func (wc *wordController) GetAllWords(c echo.Context) error {
+func (wc *WordController) GetAllWords(c echo.Context) error {
 	// TODO
 	return nil
 }
 
-func (wc *wordController) GetWordById(c echo.Context) error {
+func (wc *WordController) GetWordById(c echo.Context) error {
 	// id := c.Param("wordId")
 	// TODO
 	return nil
