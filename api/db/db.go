@@ -9,11 +9,14 @@ import (
 )
 
 func NewDB() *sql.DB {
-	username := os.Getenv("POSTGRES_USER")
-	password := os.Getenv("POSTGRES_PASSWORD")
-	dbname:= os.Getenv("POSTGRES_DB")
-	args := fmt.Sprintf("user=%s dbname=%s password=%s", username, dbname, password)
-	db, err := sql.Open("postgres", args)
+	pgConfigString := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
+		os.Getenv("DB_HOST"),
+		os.Getenv("DB_PORT"),
+		os.Getenv("POSTGRES_USER"),
+		os.Getenv("POSTGRES_DB"),
+		os.Getenv("POSTGRES_PASSWORD"),
+	)
+	db, err := sql.Open("postgres", pgConfigString)
 	if err != nil {
 		log.Fatalln(err)
 	}
