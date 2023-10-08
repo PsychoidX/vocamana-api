@@ -51,19 +51,27 @@ func (wr *WordRepository) GetWordById(id uint) (model.Word, error) {
 }
 
 func (wr *WordRepository) InsertWord(newWord model.WordRegistration) (model.Word, error) {
-	var id uint
+	createdWord := model.Word{}
 
 	err := wr.db.QueryRow(
 		"INSERT INTO words" +
 		" (id, word, memo)" +
 		" VALUES(" + wr.getSequenceNextvalQuery() + ", $1, $2)" +
-		" RETURNING id;",
+		" RETURNING id, word, memo, created_at, updated_at;",
 		newWord.Word,
 		newWord.Memo,
-	).Scan(&id)
+	).Scan(
+		&createdWord.Id,
+		&createdWord.Word,
+		&createdWord.Memo,
+		// &createdWord.UserId, // TODO
+		&createdWord.CreatedAt,
+		&createdWord.UpdatedAt,
+	)
 	if err != nil {
 		return model.Word{}, err
 	}
 
-	return wr.GetWordById(id)
+	// return wr.GetWordById(id)
+	return createdWord, nil
 }
