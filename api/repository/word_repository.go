@@ -8,7 +8,7 @@ import (
 
 type IWordRepository interface {
 	getSequenceName() string
-	GetAllWords() ([]model.Word, error)
+	GetAllWords(userId uint) ([]model.Word, error)
 	GetWordById(id uint) (model.Word, error)
 	InsertWord(model.WordRegistration) (model.Word, error)
 }
@@ -29,9 +29,29 @@ func (wr *WordRepository) getSequenceNextvalQuery() string {
 	return fmt.Sprintf("nextval('%s')", wr.getSequenceName())
 }
 
-func (wr *WordRepository) GetAllWords() ([]model.Word, error) {
-	// TODO
-	return []model.Word{}, nil
+func (wr *WordRepository) GetAllWords(userId uint) ([]model.Word, error) {
+	var words []model.Word
+
+	rows, err := wr.db.Query(
+		"SELECT id, word, memo, user_id, created_at, updated_at FROM words" +
+		" WHERE user_id = $1",
+		userId,
+	)
+	if err != nil {
+		return []model.Word{}, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		word := model.Word{}
+		err:= rows.Scan(&word.Id, &word.Word, &word.Memo, &word.UserId, &word.CreatedAt, &word.UpdatedAt);
+		if err != nil {
+			return []model.Word{}, err
+		}
+		words = append(words, word)
+	}
+
+	return words, nil
 }
 
 func (wr *WordRepository) GetWordById(id uint) (model.Word, error) {

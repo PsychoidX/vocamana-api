@@ -13,9 +13,25 @@ func NewWordUsecase(wr repository.IWordRepository) *WordUsecase {
 	return &WordUsecase{wr}
 }
 
-func (wu *WordUsecase) GetAllWords() ([]model.WordResponse, error) {
-	// TODO
-	return []model.WordResponse{}, nil
+func (wu *WordUsecase) GetAllWords(user_id uint) ([]model.WordResponse, error) {
+	var wordResponses []model.WordResponse
+	
+	words, err := wu.wr.GetAllWords(user_id)
+	if err != nil {
+		return []model.WordResponse{}, err
+	}
+
+	for _, word := range words {
+		wordResponse := model.WordResponse{
+			Id: word.Id,
+			Word: word.Word,
+			Memo: word.Memo,
+			UserId: word.UserId,
+		}
+		wordResponses = append(wordResponses, wordResponse)
+	}
+
+	return wordResponses, nil
 }
 
 func (wu *WordUsecase) GetWordById(id uint) (model.WordResponse, error) {

@@ -22,8 +22,12 @@ func NewWordController(wu *usecase.WordUsecase) IWordController {
 }
 
 func (wc *WordController) GetAllWords(c echo.Context) error {
-	// TODO
-	return nil
+	var userId uint = 1 // TODO セッションから取得
+	wordResponses, err := wc.wu.GetAllWords(userId)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+	return c.JSON(http.StatusCreated, wordResponses)
 }
 
 func (wc *WordController) GetWordById(c echo.Context) error {
