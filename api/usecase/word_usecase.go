@@ -23,7 +23,13 @@ func (wu *WordUsecase) GetWordById(id uint) (model.WordResponse, error) {
 	return model.WordResponse{}, nil
 }
 
-func (wu *WordUsecase) CreateWord(newWord model.WordRegistration) (model.WordResponse, error) {
+func (wu *WordUsecase) CreateWord(wordInput model.WordRegistrationInput) (model.WordResponse, error) {
+	newWord := model.WordRegistration{
+		Word: wordInput.Word,
+		Memo: wordInput.Memo,
+		UserId: 1, // TODO セッションから取得する
+	}
+
 	createdWord, err := wu.wr.InsertWord(newWord)
 	if err != nil {
 		return model.WordResponse{}, err

@@ -55,16 +55,17 @@ func (wr *WordRepository) InsertWord(newWord model.WordRegistration) (model.Word
 
 	err := wr.db.QueryRow(
 		"INSERT INTO words" +
-		" (id, word, memo)" +
-		" VALUES(" + wr.getSequenceNextvalQuery() + ", $1, $2)" +
-		" RETURNING id, word, memo, created_at, updated_at;",
+		" (id, word, memo, user_id)" +
+		" VALUES(" + wr.getSequenceNextvalQuery() + ", $1, $2, $3)" +
+		" RETURNING id, word, memo, user_id, created_at, updated_at;",
 		newWord.Word,
 		newWord.Memo,
+		newWord.UserId,
 	).Scan(
 		&createdWord.Id,
 		&createdWord.Word,
 		&createdWord.Memo,
-		// &createdWord.UserId, // TODO
+		&createdWord.UserId,
 		&createdWord.CreatedAt,
 		&createdWord.UpdatedAt,
 	)
