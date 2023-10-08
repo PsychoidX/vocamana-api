@@ -15,5 +15,6 @@ func main() {
 	wu := usecase.NewWordUsecase(wr)
 	wc := controller.NewWordController(wu)
 	e.GET("/words", wc.GetAllWords)
+	e.POST("/create", wc.CreateWord)
 	e.Logger.Fatal(e.Start(":8080"))
 }
