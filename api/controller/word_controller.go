@@ -5,7 +5,6 @@ import (
 	"api/model"
 	"github.com/labstack/echo/v4"
 	"net/http"
-	"strconv"
 )
 
 type IWordController interface {
@@ -58,12 +57,7 @@ func (wc *WordController) DeleteWord(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	id, err := strconv.ParseUint(req.Id, 10, 64)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
-	}
-
-	wordRes, err := wc.wu.DeleteWord(id)
+	wordRes, err := wc.wu.DeleteWord(req.Id)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}

@@ -30,5 +30,5 @@ type WordCreation struct {
 }
 
 type WordDeleteRequest struct {
-	Id string `json:"id"`
+	Id uint64 `json:"id"`
 }
