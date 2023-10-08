@@ -72,6 +72,5 @@ func (wr *WordRepository) InsertWord(newWord model.WordRegistration) (model.Word
 		return model.Word{}, err
 	}
 
-	// return wr.GetWordById(id)
 	return createdWord, nil
 }
