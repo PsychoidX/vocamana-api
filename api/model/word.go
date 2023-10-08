@@ -18,14 +18,12 @@ type WordResponse struct {
 	UserId uint64   `json:"user_id"`
 }
 
-// Word作成時に必要な入力項目
-type WordRegistrationInput struct {
+type WordCreationRequest struct {
 	Word   string `json:"word"`
 	Memo   string `json:"memo"`
 }
 
-// Word作成時に必要な項目
-type WordRegistration struct {
+type WordCreation struct {
 	Word   string `json:"word"`
 	Memo   string `json:"memo"`
 	UserId uint64   `json:"user_id"`

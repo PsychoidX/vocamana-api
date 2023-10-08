@@ -10,7 +10,7 @@ type IWordRepository interface {
 	getSequenceName() string
 	GetAllWords(userId uint64) ([]model.Word, error)
 	GetWordById(id uint64) (model.Word, error)
-	InsertWord(model.WordRegistration) (model.Word, error)
+	InsertWord(model.WordCreation) (model.Word, error)
 	DeleteWordById(id uint64) (model.Word, error)
 }
 
@@ -71,7 +71,7 @@ func (wr *WordRepository) GetWordById(id uint64) (model.Word, error) {
 	return word, nil
 }
 
-func (wr *WordRepository) InsertWord(newWord model.WordRegistration) (model.Word, error) {
+func (wr *WordRepository) InsertWord(newWord model.WordCreation) (model.Word, error) {
 	createdWord := model.Word{}
 
 	err := wr.db.QueryRow(

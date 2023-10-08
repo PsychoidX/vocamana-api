@@ -39,13 +39,12 @@ func (wc *WordController) GetWordById(c echo.Context) error {
 }
 
 func (wc *WordController) CreateWord(c echo.Context) error {
-	var wordInput model.WordRegistrationInput
-
-	if err := c.Bind(&wordInput); err != nil {
+	var req model.WordCreationRequest
+	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	wordRes, err := wc.wu.CreateWord(wordInput)
+	wordRes, err := wc.wu.CreateWord(req)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
