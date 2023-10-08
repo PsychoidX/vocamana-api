@@ -17,5 +17,6 @@ func main() {
 	e.GET("/words", wc.GetAllWords)
 	e.POST("/create", wc.CreateWord)
 	e.POST("/delete", wc.DeleteWord)
+	e.POST("/update", wc.UpdateWord)
 	e.Logger.Fatal(e.Start(":8080"))
 }

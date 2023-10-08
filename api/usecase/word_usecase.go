@@ -43,7 +43,7 @@ func (wu *WordUsecase) CreateWord(wordCreateRequest model.WordCreateRequest) (mo
 	newWord := model.WordCreation{
 		Word: wordCreateRequest.Word,
 		Memo: wordCreateRequest.Memo,
-		UserId: 1, // TODO セッションから取得する
+		UserId: 1, // TODO リクエストに含める
 	}
 
 	createdWord, err := wu.wr.InsertWord(newWord)
@@ -77,3 +77,25 @@ func (wu *WordUsecase) DeleteWord(id uint64) (model.WordResponse, error) {
 	return deletedWordResponse, nil
 }
 
+func (wu *WordUsecase) UpdateWord(wordUpdateRequest model.WordUpdateRequest) (model.WordResponse, error) {
+	wordUpdate := model.WordUpdate{
+		Id: wordUpdateRequest.Id,
+		Word: wordUpdateRequest.Word,
+		Memo: wordUpdateRequest.Memo,
+		UserId: 1, // TODO リクエストに含める
+	}
+
+	updatedWord, err := wu.wr.UpdateWord(wordUpdate)
+	if err != nil {
+		return model.WordResponse{}, err
+	}
+
+	updatedWordResponse := model.WordResponse{
+		Id:     updatedWord.Id,
+		Word:   updatedWord.Word,
+		Memo:   updatedWord.Memo,
+		UserId: updatedWord.UserId,
+	}
+
+	return updatedWordResponse, nil
+}

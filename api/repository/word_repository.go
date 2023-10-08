@@ -12,6 +12,7 @@ type IWordRepository interface {
 	GetWordById(id uint64) (model.Word, error)
 	InsertWord(model.WordCreation) (model.Word, error)
 	DeleteWordById(id uint64) (model.Word, error)
+	UpdateWord(model.WordUpdate) (model.Word, error)
 }
 
 type WordRepository struct {
@@ -118,4 +119,31 @@ func (wr *WordRepository) DeleteWordById(id uint64) (model.Word, error) {
 	}
 
 	return deletedWord, nil
+}
+
+func (wr *WordRepository) UpdateWord(wordUpdate model.WordUpdate) (model.Word, error) {
+	updatedWord := model.Word{}
+
+	err := wr.db.QueryRow(
+		"UPDATE words" +
+		" SET word = $1," +
+		" memo = $2" +
+		" WHERE id = $3" +
+		" RETURNING id, word, memo, user_id, created_at, updated_at;",
+		wordUpdate.Word,
+		wordUpdate.Memo,
+		wordUpdate.Id,
+	).Scan(
+		&updatedWord.Id,
+		&updatedWord.Word,
+		&updatedWord.Memo,
+		&updatedWord.UserId,
+		&updatedWord.CreatedAt,
+		&updatedWord.UpdatedAt,
+	)
+	if err != nil {
+		return model.Word{}, err
+	}
+
+	return updatedWord, nil
 }

@@ -12,6 +12,7 @@ type IWordController interface {
 	GetWordById(c echo.Context) error
 	CreateWord(c echo.Context) error
 	DeleteWord(c echo.Context) error
+	UpdateWord(c echo.Context) error
 }
 
 type WordController struct {
@@ -58,6 +59,20 @@ func (wc *WordController) DeleteWord(c echo.Context) error {
 	}
 
 	wordRes, err := wc.wu.DeleteWord(req.Id)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+	
+	return c.JSON(http.StatusAccepted, wordRes)
+}
+
+func (wc *WordController) UpdateWord(c echo.Context) error {
+	var req model.WordUpdateRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	wordRes, err := wc.wu.UpdateWord(req)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
