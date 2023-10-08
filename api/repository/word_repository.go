@@ -8,9 +8,10 @@ import (
 
 type IWordRepository interface {
 	getSequenceName() string
-	GetAllWords(userId uint) ([]model.Word, error)
-	GetWordById(id uint) (model.Word, error)
+	GetAllWords(userId uint64) ([]model.Word, error)
+	GetWordById(id uint64) (model.Word, error)
 	InsertWord(model.WordRegistration) (model.Word, error)
+	DeleteWordById(id uint64) (model.Word, error)
 }
 
 type WordRepository struct {
@@ -29,7 +30,7 @@ func (wr *WordRepository) getSequenceNextvalQuery() string {
 	return fmt.Sprintf("nextval('%s')", wr.getSequenceName())
 }
 
-func (wr *WordRepository) GetAllWords(userId uint) ([]model.Word, error) {
+func (wr *WordRepository) GetAllWords(userId uint64) ([]model.Word, error) {
 	var words []model.Word
 
 	rows, err := wr.db.Query(
@@ -54,7 +55,7 @@ func (wr *WordRepository) GetAllWords(userId uint) ([]model.Word, error) {
 	return words, nil
 }
 
-func (wr *WordRepository) GetWordById(id uint) (model.Word, error) {
+func (wr *WordRepository) GetWordById(id uint64) (model.Word, error) {
 	word := model.Word{}
 
 	err := wr.db.QueryRow(
@@ -94,4 +95,27 @@ func (wr *WordRepository) InsertWord(newWord model.WordRegistration) (model.Word
 	}
 
 	return createdWord, nil
+}
+
+func (wr *WordRepository) DeleteWordById(id uint64) (model.Word, error) {
+	deletedWord := model.Word{}
+
+	err := wr.db.QueryRow(
+		"DELETE FROM words" +
+		" WHERE id = $1" +
+		" RETURNING id, word, memo, user_id, created_at, updated_at;",
+		id,
+	).Scan(
+		&deletedWord.Id,
+		&deletedWord.Word,
+		&deletedWord.Memo,
+		&deletedWord.UserId,
+		&deletedWord.CreatedAt,
+		&deletedWord.UpdatedAt,
+	)
+	if err != nil {
+		return model.Word{}, err
+	}
+
+	return deletedWord, nil
 }

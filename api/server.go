@@ -16,5 +16,6 @@ func main() {
 	wc := controller.NewWordController(wu)
 	e.GET("/words", wc.GetAllWords)
 	e.POST("/create", wc.CreateWord)
+	e.POST("/delete", wc.DeleteWord)
 	e.Logger.Fatal(e.Start(":8080"))
 }
