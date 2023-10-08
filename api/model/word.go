@@ -18,7 +18,7 @@ type WordResponse struct {
 	UserId uint64   `json:"user_id"`
 }
 
-type WordCreationRequest struct {
+type WordCreateRequest struct {
 	Word   string `json:"word"`
 	Memo   string `json:"memo"`
 }

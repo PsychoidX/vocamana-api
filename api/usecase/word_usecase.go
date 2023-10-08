@@ -39,10 +39,10 @@ func (wu *WordUsecase) GetWordById(id uint64) (model.WordResponse, error) {
 	return model.WordResponse{}, nil
 }
 
-func (wu *WordUsecase) CreateWord(wordCreationRequest model.WordCreationRequest) (model.WordResponse, error) {
+func (wu *WordUsecase) CreateWord(wordCreateRequest model.WordCreateRequest) (model.WordResponse, error) {
 	newWord := model.WordCreation{
-		Word: wordCreationRequest.Word,
-		Memo: wordCreationRequest.Memo,
+		Word: wordCreateRequest.Word,
+		Memo: wordCreateRequest.Memo,
 		UserId: 1, // TODO セッションから取得する
 	}
 
