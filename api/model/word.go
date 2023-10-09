@@ -12,10 +12,10 @@ type Word struct {
 }
 
 type WordResponse struct {
-	Id     uint64   `json:"id"`
+	Id     uint64 `json:"id"`
 	Word   string `json:"word"`
 	Memo   string `json:"memo"`
-	UserId uint64   `json:"user_id"`
+	UserId uint64 `json:"user_id"`
 }
 
 type WordCreateRequest struct {
@@ -24,9 +24,9 @@ type WordCreateRequest struct {
 }
 
 type WordCreation struct {
-	Word   string `json:"word"`
-	Memo   string `json:"memo"`
-	UserId uint64   `json:"user_id"`
+	Word   string
+	Memo   string
+	UserId uint64
 }
 
 type WordDeleteRequest struct {
@@ -40,8 +40,8 @@ type WordUpdateRequest struct {
 }
 
 type WordUpdate struct {
-	Id   uint64   `json:"id"` 
-	Word string   `json:"word"`
-	Memo string   `json:"memo"`
-	UserId uint64 `json:"user_id"`
+	Id   uint64
+	Word string
+	Memo string
+	UserId uint64
 }
