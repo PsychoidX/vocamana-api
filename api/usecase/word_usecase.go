@@ -13,10 +13,12 @@ func NewWordUsecase(wr repository.IWordRepository) *WordUsecase {
 	return &WordUsecase{wr}
 }
 
-func (wu *WordUsecase) GetAllWords(user_id uint64) ([]model.WordResponse, error) {
+func (wu *WordUsecase) GetAllWords(userId uint64) ([]model.WordResponse, error) {
 	var wordResponses []model.WordResponse
+
+	// TODO: userIdがログイン中のものと一致することを確認
 	
-	words, err := wu.wr.GetAllWords(user_id)
+	words, err := wu.wr.GetAllWords(userId)
 	if err != nil {
 		return []model.WordResponse{}, err
 	}
@@ -34,9 +36,22 @@ func (wu *WordUsecase) GetAllWords(user_id uint64) ([]model.WordResponse, error)
 	return wordResponses, nil
 }
 
-func (wu *WordUsecase) GetWordById(id uint64) (model.WordResponse, error) {
-	// TODO
-	return model.WordResponse{}, nil
+func (wu *WordUsecase) GetWordById(userId uint64, wordId uint64) (model.WordResponse, error) {	
+	// TODO: userIdがログイン中のものと一致することを確認
+
+	word, err := wu.wr.GetWordById(wordId)
+	if err != nil {
+		return model.WordResponse{}, err
+	}
+
+	wordResponse := model.WordResponse{
+		Id: word.Id,
+		Word: word.Word,
+		Memo: word.Memo,
+		UserId: word.UserId,
+	}
+
+	return wordResponse, nil
 }
 
 func (wu *WordUsecase) CreateWord(req model.WordCreationRequest) (model.WordResponse, error) {

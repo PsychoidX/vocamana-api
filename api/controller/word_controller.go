@@ -34,9 +34,19 @@ func (wc *WordController) GetAllWords(c echo.Context) error {
 }
 
 func (wc *WordController) GetWordById(c echo.Context) error {
-	// id := c.Param("wordId")
-	// TODO
-	return nil
+	var userId uint64 = 1 // TODO セッションから取得
+
+	wordId, err := strconv.ParseUint(c.Param("wordId"), 10, 32)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	wordResponse, err := wc.wu.GetWordById(userId, wordId)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	return c.JSON(http.StatusCreated, wordResponse)
 }
 
 func (wc *WordController) CreateWord(c echo.Context) error {

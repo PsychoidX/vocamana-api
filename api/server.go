@@ -17,6 +17,7 @@ func main() {
 	wu := usecase.NewWordUsecase(wr)
 	wc := controller.NewWordController(wu)
 	w.GET("", wc.GetAllWords)
+	w.GET("/:wordId", wc.GetWordById)
 	w.POST("", wc.CreateWord)
 	w.PUT("/:wordId", wc.UpdateWord)
 	w.DELETE("/:wordId", wc.DeleteWord)
