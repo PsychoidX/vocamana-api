@@ -13,6 +13,28 @@ func NewSentenceUsecase(sr repository.ISentenceRepository) *SentenceUsecase {
 	return &SentenceUsecase{sr}
 }
 
+func (su *SentenceUsecase) GetAllSentences(userId uint64) ([]model.SentenceResponse, error) {
+	var sentenceResponses []model.SentenceResponse
+
+	// TODO: userIdがログイン中のものと一致することを確認
+	
+	sentences, err := su.sr.GetAllSentences(userId)
+	if err != nil {
+		return []model.SentenceResponse{}, err
+	}
+
+	for _, sentence := range sentences {
+		sentenceResponse := model.SentenceResponse{
+			Id: sentence.Id,
+			Sentence: sentence.Sentence,
+			UserId: sentence.UserId,
+		}
+		sentenceResponses = append(sentenceResponses, sentenceResponse)
+	}
+
+	return sentenceResponses, nil
+}
+
 func (su *SentenceUsecase) CreateSentence(userId uint64, req model.SentenceCreationRequest) (model.SentenceResponse, error) {
 	// TODO: userIdがログイン中のものと一致することを確認
 	

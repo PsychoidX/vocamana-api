@@ -8,6 +8,7 @@ import (
 )
 
 type ISentenceController interface {
+	GetAllSentences(c echo.Context) error
 	CreateSentence(c echo.Context) error
 }
 
@@ -17,6 +18,17 @@ type SentenceController struct {
 
 func NewSentenceController(su *usecase.SentenceUsecase) ISentenceController {
 	return &SentenceController{su}
+}
+
+func (sc *SentenceController) GetAllSentences(c echo.Context) error {
+	var userId uint64 = 1 // TODO セッションから取得
+	
+	sentenceResponses, err := sc.su.GetAllSentences(userId)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	return c.JSON(http.StatusCreated, sentenceResponses)
 }
 
 func (sc *SentenceController) CreateSentence(c echo.Context) error {

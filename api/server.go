@@ -26,6 +26,7 @@ func main() {
 	sr := repository.NewSentenceRepository(db)
 	su := usecase.NewSentenceUsecase(sr)
 	sc := controller.NewSentenceController(su)
+	s.GET("", sc.GetAllSentences)
 	s.POST("", sc.CreateSentence)
 
 	e.Logger.Fatal(e.Start(":8080"))
