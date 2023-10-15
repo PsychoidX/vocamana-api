@@ -50,12 +50,14 @@ func (wc *WordController) GetWordById(c echo.Context) error {
 }
 
 func (wc *WordController) CreateWord(c echo.Context) error {
+	var userId uint64 = 1 // TODO セッションから取得
+
 	var req model.WordCreationRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	wordRes, err := wc.wu.CreateWord(req)
+	wordRes, err := wc.wu.CreateWord(userId, req)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -64,12 +66,14 @@ func (wc *WordController) CreateWord(c echo.Context) error {
 }
 
 func (wc *WordController) DeleteWord(c echo.Context) error {
-	id, err := strconv.ParseUint(c.Param("wordId"), 10, 32)
+	var userId uint64 = 1 // TODO セッションから取得
+
+	wordId, err := strconv.ParseUint(c.Param("wordId"), 10, 32)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	wordRes, err := wc.wu.DeleteWord(id)
+	wordRes, err := wc.wu.DeleteWord(userId, wordId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -78,19 +82,21 @@ func (wc *WordController) DeleteWord(c echo.Context) error {
 }
 
 func (wc *WordController) UpdateWord(c echo.Context) error {
+	var userId uint64 = 1 // TODO セッションから取得
+
 	var req model.WordUpdateRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 	
-	id, err := strconv.ParseUint(c.Param("wordId"), 10, 32)
+	wordId, err := strconv.ParseUint(c.Param("wordId"), 10, 32)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	req.Id = id
+	req.Id = wordId
 
-	wordRes, err := wc.wu.UpdateWord(req)
+	wordRes, err := wc.wu.UpdateWord(userId, req)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}

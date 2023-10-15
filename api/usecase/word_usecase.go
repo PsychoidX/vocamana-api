@@ -54,11 +54,13 @@ func (wu *WordUsecase) GetWordById(userId uint64, wordId uint64) (model.WordResp
 	return wordResponse, nil
 }
 
-func (wu *WordUsecase) CreateWord(req model.WordCreationRequest) (model.WordResponse, error) {
+func (wu *WordUsecase) CreateWord(userId uint64, req model.WordCreationRequest) (model.WordResponse, error) {
+	// TODO: userIdがログイン中のものと一致することを確認
+	
 	newWord := model.WordCreation{
 		Word: req.Word,
 		Memo: req.Memo,
-		UserId: 1, // TODO リクエストに含める
+		UserId: userId,
 	}
 
 	createdWord, err := wu.wr.InsertWord(newWord)
@@ -76,8 +78,10 @@ func (wu *WordUsecase) CreateWord(req model.WordCreationRequest) (model.WordResp
 	return createdWordResponse, nil
 }
 
-func (wu *WordUsecase) DeleteWord(id uint64) (model.WordResponse, error) {
-	deletedWord, err := wu.wr.DeleteWordById(id)
+func (wu *WordUsecase) DeleteWord(userId uint64, wordId uint64) (model.WordResponse, error) {
+	// TODO: userIdがログイン中のものと一致することを確認
+
+	deletedWord, err := wu.wr.DeleteWordById(wordId)
 	if err != nil {
 		return model.WordResponse{}, err
 	}
@@ -92,12 +96,14 @@ func (wu *WordUsecase) DeleteWord(id uint64) (model.WordResponse, error) {
 	return deletedWordResponse, nil
 }
 
-func (wu *WordUsecase) UpdateWord(req model.WordUpdateRequest) (model.WordResponse, error) {
+func (wu *WordUsecase) UpdateWord(userId uint64, req model.WordUpdateRequest) (model.WordResponse, error) {
+	// TODO: userIdがログイン中のものと一致することを確認
+	
 	wordUpdate := model.WordUpdate{
 		Id: req.Id,
 		Word: req.Word,
 		Memo: req.Memo,
-		UserId: 1, // TODO リクエストに含める
+		UserId: userId,
 	}
 
 	updatedWord, err := wu.wr.UpdateWord(wordUpdate)
