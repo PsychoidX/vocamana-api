@@ -13,6 +13,7 @@ type ISentenceController interface {
 	GetSentenceById(c echo.Context) error
 	CreateSentence(c echo.Context) error
 	UpdateSentence(c echo.Context) error
+	DeleteSentence(c echo.Context) error
 }
 
 type SentenceController struct {
@@ -82,6 +83,22 @@ func (sc *SentenceController) UpdateSentence(c echo.Context) error {
 	req.Id = sentenceId
 
 	sentenceRes, err := sc.su.UpdateSentence(userId, req)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+	
+	return c.JSON(http.StatusAccepted, sentenceRes)
+}
+
+func (sc *SentenceController) DeleteSentence(c echo.Context) error {
+	var userId uint64 = 1 // TODO セッションから取得
+
+	sentenceId, err := strconv.ParseUint(c.Param("sentenceId"), 10, 32)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	sentenceRes, err := sc.su.DeleteSentence(userId, sentenceId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}

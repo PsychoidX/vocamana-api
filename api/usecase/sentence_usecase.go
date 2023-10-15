@@ -96,3 +96,20 @@ func (su *SentenceUsecase) UpdateSentence(userId uint64, req model.SentenceUpdat
 
 	return updatedSentenceResponse, nil
 }
+
+func (su *SentenceUsecase) DeleteSentence(userId uint64, sentenceId uint64) (model.SentenceResponse, error) {
+	// TODO: userIdがログイン中のものと一致することを確認
+
+	deletedSentence, err := su.sr.DeleteSentenceById(sentenceId)
+	if err != nil {
+		return model.SentenceResponse{}, err
+	}
+
+	deletedSentenceResponse := model.SentenceResponse{
+		Id:     deletedSentence.Id,
+		Sentence:   deletedSentence.Sentence,
+		UserId: deletedSentence.UserId,
+	}
+
+	return deletedSentenceResponse, nil
+}

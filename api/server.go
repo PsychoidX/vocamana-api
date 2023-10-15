@@ -30,6 +30,7 @@ func main() {
 	s.GET("/:sentenceId", sc.GetSentenceById)
 	s.POST("", sc.CreateSentence)
 	s.PUT("/:sentenceId", sc.UpdateSentence)
+	s.DELETE("/:sentenceId", sc.DeleteSentence)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

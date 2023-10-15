@@ -12,6 +12,7 @@ type ISentenceRepository interface {
 	GetSentenceById(uint64) (model.Sentence, error)
 	InsertSentence(model.SentenceCreation) (model.Sentence, error)
 	UpdateSentence(model.SentenceUpdate) (model.Sentence, error)
+	DeleteSentenceById(uint64) (model.Sentence, error)
 }
 
 type SentenceRepository struct {
@@ -117,4 +118,26 @@ func (sr *SentenceRepository) UpdateSentence(sentenceUpdate model.SentenceUpdate
 	}
 
 	return updatedSentence, nil
+}
+
+func (sr *SentenceRepository) DeleteSentenceById(id uint64) (model.Sentence, error) {
+	deletedSentence := model.Sentence{}
+
+	err := sr.db.QueryRow(
+		"DELETE FROM sentences" +
+		" WHERE id = $1" +
+		" RETURNING id, sentence, user_id, created_at, updated_at;",
+		id,
+	).Scan(
+		&deletedSentence.Id,
+		&deletedSentence.Sentence,
+		&deletedSentence.UserId,
+		&deletedSentence.CreatedAt,
+		&deletedSentence.UpdatedAt,
+	)
+	if err != nil {
+		return model.Sentence{}, err
+	}
+
+	return deletedSentence, nil
 }
