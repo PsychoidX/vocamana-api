@@ -5,10 +5,12 @@ import (
 	"api/model"
 	"github.com/labstack/echo/v4"
 	"net/http"
+	"strconv"
 )
 
 type ISentenceController interface {
 	GetAllSentences(c echo.Context) error
+	GetSentenceById(c echo.Context) error
 	CreateSentence(c echo.Context) error
 }
 
@@ -29,6 +31,22 @@ func (sc *SentenceController) GetAllSentences(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, sentenceResponses)
+}
+
+func (sc *SentenceController) GetSentenceById(c echo.Context) error {
+	var userId uint64 = 1 // TODO セッションから取得
+
+	sentenceId, err := strconv.ParseUint(c.Param("sentenceId"), 10, 32)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	sentenceResponse, err := sc.su.GetSentenceById(userId, sentenceId)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	return c.JSON(http.StatusCreated, sentenceResponse)
 }
 
 func (sc *SentenceController) CreateSentence(c echo.Context) error {

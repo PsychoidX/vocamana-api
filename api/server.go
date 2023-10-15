@@ -27,6 +27,7 @@ func main() {
 	su := usecase.NewSentenceUsecase(sr)
 	sc := controller.NewSentenceController(su)
 	s.GET("", sc.GetAllSentences)
+	s.GET("/:sentenceId", sc.GetSentenceById)
 	s.POST("", sc.CreateSentence)
 
 	e.Logger.Fatal(e.Start(":8080"))

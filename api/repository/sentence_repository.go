@@ -9,6 +9,7 @@ import (
 type ISentenceRepository interface {
 	getSequenceName() string
 	GetAllSentences(uint64) ([]model.Sentence, error)
+	GetSentenceById(uint64) (model.Sentence, error)
 	InsertSentence(model.SentenceCreation) (model.Sentence, error)
 }
 
@@ -51,6 +52,22 @@ func (sr *SentenceRepository) GetAllSentences(userId uint64) ([]model.Sentence, 
 	}
 
 	return sentences, nil
+}
+
+func (sr *SentenceRepository) GetSentenceById(id uint64) (model.Sentence, error) {
+	sentence := model.Sentence{}
+
+	err := sr.db.QueryRow(
+		"SELECT id, sentence, user_id, created_at, updated_at" + 
+		" FROM sentences" +
+		" WHERE id = $1",
+		id,
+	).Scan(&sentence.Id, &sentence.Sentence, &sentence.UserId, &sentence.CreatedAt, &sentence.UpdatedAt)
+	if err != nil {
+		return model.Sentence{}, err
+	}
+
+	return sentence, nil
 }
 
 func (sr *SentenceRepository) InsertSentence(newSentence model.SentenceCreation) (model.Sentence, error) {
