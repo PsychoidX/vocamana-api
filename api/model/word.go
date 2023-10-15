@@ -29,10 +29,6 @@ type WordCreation struct {
 	UserId uint64
 }
 
-type WordDeleteRequest struct {
-	Id uint64 `json:"id"`
-}
-
 type WordUpdateRequest struct {
 	Id   uint64 `json:"id"` 
 	Word string `json:"word"`

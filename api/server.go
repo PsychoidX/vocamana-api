@@ -11,12 +11,15 @@ import (
 func main() {
 	e := echo.New()
 	db := db.NewDB()
+
+	w := e.Group("/words")
 	wr := repository.NewWordRepository(db)
 	wu := usecase.NewWordUsecase(wr)
 	wc := controller.NewWordController(wu)
-	e.GET("/words", wc.GetAllWords)
-	e.POST("/create", wc.CreateWord)
-	e.POST("/delete", wc.DeleteWord)
-	e.POST("/update", wc.UpdateWord)
+	w.GET("", wc.GetAllWords)
+	w.POST("", wc.CreateWord)
+	w.PUT("/:wordId", wc.UpdateWord)
+	w.DELETE("/:wordId", wc.DeleteWord)
+	
 	e.Logger.Fatal(e.Start(":8080"))
 }
