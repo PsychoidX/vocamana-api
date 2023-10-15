@@ -15,3 +15,12 @@ type SentenceResponse struct {
 	Sentence string `json:"sentence"`
 	UserId   uint   `json:"user_id"`
 }
+
+type SentenceCreationRequest struct {
+	Sentence string `json:"sentence"`
+}
+
+type SentenceCreation struct {
+	Sentence string
+	UserId   uint64
+}

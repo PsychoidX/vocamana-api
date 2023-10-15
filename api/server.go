@@ -22,5 +22,11 @@ func main() {
 	w.PUT("/:wordId", wc.UpdateWord)
 	w.DELETE("/:wordId", wc.DeleteWord)
 	
+	s := e.Group("/sentences")
+	sr := repository.NewSentenceRepository(db)
+	su := usecase.NewSentenceUsecase(sr)
+	sc := controller.NewSentenceController(su)
+	s.POST("", sc.CreateSentence)
+
 	e.Logger.Fatal(e.Start(":8080"))
 }
