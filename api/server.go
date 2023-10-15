@@ -29,6 +29,7 @@ func main() {
 	s.GET("", sc.GetAllSentences)
 	s.GET("/:sentenceId", sc.GetSentenceById)
 	s.POST("", sc.CreateSentence)
+	s.PUT("/:sentenceId", sc.UpdateSentence)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

@@ -11,6 +11,7 @@ type ISentenceRepository interface {
 	GetAllSentences(uint64) ([]model.Sentence, error)
 	GetSentenceById(uint64) (model.Sentence, error)
 	InsertSentence(model.SentenceCreation) (model.Sentence, error)
+	UpdateSentence(model.SentenceUpdate) (model.Sentence, error)
 }
 
 type SentenceRepository struct {
@@ -92,4 +93,28 @@ func (sr *SentenceRepository) InsertSentence(newSentence model.SentenceCreation)
 	}
 
 	return createdSentence, nil
+}
+
+func (sr *SentenceRepository) UpdateSentence(sentenceUpdate model.SentenceUpdate) (model.Sentence, error) {
+	updatedSentence := model.Sentence{}
+
+	err := sr.db.QueryRow(
+		"UPDATE sentences" +
+		" SET sentence = $1" +
+		" WHERE id = $2" +
+		" RETURNING id, sentence, user_id, created_at, updated_at;",
+		sentenceUpdate.Sentence,
+		sentenceUpdate.Id,
+	).Scan(
+		&updatedSentence.Id,
+		&updatedSentence.Sentence,
+		&updatedSentence.UserId,
+		&updatedSentence.CreatedAt,
+		&updatedSentence.UpdatedAt,
+	)
+	if err != nil {
+		return model.Sentence{}, err
+	}
+
+	return updatedSentence, nil
 }

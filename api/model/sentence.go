@@ -24,3 +24,14 @@ type SentenceCreation struct {
 	Sentence string
 	UserId   uint64
 }
+
+type SentenceUpdateRequest struct {
+	Id       uint64 `json:"id"` 
+	Sentence string `json:"sentence"`
+}
+
+type SentenceUpdate struct {
+	Id       uint64
+	Sentence string
+	UserId   uint64
+}

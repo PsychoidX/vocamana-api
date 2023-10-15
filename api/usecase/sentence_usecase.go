@@ -73,3 +73,26 @@ func (su *SentenceUsecase) CreateSentence(userId uint64, req model.SentenceCreat
 
 	return createdSentenceResponse, nil
 }
+
+func (su *SentenceUsecase) UpdateSentence(userId uint64, req model.SentenceUpdateRequest) (model.SentenceResponse, error) {
+	// TODO: userIdがログイン中のものと一致することを確認
+	
+	sentenceUpdate := model.SentenceUpdate{
+		Id: req.Id,
+		Sentence: req.Sentence,
+		UserId: userId,
+	}
+
+	updatedSentence, err := su.sr.UpdateSentence(sentenceUpdate)
+	if err != nil {
+		return model.SentenceResponse{}, err
+	}
+
+	updatedSentenceResponse := model.SentenceResponse{
+		Id:     updatedSentence.Id,
+		Sentence:   updatedSentence.Sentence,
+		UserId: updatedSentence.UserId,
+	}
+
+	return updatedSentenceResponse, nil
+}
