@@ -39,10 +39,10 @@ func (wu *WordUsecase) GetWordById(id uint64) (model.WordResponse, error) {
 	return model.WordResponse{}, nil
 }
 
-func (wu *WordUsecase) CreateWord(wordCreateRequest model.WordCreateRequest) (model.WordResponse, error) {
+func (wu *WordUsecase) CreateWord(req model.WordCreationRequest) (model.WordResponse, error) {
 	newWord := model.WordCreation{
-		Word: wordCreateRequest.Word,
-		Memo: wordCreateRequest.Memo,
+		Word: req.Word,
+		Memo: req.Memo,
 		UserId: 1, // TODO リクエストに含める
 	}
 
@@ -77,11 +77,11 @@ func (wu *WordUsecase) DeleteWord(id uint64) (model.WordResponse, error) {
 	return deletedWordResponse, nil
 }
 
-func (wu *WordUsecase) UpdateWord(wordUpdateRequest model.WordUpdateRequest) (model.WordResponse, error) {
+func (wu *WordUsecase) UpdateWord(req model.WordUpdateRequest) (model.WordResponse, error) {
 	wordUpdate := model.WordUpdate{
-		Id: wordUpdateRequest.Id,
-		Word: wordUpdateRequest.Word,
-		Memo: wordUpdateRequest.Memo,
+		Id: req.Id,
+		Word: req.Word,
+		Memo: req.Memo,
 		UserId: 1, // TODO リクエストに含める
 	}
 
