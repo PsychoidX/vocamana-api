@@ -7,7 +7,6 @@ import (
 )
 
 type IWordRepository interface {
-	getSequenceName() string
 	GetAllWords(userId uint64) ([]model.Word, error)
 	GetWordById(id uint64) (model.Word, error)
 	InsertWord(model.WordCreation) (model.Word, error)

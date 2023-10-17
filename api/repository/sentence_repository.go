@@ -7,7 +7,6 @@ import (
 )
 
 type ISentenceRepository interface {
-	getSequenceName() string
 	GetAllSentences(uint64) ([]model.Sentence, error)
 	GetSentenceById(uint64) (model.Sentence, error)
 	InsertSentence(model.SentenceCreation) (model.Sentence, error)
