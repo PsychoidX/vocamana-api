@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE containing (
+CREATE TABLE sentences_words (
   sentence_id INTEGER,
   word_id INTEGER,
   PRIMARY KEY(sentence_id, word_id),
@@ -15,5 +15,5 @@ CREATE TABLE containing (
 
 -- +goose Down
 -- +goose StatementBegin
-DROP TABLE containing;
+DROP TABLE sentences_words;
 -- +goose StatementEnd
