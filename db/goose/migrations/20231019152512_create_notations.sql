@@ -1,5 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
+CREATE SEQUENCE notation_id_seq;
+
 CREATE TABLE notations (
   id INTEGER PRIMARY KEY,
   word_id INTEGER,
@@ -20,4 +22,5 @@ EXECUTE PROCEDURE refresh_updated_at();
 -- +goose StatementBegin
 DROP TRIGGER refresh_notations_updated_at ON notations;
 DROP TABLE notations;
+DROP SEQUENCE notation_id_seq;
 -- +goose StatementEnd
