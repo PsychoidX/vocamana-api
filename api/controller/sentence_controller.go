@@ -14,6 +14,7 @@ type ISentenceController interface {
 	CreateSentence(c echo.Context) error
 	UpdateSentence(c echo.Context) error
 	DeleteSentence(c echo.Context) error
+	AssociateSentenceWithWords(c echo.Context) error
 }
 
 type SentenceController struct {
@@ -104,4 +105,25 @@ func (sc *SentenceController) DeleteSentence(c echo.Context) error {
 	}
 	
 	return c.JSON(http.StatusAccepted, sentenceRes)
+}
+
+func (sc *SentenceController) AssociateSentenceWithWords(c echo.Context) error {
+	var userId uint64 = 1 // TODO セッションから取得
+
+	sentenceId, err := strconv.ParseUint(c.Param("sentenceId"), 10, 32)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	var req model.WordIdsRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	wordIdsRes, err := sc.su.AssociateSentenceWithWords(userId, sentenceId, req)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	return c.JSON(http.StatusAccepted, wordIdsRes)
 }

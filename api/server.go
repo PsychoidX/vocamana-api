@@ -12,8 +12,12 @@ func main() {
 	e := echo.New()
 	db := db.NewDB()
 
-	w := e.Group("/words")
+	
 	wr := repository.NewWordRepository(db)
+	sr := repository.NewSentenceRepository(db)
+	swr := repository.NewSentencesWordsRepository(db)
+
+	w := e.Group("/words")
 	wu := usecase.NewWordUsecase(wr)
 	wc := controller.NewWordController(wu)
 	w.GET("", wc.GetAllWords)
@@ -23,14 +27,17 @@ func main() {
 	w.DELETE("/:wordId", wc.DeleteWord)
 	
 	s := e.Group("/sentences")
-	sr := repository.NewSentenceRepository(db)
-	su := usecase.NewSentenceUsecase(sr)
+	su := usecase.NewSentenceUsecase(sr, wr, swr)
 	sc := controller.NewSentenceController(su)
 	s.GET("", sc.GetAllSentences)
 	s.GET("/:sentenceId", sc.GetSentenceById)
 	s.POST("", sc.CreateSentence)
 	s.PUT("/:sentenceId", sc.UpdateSentence)
 	s.DELETE("/:sentenceId", sc.DeleteSentence)
+
+	sa := e.Group("/sentences/association")
+	sa.POST("/:sentenceId", sc.AssociateSentenceWithWords)
+
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

@@ -12,6 +12,7 @@ type IWordRepository interface {
 	InsertWord(model.WordCreation) (model.Word, error)
 	DeleteWordById(id uint64) (model.Word, error)
 	UpdateWord(model.WordUpdate) (model.Word, error)
+	IsWordOwner(uint64, uint64) (bool, error)
 }
 
 type WordRepository struct {
@@ -145,4 +146,23 @@ func (wr *WordRepository) UpdateWord(wordUpdate model.WordUpdate) (model.Word, e
 	}
 
 	return updatedWord, nil
+}
+
+func (wr *WordRepository) IsWordOwner(wordId uint64, userId uint64) (bool, error) {
+	// wordIdの所持者がuserIdであるかを判定
+
+	var count int
+
+	err := wr.db.QueryRow(
+		"SELECT COUNT(*) FROM words" +
+		" WHERE id = $1" + 
+		" AND user_id = $2;",
+		wordId,
+		userId,
+	).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	
+	return count == 1, nil
 }

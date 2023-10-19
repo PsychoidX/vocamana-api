@@ -12,6 +12,7 @@ type ISentenceRepository interface {
 	InsertSentence(model.SentenceCreation) (model.Sentence, error)
 	UpdateSentence(model.SentenceUpdate) (model.Sentence, error)
 	DeleteSentenceById(uint64) (model.Sentence, error)
+	IsSentenceOwner(uint64, uint64) (bool, error)
 }
 
 type SentenceRepository struct {
@@ -139,4 +140,23 @@ func (sr *SentenceRepository) DeleteSentenceById(id uint64) (model.Sentence, err
 	}
 
 	return deletedSentence, nil
+}
+
+func (sr *SentenceRepository) IsSentenceOwner(sentenceId uint64, userId uint64) (bool, error) {
+	// sentenceIdの所持者がuserIdであるかを判定
+
+	var count int
+
+	err := sr.db.QueryRow(
+		"SELECT COUNT(*) FROM sentences" +
+		" WHERE id = $1" + 
+		" AND user_id = $2;",
+		sentenceId,
+		userId,
+	).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	
+	return count == 1, nil
 }
