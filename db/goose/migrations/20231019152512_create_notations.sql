@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE word_notations (
+CREATE TABLE notations (
   word_id INTEGER PRIMARY KEY,
   notation VARCHAR(100),
   FOREIGN KEY (word_id) REFERENCES words(id)
@@ -11,5 +11,5 @@ CREATE TABLE word_notations (
 
 -- +goose Down
 -- +goose StatementBegin
-DROP TABLE word_notations;
+DROP TABLE notations;
 -- +goose StatementEnd
