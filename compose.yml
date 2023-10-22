@@ -7,11 +7,25 @@ services:
     env_file:
       - ./docker/db/.env
     volumes:
-      - db-data:/var/lib/postgres/data
       - ./db/goose:/root/goose
+      - ./docker/db/initdb:/docker-entrypoint-initdb.d
     networks:
       vocamana:
         ipv4_address: 192.168.100.2
+  test-db:
+    build:
+      # dbのDockerfileを使ってビルドする
+      context: ./docker/db
+      dockerfile: Dockerfile
+    container_name: vocamana-test-db
+    env_file:
+      - ./docker/test-db/.env
+    volumes:
+      - ./db/goose:/root/goose
+      - ./docker/db/initdb:/docker-entrypoint-initdb.d
+    networks:
+      vocamana:
+        ipv4_address: 192.168.100.4
   api:
     build:
       context: ./docker/api
@@ -35,5 +49,3 @@ networks:
       driver: default
       config: 
         - subnet: 192.168.100.0/24
-volumes:
-  db-data:

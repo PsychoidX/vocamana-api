@@ -11,5 +11,6 @@ RUN apt-get update \
   && mv go /usr/local \
   && /usr/local/go/bin/go install github.com/pressly/goose/v3/cmd/goose@latest
 
+# ビルド時に設定する環境変数
 ENV LANG ja_JP.utf8
 ENV PATH $PATH:/usr/local/go/bin:/root/go/bin
