@@ -31,8 +31,8 @@ func (wc *WordController) GetAllWords(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
-	
-	return c.JSON(http.StatusCreated, wordResponses)
+
+	return c.JSON(http.StatusOK, wordResponses)
 }
 
 func (wc *WordController) GetWordById(c echo.Context) error {
