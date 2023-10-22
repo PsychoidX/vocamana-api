@@ -48,6 +48,6 @@ func setupDB() *sql.DB {
 }
 
 func DeleteAllFromWords() {
-	// wordsテーブルのレコードを削除し、シーケンスをリセットする
+	// wordsテーブルのレコードを全件削除・シーケンスをリセット
 	db.Exec("TURNCATE TABLE words RESTART IDENTITY;")
 }
