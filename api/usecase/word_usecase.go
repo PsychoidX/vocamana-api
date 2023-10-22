@@ -32,7 +32,7 @@ func (wu *WordUsecase) GetAllWords(userId uint64) ([]model.WordResponse, error) 
 		}
 		wordResponses = append(wordResponses, wordResponse)
 	}
-
+	
 	return wordResponses, nil
 }
 
