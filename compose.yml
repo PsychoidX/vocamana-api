@@ -39,6 +39,7 @@ services:
       - "8081:8080"
     env_file:
       - ./docker/api/.env
+      - ./docker/api/test/.env
     tty: true
     networks:
       vocamana:
