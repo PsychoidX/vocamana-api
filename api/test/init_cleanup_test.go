@@ -27,6 +27,8 @@ func TestMain(m *testing.M) {
 	wu = usecase.NewWordUsecase(wr)
 	wc = controller.NewWordController(wu)
 
+	setupUserData()
+	
 	exitCode := m.Run()
 
 	os.Exit(exitCode)
@@ -47,7 +49,37 @@ func setupDB() *sql.DB {
 	return db
 }
 
+func setupUserData() {
+	// テストのため、id=1, 2のユーザが存在しない場合に作成する
+	for i:=1; i<=2; i++ {
+		db.Exec(`
+			INSERT INTO users
+			(id, email, password)
+			SELECT CAST($1 AS INTEGER), CONCAT('sample', $1, '@example.com'), 'pass'
+			WHERE NOT EXISTS(
+				SELECT 1
+				FROM users
+				WHERE id = CAST($1 AS INTEGER)
+			);`, i)
+	}
+}
+
 func DeleteAllFromWords() {
-	// wordsテーブルのレコードを全件削除・シーケンスをリセット
-	db.Exec("TURNCATE TABLE words RESTART IDENTITY;")
+	// wordsテーブルのレコードを全件削除
+	db.Exec("TRUNCATE TABLE words CASCADE;")
+	// word_id_seqシーケンスを1にリセット
+	db.Exec("SELECT setval('word_id_seq', 1, false);")
+}
+
+func GetCurrentWordsSequenceValue() int {
+	var currval int
+	db.QueryRow(
+		"SELECT currval('word_id_seq');",
+	).Scan(&currval);
+
+	return currval
+}
+
+func GetNextWordsSequenceValue() int {
+	return GetCurrentWordsSequenceValue() + 1
 }
