@@ -22,21 +22,23 @@ func TestGetAllWords(t *testing.T) {
 
 	// レコードが存在する場合、ログイン中のユーザのレコードが全件返る
 	// TODO
-	
+
 	// とりあえず、user_id=1のレコードだけ返すよう実装
-	db.Exec(`
+	var idWithUserId1 int
+	db.QueryRow(`
 		INSERT INTO words
 		(id, word, memo, user_id)
 		VALUES(nextval('word_id_seq'), 'testword', 'testmemo', 1)
-	`)
+		RETURNING id;
+	`).Scan(&idWithUserId1)
 
-	currval := GetCurrentWordsSequenceValue() // user_id=1のレコードが追加された時点でのid
-
-	db.Exec(`
+	var idWithUserId2 int
+	db.QueryRow(`
 		INSERT INTO words
 		(id, word, memo, user_id)
 		VALUES(nextval('word_id_seq'), 'testword2', 'testmemo2', 2)
-	`)
+		RETURNING id;
+	`).Scan(&idWithUserId2)
 
 	expectedJSON := fmt.Sprintf(`
 		[
@@ -47,7 +49,7 @@ func TestGetAllWords(t *testing.T) {
 				"user_id": 1
 			}
 		]`,
-		currval,
+		idWithUserId1,
 	)
 
 	DoSimpleTest(
@@ -59,4 +61,20 @@ func TestGetAllWords(t *testing.T) {
 		http.StatusOK,
 		expectedJSON,
 	)
+}
+
+func TestGetWordById(t *testing.T) {
+	// TODO
+}
+
+func TestCreateWord(t *testing.T) {
+	// TOOD
+}
+
+func TestUpdateWord(t *testing.T) {
+	// TOOD
+}
+
+func TestDeleteWord(t *testing.T) {
+	// TOOD
 }
