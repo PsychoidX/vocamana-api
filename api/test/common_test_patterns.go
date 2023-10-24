@@ -16,6 +16,8 @@ func DoSimpleTest(
 		t *testing.T,
 		httpMethod string,
 		path string,
+		paramNames []string,
+		paramValues []string,
 		body string,
 		controllerMethod func(echo.Context) error,
 		expectedStatusCode int,
@@ -28,9 +30,16 @@ func DoSimpleTest(
 		bodyReader = strings.NewReader(body)
 	}
 
-	req := httptest.NewRequest(httpMethod, path, bodyReader)
+	req := httptest.NewRequest(httpMethod, "/", bodyReader)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
+
+	c.SetPath(path)
+	if paramNames != nil && paramValues != nil {
+		c.SetParamNames(paramNames...)
+		c.SetParamValues(paramValues...)
+	}
+
 
 	if assert.NoError(t, controllerMethod(c)) {
 		assert.Equal(t, expectedStatusCode, rec.Code)

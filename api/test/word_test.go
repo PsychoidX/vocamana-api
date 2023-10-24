@@ -14,6 +14,8 @@ func TestGetAllWords(t *testing.T) {
 		t,
 		http.MethodGet,
 		"/words",
+		nil,
+		nil,
 		"",
 		wc.GetAllWords,
 		http.StatusOK,
@@ -56,6 +58,8 @@ func TestGetAllWords(t *testing.T) {
 		t,
 		http.MethodGet,
 		"/words",
+		nil,
+		nil,
 		"",
 		wc.GetAllWords,
 		http.StatusOK,
@@ -64,7 +68,63 @@ func TestGetAllWords(t *testing.T) {
 }
 
 func TestGetWordById(t *testing.T) {
+	DeleteAllFromWords()
+
+	// ログイン中のUserに紐づくWordだけを取得可能
 	// TODO
+	// とりあえず、user_id=1のUserに紐づくWordだけを取得可能なよう実装
+
+	var idWithUserId1 string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'testword', 'testmemo', 1)
+		RETURNING id;
+	`).Scan(&idWithUserId1)
+
+	// user_id=1の場合取得可能
+	expectedJSON := fmt.Sprintf(`
+		{
+			"id": %s,
+			"word": "testword",
+			"memo": "testmemo",
+			"user_id": 1
+		}`,
+		idWithUserId1,
+	)
+
+	DoSimpleTest(
+		t,
+		http.MethodGet,
+		"/words/:wordId",
+		[]string{"wordId"},
+		[]string{idWithUserId1},
+		"",
+		wc.GetWordById,
+		http.StatusOK,
+		expectedJSON,
+	)
+
+	// user_id=2の場合{}が返る
+	var idWithUserId2 string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'testword2', 'testmemo2', 2)
+		RETURNING id;
+	`).Scan(&idWithUserId2)
+
+	DoSimpleTest(
+		t,
+		http.MethodGet,
+		"/words/:wordId",
+		[]string{"wordId"},
+		[]string{idWithUserId2},
+		"",
+		wc.GetWordById,
+		http.StatusOK,
+		"{}",
+	)
 }
 
 func TestCreateWord(t *testing.T) {

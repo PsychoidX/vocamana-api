@@ -1,11 +1,12 @@
 package controller
 
 import (
-	"api/usecase"
 	"api/model"
-	"github.com/labstack/echo/v4"
+	"api/usecase"
 	"net/http"
 	"strconv"
+
+	"github.com/labstack/echo/v4"
 )
 
 type IWordController interface {
@@ -48,7 +49,13 @@ func (wc *WordController) GetWordById(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	return c.JSON(http.StatusCreated, wordResponse)
+	if(wordResponse == model.WordResponse{}) {
+		// usecaseで取得した結果がゼロ値の場合
+		// {}を返す
+		return c.JSON(http.StatusOK, make(map[string]interface{}))
+	} else {
+		return c.JSON(http.StatusOK, wordResponse)
+	}
 }
 
 func (wc *WordController) CreateWord(c echo.Context) error {

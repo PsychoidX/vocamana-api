@@ -8,7 +8,7 @@ import (
 
 type IWordRepository interface {
 	GetAllWords(userId uint64) ([]model.Word, error)
-	GetWordById(id uint64) (model.Word, error)
+	GetWordById(userId, wordId uint64) (model.Word, error)
 	InsertWord(model.WordCreation) (model.Word, error)
 	DeleteWordById(id uint64) (model.Word, error)
 	UpdateWord(model.WordUpdate) (model.Word, error)
@@ -56,14 +56,16 @@ func (wr *WordRepository) GetAllWords(userId uint64) ([]model.Word, error) {
 	return words, nil
 }
 
-func (wr *WordRepository) GetWordById(id uint64) (model.Word, error) {
+func (wr *WordRepository) GetWordById(userId uint64, wordId uint64) (model.Word, error) {
 	word := model.Word{}
 
 	err := wr.db.QueryRow(
 		"SELECT id, word, memo, user_id, created_at, updated_at" + 
 		" FROM words" +
-		" WHERE id = $1",
-		id,
+		" WHERE id = $1" +
+		" AND user_id = $2;",
+		wordId,
+		userId,
 	).Scan(&word.Id, &word.Word, &word.Memo, &word.UserId, &word.CreatedAt, &word.UpdatedAt)
 	if err != nil {
 		return model.Word{}, err
