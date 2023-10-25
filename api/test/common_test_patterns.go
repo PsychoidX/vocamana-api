@@ -2,7 +2,6 @@ package test
 
 import (
 	"io"
-	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -33,9 +32,8 @@ func DoSimpleTest(
 
 	req := httptest.NewRequest(httpMethod, "/", bodyReader)
 
-	// POSTのテストをする場合
-	// リクエストはJSONであるとする
-	if(httpMethod == http.MethodPost) {
+	// リクエストボディがある場合、JSON形式であるとする
+	if body != "" {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	}
 

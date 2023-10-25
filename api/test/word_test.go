@@ -180,7 +180,60 @@ func TestCreateWord(t *testing.T) {
 }
 
 func TestUpdateWord(t *testing.T) {
-	// TOOD
+	DeleteAllFromWords()
+
+	// ログイン中のユーザのWordのみUpdate可能
+	// TODO
+	// とりあえずuser_id=1のWordのみUpdate可能とする
+
+	var id string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'word', 'memo', 1)
+		RETURNING id;
+	`).Scan(&id)
+
+	reqBody := `{
+		"word": "updated word",
+		"memo": "updated memo"
+	}`
+
+	// 変更後のレコードが返る
+	expectedJSON := fmt.Sprintf(`
+		{
+			"id": %s,
+			"word": "updated word",
+			"memo": "updated memo",
+			"user_id": 1
+		}`,
+		id,
+	)
+
+	DoSimpleTest(
+		t,
+		http.MethodPut,
+		"/words/:wordId",
+		[]string{"wordId"},
+		[]string{id},
+		reqBody,
+		wc.UpdateWord,
+		http.StatusAccepted,
+		expectedJSON,
+	)
+
+	// DBのレコードが更新される
+	var word string
+	var memo string
+	db.QueryRow(`
+		SELECT word, memo FROM words
+		WHERE id = $1;
+	`,
+	id,
+	).Scan(&word, &memo)
+
+	assert.Equal(t, "updated word", word)
+	assert.Equal(t, "updated memo", memo)
 }
 
 func TestDeleteWord(t *testing.T) {
