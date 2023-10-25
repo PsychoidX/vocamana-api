@@ -3,6 +3,7 @@ package usecase
 import (
 	"api/model"
 	"api/repository"
+	"database/sql"
 )
 
 type WordUsecase struct {
@@ -32,15 +33,20 @@ func (wu *WordUsecase) GetAllWords(userId uint64) ([]model.WordResponse, error) 
 		}
 		wordResponses = append(wordResponses, wordResponse)
 	}
-	
+
 	return wordResponses, nil
 }
 
 func (wu *WordUsecase) GetWordById(userId uint64, wordId uint64) (model.WordResponse, error) {	
 	// TODO: userIdがログイン中のものと一致することを確認
 
-	word, err := wu.wr.GetWordById(wordId)
+	word, err := wu.wr.GetWordById(userId, wordId)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			// マッチするレコードが無い場合
+			// WordResponseのゼロ値を返す
+			return model.WordResponse{}, nil
+		}
 		return model.WordResponse{}, err
 	}
 
