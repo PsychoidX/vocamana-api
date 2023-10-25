@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetAllWords(t *testing.T) {
@@ -128,7 +130,53 @@ func TestGetWordById(t *testing.T) {
 }
 
 func TestCreateWord(t *testing.T) {
-	// TOOD
+	DeleteAllFromWords()
+
+	nextId := GetNextWordsSequenceValue()
+
+	reqBody := `{
+		"word": "testword",
+		"memo": "testmemo"
+	}`
+
+	// 登録されたレコードが返る
+	// ログイン中のユーザのuserIdを使って登録
+	// TODO
+	// とりあえずuser_id=1を使用
+	expectedJSON := fmt.Sprintf(`
+		{
+			"id": %d,
+			"word": "testword",
+			"memo": "testmemo",
+			"user_id": 1
+		}`,
+		nextId,
+	)
+
+	DoSimpleTest(
+		t,
+		http.MethodPost,
+		"/words",
+		nil,
+		nil,
+		reqBody,
+		wc.CreateWord,
+		http.StatusCreated,
+		expectedJSON,
+	)
+
+	// DBにレコードが追加される
+	var word string
+	var memo string
+	db.QueryRow(`
+		SELECT word, memo FROM words
+		WHERE id = $1;
+	`,
+	nextId,
+	).Scan(&word, &memo)
+
+	assert.Equal(t, "testword", word)
+	assert.Equal(t, "testmemo", memo)
 }
 
 func TestUpdateWord(t *testing.T) {

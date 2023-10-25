@@ -68,7 +68,8 @@ func DeleteAllFromWords() {
 	// wordsテーブルのレコードを全件削除
 	db.Exec("TRUNCATE TABLE words CASCADE;")
 	// word_id_seqシーケンスを1にリセット
-	db.Exec("SELECT setval('word_id_seq', 1, false);")
+	// nextval()で、2から連番で取得される
+	db.Exec("SELECT setval('word_id_seq', 1);")
 }
 
 func GetCurrentWordsSequenceValue() int {
@@ -76,10 +77,10 @@ func GetCurrentWordsSequenceValue() int {
 	db.QueryRow(
 		"SELECT currval('word_id_seq');",
 	).Scan(&currval);
-
 	return currval
 }
 
 func GetNextWordsSequenceValue() int {
+	// インデックスのカウンタを進めず参照のみするための実装
 	return GetCurrentWordsSequenceValue() + 1
 }
