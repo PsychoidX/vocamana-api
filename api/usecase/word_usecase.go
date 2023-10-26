@@ -87,8 +87,14 @@ func (wu *WordUsecase) CreateWord(userId uint64, req model.WordCreationRequest) 
 func (wu *WordUsecase) DeleteWord(userId uint64, wordId uint64) (model.WordResponse, error) {
 	// TODO: userIdがログイン中のものと一致することを確認
 
-	deletedWord, err := wu.wr.DeleteWordById(wordId)
+	deletedWord, err := wu.wr.DeleteWordById(userId, wordId)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			// マッチするレコードが無い場合
+			// WordResponseのゼロ値を返す
+			return model.WordResponse{}, nil
+		}
+		
 		return model.WordResponse{}, err
 	}
 

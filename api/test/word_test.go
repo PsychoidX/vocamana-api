@@ -236,12 +236,11 @@ func TestUpdateWord(t *testing.T) {
 	assert.Equal(t, "updated memo", memo)
 }
 
-func TestDeleteWord(t *testing.T) {
-	DeleteAllFromWords()
-
-	// ログイン中のユーザのWordのみUpdate可能
-	// TODO
+func TestDeleteWordWithLoggingInUserId(t *testing.T) {
+	// ログイン中のUserに紐づくWordを削除できることをテスト
+	// TODO ログイン機能
 	// とりあえずuser_id=1のWordのみDelete可能とする
+	DeleteAllFromWords()
 
 	var id string
 	db.QueryRow(`
@@ -284,4 +283,42 @@ func TestDeleteWord(t *testing.T) {
 	).Scan(&count)
 
 	assert.Equal(t, 0, count)
+}
+
+func TestDeleteWordWithoutLoggingInUserId(t *testing.T) {
+	// ログイン中のUserに紐づかないWordは削除できないことをテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のWordのみDelete可能とする
+	DeleteAllFromWords()
+
+	var id string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'word', 'memo', 2)
+		RETURNING id;
+	`).Scan(&id)
+
+	DoSimpleTest(
+		t,
+		http.MethodDelete,
+		"/words/:wordId",
+		[]string{"wordId"},
+		[]string{id},
+		"",
+		wc.DeleteWord,
+		http.StatusAccepted,
+		"{}",
+	)
+
+	// DBからレコードが削除されていない
+	var count int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM words
+		WHERE id = $1;
+	`,
+	id,
+	).Scan(&count)
+
+	assert.Equal(t, 1, count)
 }

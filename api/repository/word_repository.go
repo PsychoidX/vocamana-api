@@ -10,7 +10,7 @@ type IWordRepository interface {
 	GetAllWords(userId uint64) ([]model.Word, error)
 	GetWordById(userId, wordId uint64) (model.Word, error)
 	InsertWord(model.WordCreation) (model.Word, error)
-	DeleteWordById(id uint64) (model.Word, error)
+	DeleteWordById(userId, wordId uint64) (model.Word, error)
 	UpdateWord(model.WordUpdate) (model.Word, error)
 	IsWordOwner(uint64, uint64) (bool, error)
 }
@@ -100,14 +100,17 @@ func (wr *WordRepository) InsertWord(newWord model.WordCreation) (model.Word, er
 	return createdWord, nil
 }
 
-func (wr *WordRepository) DeleteWordById(id uint64) (model.Word, error) {
+func (wr *WordRepository) DeleteWordById(userId, wordId uint64) (model.Word, error) {
 	deletedWord := model.Word{}
 
-	err := wr.db.QueryRow(
-		"DELETE FROM words" +
-		" WHERE id = $1" +
-		" RETURNING id, word, memo, user_id, created_at, updated_at;",
-		id,
+	err := wr.db.QueryRow(`
+		DELETE FROM words
+		WHERE user_id = $1
+			AND id = $2
+		RETURNING id, word, memo, user_id, created_at, updated_at;
+		`,
+		userId,
+		wordId,
 	).Scan(
 		&deletedWord.Id,
 		&deletedWord.Word,

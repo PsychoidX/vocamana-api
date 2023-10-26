@@ -86,8 +86,14 @@ func (wc *WordController) DeleteWord(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
-	
-	return c.JSON(http.StatusAccepted, wordRes)
+
+	if(wordRes == model.WordResponse{}) {
+		// usecaseで取得した結果がゼロ値の場合
+		// {}を返す
+		return c.JSON(http.StatusAccepted, make(map[string]interface{}))
+	} else {
+		return c.JSON(http.StatusAccepted, wordRes)
+	}
 }
 
 func (wc *WordController) UpdateWord(c echo.Context) error {
