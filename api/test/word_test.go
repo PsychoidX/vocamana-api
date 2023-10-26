@@ -8,7 +8,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetAllWords(t *testing.T) {
+func TestGetAllWordsWithNoRows(t *testing.T) {
+	// ログイン中のUserに紐づくWordが1つも無い場合nullが返ることをテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のWordのみUpdate可能とする
 	DeleteAllFromWords()
 
 	// レコードが1つも無い場合、[]ではなくnullが返る
@@ -23,11 +26,14 @@ func TestGetAllWords(t *testing.T) {
 		http.StatusOK,
 		"null",
 	)
+}
 
-	// レコードが存在する場合、ログイン中のユーザのレコードが全件返る
-	// TODO
+func TestGetAllWords(t *testing.T) {
+	// ログイン中のUserに紐づくWordを取得できることをテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のWordのみUpdate可能とする
+	DeleteAllFromWords()
 
-	// とりあえず、user_id=1のレコードだけ返すよう実装
 	var idWithUserId1 int
 	db.QueryRow(`
 		INSERT INTO words
