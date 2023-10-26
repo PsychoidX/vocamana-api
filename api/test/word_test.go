@@ -11,7 +11,7 @@ import (
 func TestGetAllWordsWithNoRows(t *testing.T) {
 	// ログイン中のUserに紐づくWordが1つも無い場合nullが返ることをテスト
 	// TODO ログイン機能
-	// とりあえずuser_id=1のWordのみUpdate可能とする
+	// とりあえずuser_id=1のWordのみ取得可能とする
 	DeleteAllFromWords()
 
 	// レコードが1つも無い場合、[]ではなくnullが返る
@@ -31,7 +31,7 @@ func TestGetAllWordsWithNoRows(t *testing.T) {
 func TestGetAllWords(t *testing.T) {
 	// ログイン中のUserに紐づくWordを取得できることをテスト
 	// TODO ログイン機能
-	// とりあえずuser_id=1のWordのみUpdate可能とする
+	// とりあえずuser_id=1のWordのみ取得可能とする
 	DeleteAllFromWords()
 
 	var idWithUserId1 int
