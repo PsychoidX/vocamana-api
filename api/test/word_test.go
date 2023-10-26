@@ -179,12 +179,11 @@ func TestCreateWord(t *testing.T) {
 	assert.Equal(t, "testmemo", memo)
 }
 
-func TestUpdateWord(t *testing.T) {
-	DeleteAllFromWords()
-
-	// ログイン中のユーザのWordのみUpdate可能
-	// TODO
+func TestUpdateWordWithLoggingInUserId(t *testing.T) {
+	// ログイン中のUserに紐づくWordをUpdateできることをテスト
+	// TODO ログイン機能
 	// とりあえずuser_id=1のWordのみUpdate可能とする
+	DeleteAllFromWords()
 
 	var id string
 	db.QueryRow(`
@@ -234,6 +233,51 @@ func TestUpdateWord(t *testing.T) {
 
 	assert.Equal(t, "updated word", word)
 	assert.Equal(t, "updated memo", memo)
+}
+
+func TestUpdateWordWithoutLoggingInUserId(t *testing.T) {
+	// ログイン中のUserに紐づかないWordをUpdateできないことをテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のWordのみUpdate可能とする
+	DeleteAllFromWords()
+
+	var id string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'word', 'memo', 2)
+		RETURNING id;
+	`).Scan(&id)
+
+	reqBody := `{
+		"word": "updated word",
+		"memo": "updated memo"
+	}`
+
+	DoSimpleTest(
+		t,
+		http.MethodPut,
+		"/words/:wordId",
+		[]string{"wordId"},
+		[]string{id},
+		reqBody,
+		wc.UpdateWord,
+		http.StatusAccepted,
+		"{}",
+	)
+
+	// DBのレコードが更新されない
+	var word string
+	var memo string
+	db.QueryRow(`
+		SELECT word, memo FROM words
+		WHERE id = $1;
+	`,
+	id,
+	).Scan(&word, &memo)
+
+	assert.Equal(t, "word", word)
+	assert.Equal(t, "memo", memo)
 }
 
 func TestDeleteWordWithLoggingInUserId(t *testing.T) {

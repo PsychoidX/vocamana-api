@@ -129,14 +129,17 @@ func (wr *WordRepository) DeleteWordById(userId, wordId uint64) (model.Word, err
 func (wr *WordRepository) UpdateWord(wordUpdate model.WordUpdate) (model.Word, error) {
 	updatedWord := model.Word{}
 
-	err := wr.db.QueryRow(
-		"UPDATE words" +
-		" SET word = $1," +
-		" memo = $2" +
-		" WHERE id = $3" +
-		" RETURNING id, word, memo, user_id, created_at, updated_at;",
+	err := wr.db.QueryRow(`
+		UPDATE words
+		SET word = $1,
+			memo = $2
+		WHERE user_id = $3
+		AND id = $4
+		RETURNING id, word, memo, user_id, created_at, updated_at;
+		`,
 		wordUpdate.Word,
 		wordUpdate.Memo,
+		wordUpdate.UserId,
 		wordUpdate.Id,
 	).Scan(
 		&updatedWord.Id,
