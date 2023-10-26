@@ -237,5 +237,51 @@ func TestUpdateWord(t *testing.T) {
 }
 
 func TestDeleteWord(t *testing.T) {
-	// TOOD
+	DeleteAllFromWords()
+
+	// ログイン中のユーザのWordのみUpdate可能
+	// TODO
+	// とりあえずuser_id=1のWordのみDelete可能とする
+
+	var id string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'word', 'memo', 1)
+		RETURNING id;
+	`).Scan(&id)
+
+	// 削除したレコードが返る
+	expectedJSON := fmt.Sprintf(`
+		{
+			"id": %s,
+			"word": "word",
+			"memo": "memo",
+			"user_id": 1
+		}`,
+		id,
+	)
+
+	DoSimpleTest(
+		t,
+		http.MethodDelete,
+		"/words/:wordId",
+		[]string{"wordId"},
+		[]string{id},
+		"",
+		wc.DeleteWord,
+		http.StatusAccepted,
+		expectedJSON,
+	)
+
+	// DBからレコードが削除されている
+	var count int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM words
+		WHERE id = $1;
+	`,
+	id,
+	).Scan(&count)
+
+	assert.Equal(t, 0, count)
 }
