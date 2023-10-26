@@ -69,20 +69,19 @@ func TestGetAllWords(t *testing.T) {
 	)
 }
 
-func TestGetWordById(t *testing.T) {
+func TestGetWordByIdWithLoggingInUserId(t *testing.T) {
+	// ログイン中のUserに紐づくWordを取得できることをテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のWordのみ取得可能とする
 	DeleteAllFromWords()
 
-	// ログイン中のUserに紐づくWordだけを取得可能
-	// TODO
-	// とりあえず、user_id=1のUserに紐づくWordだけを取得可能なよう実装
-
-	var idWithUserId1 string
+	var id string
 	db.QueryRow(`
 		INSERT INTO words
 		(id, word, memo, user_id)
 		VALUES(nextval('word_id_seq'), 'testword', 'testmemo', 1)
 		RETURNING id;
-	`).Scan(&idWithUserId1)
+	`).Scan(&id)
 
 	// user_id=1の場合取得可能
 	expectedJSON := fmt.Sprintf(`
@@ -92,7 +91,7 @@ func TestGetWordById(t *testing.T) {
 			"memo": "testmemo",
 			"user_id": 1
 		}`,
-		idWithUserId1,
+		id,
 	)
 
 	DoSimpleTest(
@@ -100,28 +99,34 @@ func TestGetWordById(t *testing.T) {
 		http.MethodGet,
 		"/words/:wordId",
 		[]string{"wordId"},
-		[]string{idWithUserId1},
+		[]string{id},
 		"",
 		wc.GetWordById,
 		http.StatusOK,
 		expectedJSON,
 	)
+}
 
-	// user_id=2の場合{}が返る
-	var idWithUserId2 string
+func TestGetWordByIdWithoutLoggingInUserId(t *testing.T) {
+	// ログイン中のUserに紐づかないWordを取得できないことをテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のWordのみ取得可能とする
+	DeleteAllFromWords()
+
+	var id string
 	db.QueryRow(`
 		INSERT INTO words
 		(id, word, memo, user_id)
 		VALUES(nextval('word_id_seq'), 'testword2', 'testmemo2', 2)
 		RETURNING id;
-	`).Scan(&idWithUserId2)
+	`).Scan(&id)
 
 	DoSimpleTest(
 		t,
 		http.MethodGet,
 		"/words/:wordId",
 		[]string{"wordId"},
-		[]string{idWithUserId2},
+		[]string{id},
 		"",
 		wc.GetWordById,
 		http.StatusOK,
@@ -130,6 +135,9 @@ func TestGetWordById(t *testing.T) {
 }
 
 func TestCreateWord(t *testing.T) {
+	// ログイン中のUserに紐づくWordを作成できることをテスト
+	// TODO ログイン機能
+	// とりあえずログインUserはuser_id=1とする
 	DeleteAllFromWords()
 
 	nextId := GetNextWordsSequenceValue()
@@ -140,9 +148,6 @@ func TestCreateWord(t *testing.T) {
 	}`
 
 	// 登録されたレコードが返る
-	// ログイン中のユーザのuserIdを使って登録
-	// TODO
-	// とりあえずuser_id=1を使用
 	expectedJSON := fmt.Sprintf(`
 		{
 			"id": %d,

@@ -120,6 +120,12 @@ func (wu *WordUsecase) UpdateWord(userId uint64, req model.WordUpdateRequest) (m
 
 	updatedWord, err := wu.wr.UpdateWord(wordUpdate)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			// マッチするレコードが無い場合
+			// WordResponseのゼロ値を返す
+			return model.WordResponse{}, nil
+		}
+		
 		return model.WordResponse{}, err
 	}
 
