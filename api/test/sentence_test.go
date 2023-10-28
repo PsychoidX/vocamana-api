@@ -6,11 +6,30 @@ import (
 	"testing"
 )
 
+func TestGetAllSentencesWithNoRows(t *testing.T) {
+	// ログイン中のUserに紐づくSentenceが1つも無い場合nullが返ることをテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のSentenceのみ取得可能とする
+	DeleteAllFromSentences()
+
+	// レコードが1つも無い場合、[]ではなくnullが返る
+	DoSimpleTest(
+		t,
+		http.MethodGet,
+		"/sentences",
+		nil,
+		nil,
+		"",
+		sc.GetAllSentences,
+		http.StatusOK,
+		"null",
+	)
+}
+
 func TestGetAllSentences(t *testing.T) {
 	// ログイン中のUserに紐づくSentenceを取得できることをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のSentenceのみ取得可能とする
-
 	DeleteAllFromSentences()
 
 	var idWithUserId1 int
