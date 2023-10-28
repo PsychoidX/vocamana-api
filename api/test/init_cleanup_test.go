@@ -28,6 +28,10 @@ var sr repository.ISentenceRepository
 var su *usecase.SentenceUsecase
 var sc controller.ISentenceController
 
+// Notation
+var nr repository.INotationRepository
+var nu *usecase.NotationUsecase
+var nc controller.INotationController
 
 func TestMain(m *testing.M) {
 	db = setupDB()
@@ -42,6 +46,11 @@ func TestMain(m *testing.M) {
 	swr = repository.NewSentencesWordsRepository(db)
 	su = usecase.NewSentenceUsecase(sr, wr, swr)
 	sc = controller.NewSentenceController(su)
+
+	// Notation
+	nr = repository.NewNotationRepository(db)
+	nu = usecase.NewNotationUsecase(nr, wr)
+	nc = controller.NewNotationController(nu)
 
 	setupUserData()
 	
@@ -102,8 +111,6 @@ func GetNextWordsSequenceValue() int {
 	return GetCurrentWordsSequenceValue() + 1
 }
 
-
-
 // sentences utils
 func DeleteAllFromSentences() {
 	// sentencesテーブルのレコードを全件削除
@@ -122,4 +129,26 @@ func GetCurrentSentencesSequenceValue() int {
 func GetNextSentencesSequenceValue() int {
 	// インデックスのカウンタを進めず参照のみするための実装
 	return GetCurrentSentencesSequenceValue() + 1
+}
+
+// notations utils
+func DeleteAllFromNotations() {
+	// wordsテーブルのレコードを全件削除
+	db.Exec("TRUNCATE TABLE notations CASCADE;")
+	// word_id_seqシーケンスを1にリセット
+	// nextval()で、2から連番で取得される
+	db.Exec("SELECT setval('notation_id_seq', 1);")
+}
+
+func GetCurrentNotationsSequenceValue() int {
+	var currval int
+	db.QueryRow(
+		"SELECT currval('notation_id_seq');",
+	).Scan(&currval);
+	return currval
+}
+
+func GetNextNotationsSequenceValue() int {
+	// インデックスのカウンタを進めず参照のみするための実装
+	return GetCurrentNotationsSequenceValue() + 1
 }

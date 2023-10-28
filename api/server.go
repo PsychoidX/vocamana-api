@@ -16,6 +16,7 @@ func main() {
 	wr := repository.NewWordRepository(db)
 	sr := repository.NewSentenceRepository(db)
 	swr := repository.NewSentencesWordsRepository(db)
+	nr := repository.NewNotationRepository(db)
 
 	w := e.Group("/words")
 	wu := usecase.NewWordUsecase(wr)
@@ -38,6 +39,10 @@ func main() {
 	sa := e.Group("/sentences/association")
 	sa.POST("/:sentenceId", sc.AssociateSentenceWithWords)
 
+	n := e.Group("/words/:wordId/notations")
+	nu := usecase.NewNotationUsecase(nr, wr)
+	nc := controller.NewNotationController(nu)
+	n.POST("", nc.CreateNotation)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }
