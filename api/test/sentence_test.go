@@ -367,6 +367,439 @@ func TestAssociateSentenceWithWords(t *testing.T) {
 	// それらを紐づかせられることをテスト
 	// TODO ログイン機能
 	// とりあえずWordとSentenceのUserIdが両方1の場合紐づけ可能とする
+	DeleteAllFromWords()
+	DeleteAllFromSentences()
 
-	// TODO
+	var wordId string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'word', 'memo',  1)
+		RETURNING id;
+	`).Scan(&wordId)
+
+	var sentenceId string
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('word_id_seq'), 'sentence', 1)
+		RETURNING id;
+	`).Scan(&sentenceId)
+
+	reqBody := fmt.Sprintf(`
+		{
+			"word_ids": [%s]
+		}
+	`,
+	wordId)
+
+	expectedJSON := fmt.Sprintf(`
+		{
+			"word_ids": [%s]
+		}`,
+		wordId,
+	)
+
+	DoSimpleTest(
+		t,
+		http.MethodDelete,
+		"/sentences/association/:sentenceId",
+		[]string{"sentenceId"},
+		[]string{sentenceId},
+		reqBody,
+		sc.AssociateSentenceWithWords,
+		http.StatusAccepted,
+		expectedJSON,
+	)
+
+	// DBにレコードが追加されている
+	var count int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences_words
+		WHERE sentence_id = $1
+			AND word_id = $2;
+	`,
+	sentenceId,
+	wordId,
+	).Scan(&count)
+
+	assert.Equal(t, 1, count)
+}
+
+func TestAssociateSentenceWithWordsWithMultipleWordIds(t *testing.T) {
+	// WordとSentenceがどちらもログイン中のUserに紐づく場合
+	// かつWordが複数選択されている場合
+	// それらを紐づかせられることをテスト
+	// TODO ログイン機能
+	// とりあえずWordとSentenceのUserIdが両方1の場合紐づけ可能とする
+	DeleteAllFromWords()
+	DeleteAllFromSentences()
+
+	var wordId1 string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'word1', 'memo1',  1)
+		RETURNING id;
+	`).Scan(&wordId1)
+
+	var wordId2 string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'word2', 'memo2',  1)
+		RETURNING id;
+	`).Scan(&wordId2)
+
+	var sentenceId string
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('word_id_seq'), 'sentence', 1)
+		RETURNING id;
+	`).Scan(&sentenceId)
+
+	reqBody := fmt.Sprintf(`
+		{
+			"word_ids": [%s, %s]
+		}`,
+		wordId1, wordId2,
+	)
+
+	expectedJSON := fmt.Sprintf(`
+		{
+			"word_ids": [%s, %s]
+		}`,
+		wordId1, wordId2,
+	)
+
+	DoSimpleTest(
+		t,
+		http.MethodDelete,
+		"/sentences/association/:sentenceId",
+		[]string{"sentenceId"},
+		[]string{sentenceId},
+		reqBody,
+		sc.AssociateSentenceWithWords,
+		http.StatusAccepted,
+		expectedJSON,
+	)
+
+	// DBにレコードが追加されている
+	var countWithWordId1 int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences_words
+		WHERE sentence_id = $1
+			AND word_id = $2;
+	`,
+	sentenceId,
+	wordId1,
+	).Scan(&countWithWordId1)
+
+	assert.Equal(t, 1, countWithWordId1)
+
+	var countWithWordId2 int
+	db.QueryRow(`
+	SELECT COUNT(*) FROM sentences_words
+	WHERE sentence_id = $1
+		AND word_id = $2;
+	`,
+	sentenceId,
+	wordId2,
+	).Scan(&countWithWordId2)
+
+	assert.Equal(t, 1, countWithWordId2)
+}
+
+func TestAssociateSentenceWithInvalidWordId(t *testing.T) {
+	// Sentenceはログイン中のUserに紐づくが
+	// Wordがログイン中のUserに紐づかない場合
+	// それらを紐づかせられないことをテスト
+	// TODO ログイン機能
+	// とりあえずWordとSentenceのUserIdが両方1の場合紐づけ可能とする
+	DeleteAllFromWords()
+	DeleteAllFromSentences()
+
+	var wordId string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'word', 'memo',  2)
+		RETURNING id;
+	`).Scan(&wordId)
+
+	var sentenceId string
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('word_id_seq'), 'sentence', 1)
+		RETURNING id;
+	`).Scan(&sentenceId)
+
+	reqBody := fmt.Sprintf(`
+		{
+			"word_ids": [%s]
+		}`,
+		wordId,
+	)
+
+	expectedJSON := `{
+		"word_ids": null
+	}`
+
+	DoSimpleTest(
+		t,
+		http.MethodDelete,
+		"/sentences/association/:sentenceId",
+		[]string{"sentenceId"},
+		[]string{sentenceId},
+		reqBody,
+		sc.AssociateSentenceWithWords,
+		http.StatusAccepted,
+		expectedJSON,
+	)
+
+	// DBにレコードが追加されていない
+	var count int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences_words
+		WHERE sentence_id = $1
+			AND word_id = $2;
+	`,
+	sentenceId,
+	wordId,
+	).Scan(&count)
+
+	assert.Equal(t, 0, count)
+}
+
+func TestAssociateSentenceWithInvalidSentenceId(t *testing.T) {
+	// Wordはログイン中のUserに紐づくが
+	// Sentenceがログイン中のUserに紐づかない場合
+	// それらを紐づかせられないことをテスト
+	// TODO ログイン機能
+	// とりあえずWordとSentenceのUserIdが両方1の場合紐づけ可能とする
+	DeleteAllFromWords()
+	DeleteAllFromSentences()
+
+	var wordId string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'word', 'memo',  1)
+		RETURNING id;
+	`).Scan(&wordId)
+
+	var sentenceId string
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('word_id_seq'), 'sentence', 2)
+		RETURNING id;
+	`).Scan(&sentenceId)
+
+	reqBody := fmt.Sprintf(`
+		{
+			"word_ids": [%s]
+		}`,
+		wordId,
+	)
+
+	expectedJSON := `{
+		"word_ids": null
+	}`
+
+	DoSimpleTest(
+		t,
+		http.MethodDelete,
+		"/sentences/association/:sentenceId",
+		[]string{"sentenceId"},
+		[]string{sentenceId},
+		reqBody,
+		sc.AssociateSentenceWithWords,
+		http.StatusAccepted,
+		expectedJSON,
+	)
+
+	// DBにレコードが追加されていない
+	var count int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences_words
+		WHERE sentence_id = $1
+			AND word_id = $2;
+	`,
+	sentenceId,
+	wordId,
+	).Scan(&count)
+
+	assert.Equal(t, 0, count)
+}
+
+func TestAssociateSentenceWithAllInvalidWordId(t *testing.T) {
+	// Sentenceはログイン中のUserに紐づくが
+	// 指定された複数のWordのうち、すべてがログイン中のUserに紐づかない場合
+	// それらを紐づかせられないことをテスト
+	// TODO ログイン機能
+	// とりあえずWordとSentenceのUserIdが両方1の場合紐づけ可能とする
+	DeleteAllFromWords()
+	DeleteAllFromSentences()
+
+	var invalidWordId1 string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'word1', 'memo1',  2)
+		RETURNING id;
+	`).Scan(&invalidWordId1)
+
+	var invalidWordId2 string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'word2', 'memo2',  2)
+		RETURNING id;
+	`).Scan(&invalidWordId2)
+
+	var sentenceId string
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('word_id_seq'), 'sentence', 1)
+		RETURNING id;
+	`).Scan(&sentenceId)
+
+	reqBody := fmt.Sprintf(`
+		{
+			"word_ids": [%s, %s]
+		}`,
+		invalidWordId1,
+		invalidWordId2,
+	)
+
+	expectedJSON := `{
+		"word_ids": null
+	}`
+
+	DoSimpleTest(
+		t,
+		http.MethodDelete,
+		"/sentences/association/:sentenceId",
+		[]string{"sentenceId"},
+		[]string{sentenceId},
+		reqBody,
+		sc.AssociateSentenceWithWords,
+		http.StatusAccepted,
+		expectedJSON,
+	)
+
+	// DBにレコードが追加されていない
+	var countWithInvalidWordId1 int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences_words
+		WHERE sentence_id = $1
+			AND word_id = $2;
+	`,
+	sentenceId,
+	invalidWordId1,
+	).Scan(&countWithInvalidWordId1)
+
+	assert.Equal(t, 0, countWithInvalidWordId1)
+
+	var countWithInvalidWordId2 int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences_words
+		WHERE sentence_id = $1
+			AND word_id = $2;
+	`,
+	sentenceId,
+	invalidWordId2,
+	).Scan(&countWithInvalidWordId2)
+
+	assert.Equal(t, 0, countWithInvalidWordId2)
+}
+
+func TestAssociateSentenceWithSomeInvalidWordId(t *testing.T) {
+	// Sentenceはログイン中のUserに紐づくが
+	// 指定された複数のWordのうち、一部だけがログイン中のUserに紐づかない場合
+	// それらを紐づかせられないことをテスト
+	// TODO ログイン機能
+	// とりあえずWordとSentenceのUserIdが両方1の場合紐づけ可能とする
+	DeleteAllFromWords()
+	DeleteAllFromSentences()
+
+	var validWordId string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'word1', 'memo1', 1)
+		RETURNING id;
+	`).Scan(&validWordId)
+
+	var invalidWordId string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'word2', 'memo2',  2)
+		RETURNING id;
+	`).Scan(&invalidWordId)
+
+	var sentenceId string
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('word_id_seq'), 'sentence', 1)
+		RETURNING id;
+	`).Scan(&sentenceId)
+
+	reqBody := fmt.Sprintf(`
+		{
+			"word_ids": [%s, %s]
+		}`,
+		validWordId,
+		invalidWordId,
+	)
+
+	expectedJSON := fmt.Sprintf(`
+		{
+			"word_ids": [%s]
+		}`,
+		validWordId,
+	)
+
+	DoSimpleTest(
+		t,
+		http.MethodDelete,
+		"/sentences/association/:sentenceId",
+		[]string{"sentenceId"},
+		[]string{sentenceId},
+		reqBody,
+		sc.AssociateSentenceWithWords,
+		http.StatusAccepted,
+		expectedJSON,
+	)
+
+	// DBにレコードが追加されていない
+	var countWithValidWordId int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences_words
+		WHERE sentence_id = $1
+			AND word_id = $2;
+	`,
+	sentenceId,
+	validWordId,
+	).Scan(&countWithValidWordId)
+
+	assert.Equal(t, 1, countWithValidWordId)
+	
+	var countWithInvalidWordId int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences_words
+		WHERE sentence_id = $1
+			AND word_id = $2;
+	`,
+	sentenceId,
+	invalidWordId,
+	).Scan(&countWithInvalidWordId)
+
+	assert.Equal(t, 0, countWithInvalidWordId)
 }
