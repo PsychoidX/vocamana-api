@@ -66,13 +66,13 @@ func (wc *WordController) GetWordById(c echo.Context) error {
 		return c.JSON(http.StatusOK, make(map[string]interface{}))
 	}
 
-	wordResponse := model.WordResponse{
+	wordRes := model.WordResponse{
 		Id: word.Id,
 		Word: word.Word,
 		Memo: word.Memo,
 		UserId: word.UserId,
 	}
-	return c.JSON(http.StatusOK, wordResponse)
+	return c.JSON(http.StatusOK, wordRes)
 }
 
 func (wc *WordController) CreateWord(c echo.Context) error {
