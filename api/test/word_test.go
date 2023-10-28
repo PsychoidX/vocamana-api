@@ -89,7 +89,6 @@ func TestGetWordByIdWithLoggingInUserId(t *testing.T) {
 		RETURNING id;
 	`).Scan(&id)
 
-	// user_id=1の場合取得可能
 	expectedJSON := fmt.Sprintf(`
 		{
 			"id": %s,

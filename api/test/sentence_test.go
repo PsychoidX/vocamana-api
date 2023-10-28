@@ -72,12 +72,67 @@ func TestGetAllSentences(t *testing.T) {
 	)
 }
 
-func TestGetSentenceById(t *testing.T) {
+func TestGetSentenceByIdWithLoggingInUserId(t *testing.T) {
 	// ログイン中のUserに紐づくSentenceを取得できることをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のSentenceのみ取得可能とする
+	DeleteAllFromSentences()
 
-	// TODO
+	var id string
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('sentence_id_seq'), 'testsentence', 1)
+		RETURNING id;
+	`).Scan(&id)
+
+	expectedJSON := fmt.Sprintf(`
+		{
+			"id": %s,
+			"sentence": "testsentence",
+			"user_id": 1
+		}`,
+		id,
+	)
+
+	DoSimpleTest(
+		t,
+		http.MethodGet,
+		"/sentences/:sentenceId",
+		[]string{"sentenceId"},
+		[]string{id},
+		"",
+		sc.GetSentenceById,
+		http.StatusOK,
+		expectedJSON,
+	)
+}
+
+func TestGetSentenceByIdWithoutLoggingInUserId(t *testing.T) {
+	// ログイン中のUserに紐づかないSentenceを取得できないことをテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のSentenceのみ取得可能とする
+	DeleteAllFromSentences()
+
+	var id string
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('sentence_id_seq'), 'testsentence', 2)
+		RETURNING id;
+	`).Scan(&id)
+
+	DoSimpleTest(
+		t,
+		http.MethodGet,
+		"/sentences/:sentenceId",
+		[]string{"sentenceId"},
+		[]string{id},
+		"",
+		sc.GetSentenceById,
+		http.StatusOK,
+		"{}",
+	)
 }
 
 func TestCreateSentence(t *testing.T) {

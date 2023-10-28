@@ -3,6 +3,7 @@ package usecase
 import (
 	"api/model"
 	"api/repository"
+	"database/sql"
 )
 
 type SentenceUsecase struct {
@@ -44,8 +45,14 @@ func (su *SentenceUsecase) GetAllSentences(userId uint64) ([]model.SentenceRespo
 func (su *SentenceUsecase) GetSentenceById(userId uint64, sentenceId uint64) (model.SentenceResponse, error) {	
 	// TODO: userIdがログイン中のものと一致することを確認
 
-	sentence, err := su.sr.GetSentenceById(sentenceId)
+	sentence, err := su.sr.GetSentenceById(userId, sentenceId)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			// マッチするレコードが無い場合
+			// WordResponseのゼロ値を返す
+			return model.SentenceResponse{}, nil
+		}
+		
 		return model.SentenceResponse{}, err
 	}
 

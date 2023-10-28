@@ -50,7 +50,13 @@ func (sc *SentenceController) GetSentenceById(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	return c.JSON(http.StatusCreated, sentenceResponse)
+	if(sentenceResponse == model.SentenceResponse{}) {
+		// usecaseで取得した結果がゼロ値の場合
+		// {}を返す
+		return c.JSON(http.StatusOK, make(map[string]interface{}))
+	} else {
+		return c.JSON(http.StatusOK, sentenceResponse)
+	}
 }
 
 func (sc *SentenceController) CreateSentence(c echo.Context) error {
