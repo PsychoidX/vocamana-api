@@ -277,14 +277,91 @@ func TestUpdateSentenceWithoutLoggingInUserId(t *testing.T) {
 	assert.Equal(t, "sentence", sentence)
 }
 
-func TestDeleteSentence(t *testing.T) {
+func TestDeleteSentenceWithLoggingInUserId(t *testing.T) {
 	// ログイン中のUserに紐づくSentenceを削除できることをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のSentenceのみ削除可能とする
+	DeleteAllFromSentences()
 
-	// TODO
+	var id string
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('word_id_seq'), 'sentence', 1)
+		RETURNING id;
+	`).Scan(&id)
+
+	// 削除したレコードが返る
+	expectedJSON := fmt.Sprintf(`
+		{
+			"id": %s,
+			"sentence": "sentence",
+			"user_id": 1
+		}`,
+		id,
+	)
+
+	DoSimpleTest(
+		t,
+		http.MethodDelete,
+		"/sentences/:sentenceId",
+		[]string{"sentenceId"},
+		[]string{id},
+		"",
+		sc.DeleteSentence,
+		http.StatusAccepted,
+		expectedJSON,
+	)
+
+	// DBからレコードが削除されている
+	var count int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences
+		WHERE id = $1;
+	`,
+	id,
+	).Scan(&count)
+
+	assert.Equal(t, 0, count)
 }
 
+func TestDeleteSentenceWithoutLoggingInUserId(t *testing.T) {
+	// ログイン中のUserに紐づかないSentenceを削除できないことをテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のSentenceのみ削除可能とする
+	DeleteAllFromSentences()
+
+	var id string
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('word_id_seq'), 'sentence', 2)
+		RETURNING id;
+	`).Scan(&id)
+
+	DoSimpleTest(
+		t,
+		http.MethodDelete,
+		"/sentences/:sentenceId",
+		[]string{"sentenceId"},
+		[]string{id},
+		"",
+		sc.DeleteSentence,
+		http.StatusAccepted,
+		"{}",
+	)
+
+	// DBからレコードが削除されていない
+	var count int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences
+		WHERE id = $1;
+	`,
+	id,
+	).Scan(&count)
+
+	assert.Equal(t, 1, count)
+}
 func TestAssociateSentenceWithWords(t *testing.T) {
 	// WordとSentenceがどちらもログイン中のUserに紐づく場合
 	// それらを紐づかせられることをテスト

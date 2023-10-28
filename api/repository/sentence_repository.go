@@ -11,7 +11,7 @@ type ISentenceRepository interface {
 	GetSentenceById(uint64, uint64) (model.Sentence, error)
 	InsertSentence(model.SentenceCreation) (model.Sentence, error)
 	UpdateSentence(model.SentenceUpdate) (model.Sentence, error)
-	DeleteSentenceById(uint64) (model.Sentence, error)
+	DeleteSentenceById(uint64, uint64) (model.Sentence, error)
 	IsSentenceOwner(uint64, uint64) (bool, error)
 }
 
@@ -126,14 +126,17 @@ func (sr *SentenceRepository) UpdateSentence(sentenceUpdate model.SentenceUpdate
 	return updatedSentence, nil
 }
 
-func (sr *SentenceRepository) DeleteSentenceById(id uint64) (model.Sentence, error) {
+func (sr *SentenceRepository) DeleteSentenceById(userId, sentenceId uint64) (model.Sentence, error) {
 	deletedSentence := model.Sentence{}
 
-	err := sr.db.QueryRow(
-		"DELETE FROM sentences" +
-		" WHERE id = $1" +
-		" RETURNING id, sentence, user_id, created_at, updated_at;",
-		id,
+	err := sr.db.QueryRow(`
+		DELETE FROM sentences
+		WHERE user_id = $1
+			AND id = $2
+		RETURNING id, sentence, user_id, created_at, updated_at;
+		`,
+		userId,
+		sentenceId,
 	).Scan(
 		&deletedSentence.Id,
 		&deletedSentence.Sentence,

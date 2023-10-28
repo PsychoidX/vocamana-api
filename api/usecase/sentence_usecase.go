@@ -119,8 +119,14 @@ func (su *SentenceUsecase) UpdateSentence(userId uint64, req model.SentenceUpdat
 func (su *SentenceUsecase) DeleteSentence(userId uint64, sentenceId uint64) (model.SentenceResponse, error) {
 	// TODO: userIdがログイン中のものと一致することを確認
 
-	deletedSentence, err := su.sr.DeleteSentenceById(sentenceId)
+	deletedSentence, err := su.sr.DeleteSentenceById(userId, sentenceId)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			// レコードが削除されなかった場合
+			// SentenceResponseのゼロ値を返す
+			return model.SentenceResponse{}, nil
+		}
+
 		return model.SentenceResponse{}, err
 	}
 

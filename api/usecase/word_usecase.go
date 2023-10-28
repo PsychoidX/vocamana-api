@@ -90,7 +90,7 @@ func (wu *WordUsecase) DeleteWord(userId uint64, wordId uint64) (model.WordRespo
 	deletedWord, err := wu.wr.DeleteWordById(userId, wordId)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			// マッチするレコードが無い場合
+			// レコードが削除されなかった場合
 			// WordResponseのゼロ値を返す
 			return model.WordResponse{}, nil
 		}

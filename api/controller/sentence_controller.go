@@ -116,8 +116,14 @@ func (sc *SentenceController) DeleteSentence(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
-	
-	return c.JSON(http.StatusAccepted, sentenceRes)
+
+	if(sentenceRes == model.SentenceResponse{}) {
+		// usecaseで更新した結果がゼロ値の場合
+		// {}を返す
+		return c.JSON(http.StatusAccepted, make(map[string]interface{}))
+	} else {
+		return c.JSON(http.StatusAccepted, sentenceRes)
+	}
 }
 
 func (sc *SentenceController) AssociateSentenceWithWords(c echo.Context) error {
