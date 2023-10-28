@@ -117,7 +117,7 @@ func (wc *WordController) UpdateWord(c echo.Context) error {
 	}
 	
 	if(wordRes == model.WordResponse{}) {
-		// usecaseで取得した結果がゼロ値の場合
+		// usecaseで更新した結果がゼロ値の場合
 		// {}を返す
 		return c.JSON(http.StatusAccepted, make(map[string]interface{}))
 	} else {

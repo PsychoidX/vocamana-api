@@ -49,7 +49,7 @@ func (su *SentenceUsecase) GetSentenceById(userId uint64, sentenceId uint64) (mo
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// マッチするレコードが無い場合
-			// WordResponseのゼロ値を返す
+			// SentenceResponseのゼロ値を返す
 			return model.SentenceResponse{}, nil
 		}
 		
@@ -98,6 +98,12 @@ func (su *SentenceUsecase) UpdateSentence(userId uint64, req model.SentenceUpdat
 
 	updatedSentence, err := su.sr.UpdateSentence(sentenceUpdate)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			// レコードが更新されなかった場合
+			// SentenceResponseのゼロ値を返す
+			return model.SentenceResponse{}, nil
+		}
+
 		return model.SentenceResponse{}, err
 	}
 

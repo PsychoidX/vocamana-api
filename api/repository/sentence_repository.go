@@ -102,12 +102,15 @@ func (sr *SentenceRepository) InsertSentence(newSentence model.SentenceCreation)
 func (sr *SentenceRepository) UpdateSentence(sentenceUpdate model.SentenceUpdate) (model.Sentence, error) {
 	updatedSentence := model.Sentence{}
 
-	err := sr.db.QueryRow(
-		"UPDATE sentences" +
-		" SET sentence = $1" +
-		" WHERE id = $2" +
-		" RETURNING id, sentence, user_id, created_at, updated_at;",
+	err := sr.db.QueryRow(`
+		UPDATE sentences
+		SET sentence = $1
+		WHERE user_id = $2
+			AND id = $3
+		RETURNING id, sentence, user_id, created_at, updated_at;
+		`,
 		sentenceUpdate.Sentence,
+		sentenceUpdate.UserId,
 		sentenceUpdate.Id,
 	).Scan(
 		&updatedSentence.Id,

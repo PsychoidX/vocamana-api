@@ -183,12 +183,98 @@ func TestCreateSentence(t *testing.T) {
 	assert.Equal(t, "testsentence", sentence)
 }
 
-func TestUpdateSentence(t *testing.T) {
+func TestUpdateSentenceWithLoggingInUserId(t *testing.T) {
 	// ログイン中のUserに紐づくSentenceを更新できることをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のSentenceのみ更新可能とする
+	DeleteAllFromSentences()
 
-	// TODO
+	var id string
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('word_id_seq'), 'sentence', 1)
+		RETURNING id;
+	`).Scan(&id)
+
+	reqBody := `{
+		"sentence": "updated sentence"
+	}`
+
+	// 変更後のレコードが返る
+	expectedJSON := fmt.Sprintf(`
+		{
+			"id": %s,
+			"sentence": "updated sentence",
+			"user_id": 1
+		}`,
+		id,
+	)
+
+	DoSimpleTest(
+		t,
+		http.MethodPut,
+		"/words/:sentenceId",
+		[]string{"sentenceId"},
+		[]string{id},
+		reqBody,
+		sc.UpdateSentence,
+		http.StatusAccepted,
+		expectedJSON,
+	)
+
+	// DBのレコードが更新される
+	var sentence string
+	db.QueryRow(`
+		SELECT sentence FROM sentences
+		WHERE id = $1;
+	`,
+	id,
+	).Scan(&sentence)
+
+	assert.Equal(t, "updated sentence", sentence)
+}
+
+func TestUpdateSentenceWithoutLoggingInUserId(t *testing.T) {
+	// ログイン中のUserに紐づかないSentenceを更新できないことをテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のSentenceのみ更新可能とする
+	DeleteAllFromSentences()
+
+	var id string
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('word_id_seq'), 'sentence', 2)
+		RETURNING id;
+	`).Scan(&id)
+
+	reqBody := `{
+		"sentence": "updated sentence"
+	}`
+
+	DoSimpleTest(
+		t,
+		http.MethodPut,
+		"/words/:sentenceId",
+		[]string{"sentenceId"},
+		[]string{id},
+		reqBody,
+		sc.UpdateSentence,
+		http.StatusAccepted,
+		"{}",
+	)
+
+	// DBのレコードが更新されない
+	var sentence string
+	db.QueryRow(`
+		SELECT sentence FROM sentences
+		WHERE id = $1;
+	`,
+	id,
+	).Scan(&sentence)
+
+	assert.Equal(t, "sentence", sentence)
 }
 
 func TestDeleteSentence(t *testing.T) {
