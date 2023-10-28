@@ -1,11 +1,12 @@
 package controller
 
 import (
-	"api/usecase"
 	"api/model"
-	"github.com/labstack/echo/v4"
+	"api/usecase"
 	"net/http"
 	"strconv"
+
+	"github.com/labstack/echo/v4"
 )
 
 type ISentenceController interface {
@@ -33,7 +34,7 @@ func (sc *SentenceController) GetAllSentences(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	return c.JSON(http.StatusCreated, sentenceResponses)
+	return c.JSON(http.StatusOK, sentenceResponses)
 }
 
 func (sc *SentenceController) GetSentenceById(c echo.Context) error {

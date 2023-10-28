@@ -1,13 +1,56 @@
 package test
 
-import "testing"
+import (
+	"fmt"
+	"net/http"
+	"testing"
+)
 
 func TestGetAllSentences(t *testing.T) {
 	// ログイン中のUserに紐づくSentenceを取得できることをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のSentenceのみ取得可能とする
 
-	// TODO
+	DeleteAllFromSentences()
+
+	var idWithUserId1 int
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('sentence_id_seq'), 'testsentence', 1)
+		RETURNING id;
+	`).Scan(&idWithUserId1)
+
+	var idWithUserId2 int
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('sentence_id_seq'), 'testsentence', 2)
+		RETURNING id;
+	`).Scan(&idWithUserId2)
+
+	expectedJSON := fmt.Sprintf(`
+		[
+			{
+				"id": %d,
+				"sentence": "testsentence",
+				"user_id": 1
+			}
+		]`,
+		idWithUserId1,
+	)
+
+	DoSimpleTest(
+		t,
+		http.MethodGet,
+		"/sentences",
+		nil,
+		nil,
+		"",
+		sc.GetAllSentences,
+		http.StatusOK,
+		expectedJSON,
+	)
 }
 
 func TestGetSentenceById(t *testing.T) {

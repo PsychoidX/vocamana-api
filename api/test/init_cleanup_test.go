@@ -20,12 +20,28 @@ var wr repository.IWordRepository
 var wu *usecase.WordUsecase
 var wc controller.IWordController
 
+// SentencesWords
+var swr repository.ISentencesWordsRepository
+
+// Sentence
+var sr repository.ISentenceRepository
+var su *usecase.SentenceUsecase
+var sc controller.ISentenceController
+
+
 func TestMain(m *testing.M) {
 	db = setupDB()
 
+	// Word
 	wr = repository.NewWordRepository(db)
 	wu = usecase.NewWordUsecase(wr)
 	wc = controller.NewWordController(wu)
+
+	// Sentence
+	sr = repository.NewSentenceRepository(db)
+	swr = repository.NewSentencesWordsRepository(db)
+	su = usecase.NewSentenceUsecase(sr, wr, swr)
+	sc = controller.NewSentenceController(su)
 
 	setupUserData()
 	
@@ -70,6 +86,12 @@ func DeleteAllFromWords() {
 	// word_id_seqシーケンスを1にリセット
 	// nextval()で、2から連番で取得される
 	db.Exec("SELECT setval('word_id_seq', 1);")
+}
+
+func DeleteAllFromSentences() {
+	// sentencesテーブルのレコードを全件削除
+	db.Exec("TRUNCATE TABLE sentences CASCADE;")
+	db.Exec("SELECT setval('sentence_id_seq', 1);")
 }
 
 func GetCurrentWordsSequenceValue() int {
