@@ -120,7 +120,7 @@ func (wc *WordController) DeleteWord(c echo.Context) error {
 	if(word == model.Word{}) {
 		// usecaseでWordが削除されなかった場合
 		// {}を返す
-		return c.JSON(http.StatusAccepted, make(map[string]interface{}))
+		return c.JSON(http.StatusUnauthorized, make(map[string]interface{}))
 	}
 
 	wordRes := model.WordResponse{
@@ -160,7 +160,7 @@ func (wc *WordController) UpdateWord(c echo.Context) error {
 	if(word == model.Word{}) {
 		// usecaseで更新した結果がゼロ値の場合
 		// {}を返す
-		return c.JSON(http.StatusAccepted, make(map[string]interface{}))
+		return c.JSON(http.StatusUnauthorized, make(map[string]interface{}))
 	}
 
 	wordRes := model.WordResponse{

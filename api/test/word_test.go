@@ -272,7 +272,7 @@ func TestUpdateWordWithoutLoggingInUserId(t *testing.T) {
 		[]string{id},
 		reqBody,
 		wc.UpdateWord,
-		http.StatusAccepted,
+		http.StatusUnauthorized,
 		"{}",
 	)
 
@@ -361,7 +361,7 @@ func TestDeleteWordWithoutLoggingInUserId(t *testing.T) {
 		[]string{id},
 		"",
 		wc.DeleteWord,
-		http.StatusAccepted,
+		http.StatusUnauthorized,
 		"{}",
 	)
 

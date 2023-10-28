@@ -261,7 +261,7 @@ func TestUpdateSentenceWithoutLoggingInUserId(t *testing.T) {
 		[]string{id},
 		reqBody,
 		sc.UpdateSentence,
-		http.StatusAccepted,
+		http.StatusUnauthorized,
 		"{}",
 	)
 
@@ -347,7 +347,7 @@ func TestDeleteSentenceWithoutLoggingInUserId(t *testing.T) {
 		[]string{id},
 		"",
 		sc.DeleteSentence,
-		http.StatusAccepted,
+		http.StatusUnauthorized,
 		"{}",
 	)
 

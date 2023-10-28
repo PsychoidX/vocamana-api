@@ -128,7 +128,7 @@ func (sc *SentenceController) UpdateSentence(c echo.Context) error {
 	if(sentence == model.Sentence{}) {
 		// usecaseで更新した結果がゼロ値の場合
 		// {}を返す
-		return c.JSON(http.StatusAccepted, make(map[string]interface{}))
+		return c.JSON(http.StatusUnauthorized, make(map[string]interface{}))
 	}
 	
 	sentenceRes := model.SentenceResponse{
@@ -156,7 +156,7 @@ func (sc *SentenceController) DeleteSentence(c echo.Context) error {
 	if(sentence == model.Sentence{}) {
 		// usecaseで更新した結果がゼロ値の場合
 		// {}を返す
-		return c.JSON(http.StatusAccepted, make(map[string]interface{}))
+		return c.JSON(http.StatusUnauthorized, make(map[string]interface{}))
 	}
 
 	sentenceRes := model.SentenceResponse{
