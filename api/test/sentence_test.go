@@ -50,7 +50,7 @@ func TestGetAllSentences(t *testing.T) {
 		RETURNING id;
 	`).Scan(&idWithUserId2)
 
-	expectedJSON := fmt.Sprintf(`
+	resJSON := fmt.Sprintf(`
 		[
 			{
 				"id": %d,
@@ -70,7 +70,7 @@ func TestGetAllSentences(t *testing.T) {
 		"",
 		sc.GetAllSentences,
 		http.StatusOK,
-		expectedJSON,
+		resJSON,
 	)
 }
 
@@ -88,7 +88,7 @@ func TestGetSentenceByIdWithLoggingInUserId(t *testing.T) {
 		RETURNING id;
 	`).Scan(&id)
 
-	expectedJSON := fmt.Sprintf(`
+	resJSON := fmt.Sprintf(`
 		{
 			"id": %s,
 			"sentence": "testsentence",
@@ -106,7 +106,7 @@ func TestGetSentenceByIdWithLoggingInUserId(t *testing.T) {
 		"",
 		sc.GetSentenceById,
 		http.StatusOK,
-		expectedJSON,
+		resJSON,
 	)
 }
 
@@ -150,7 +150,7 @@ func TestCreateSentence(t *testing.T) {
 	}`
 
 	// 登録されたレコードが返る
-	expectedJSON := fmt.Sprintf(`
+	resJSON := fmt.Sprintf(`
 		{
 			"id": %d,
 			"sentence": "testsentence",
@@ -168,7 +168,7 @@ func TestCreateSentence(t *testing.T) {
 		reqBody,
 		sc.CreateSentence,
 		http.StatusCreated,
-		expectedJSON,
+		resJSON,
 	)
 
 	// DBにレコードが追加される
@@ -202,7 +202,7 @@ func TestUpdateSentenceWithLoggingInUserId(t *testing.T) {
 	}`
 
 	// 変更後のレコードが返る
-	expectedJSON := fmt.Sprintf(`
+	resJSON := fmt.Sprintf(`
 		{
 			"id": %s,
 			"sentence": "updated sentence",
@@ -220,7 +220,7 @@ func TestUpdateSentenceWithLoggingInUserId(t *testing.T) {
 		reqBody,
 		sc.UpdateSentence,
 		http.StatusAccepted,
-		expectedJSON,
+		resJSON,
 	)
 
 	// DBのレコードが更新される
@@ -292,7 +292,7 @@ func TestDeleteSentenceWithLoggingInUserId(t *testing.T) {
 	`).Scan(&id)
 
 	// 削除したレコードが返る
-	expectedJSON := fmt.Sprintf(`
+	resJSON := fmt.Sprintf(`
 		{
 			"id": %s,
 			"sentence": "sentence",
@@ -310,7 +310,7 @@ func TestDeleteSentenceWithLoggingInUserId(t *testing.T) {
 		"",
 		sc.DeleteSentence,
 		http.StatusAccepted,
-		expectedJSON,
+		resJSON,
 	)
 
 	// DBからレコードが削除されている
@@ -393,7 +393,7 @@ func TestAssociateSentenceWithWords(t *testing.T) {
 	`,
 	wordId)
 
-	expectedJSON := fmt.Sprintf(`
+	resJSON := fmt.Sprintf(`
 		{
 			"word_ids": [%s]
 		}`,
@@ -409,7 +409,7 @@ func TestAssociateSentenceWithWords(t *testing.T) {
 		reqBody,
 		sc.AssociateSentenceWithWords,
 		http.StatusAccepted,
-		expectedJSON,
+		resJSON,
 	)
 
 	// DBにレコードが追加されている
@@ -466,7 +466,7 @@ func TestAssociateSentenceWithWordsWithMultipleWordIds(t *testing.T) {
 		wordId1, wordId2,
 	)
 
-	expectedJSON := fmt.Sprintf(`
+	resJSON := fmt.Sprintf(`
 		{
 			"word_ids": [%s, %s]
 		}`,
@@ -482,7 +482,7 @@ func TestAssociateSentenceWithWordsWithMultipleWordIds(t *testing.T) {
 		reqBody,
 		sc.AssociateSentenceWithWords,
 		http.StatusAccepted,
-		expectedJSON,
+		resJSON,
 	)
 
 	// DBにレコードが追加されている
@@ -543,7 +543,7 @@ func TestAssociateSentenceWithInvalidWordId(t *testing.T) {
 		wordId,
 	)
 
-	expectedJSON := `{
+	resJSON := `{
 		"word_ids": null
 	}`
 
@@ -556,7 +556,7 @@ func TestAssociateSentenceWithInvalidWordId(t *testing.T) {
 		reqBody,
 		sc.AssociateSentenceWithWords,
 		http.StatusAccepted,
-		expectedJSON,
+		resJSON,
 	)
 
 	// DBにレコードが追加されていない
@@ -605,7 +605,7 @@ func TestAssociateSentenceWithInvalidSentenceId(t *testing.T) {
 		wordId,
 	)
 
-	expectedJSON := `{
+	resJSON := `{
 		"word_ids": null
 	}`
 
@@ -618,7 +618,7 @@ func TestAssociateSentenceWithInvalidSentenceId(t *testing.T) {
 		reqBody,
 		sc.AssociateSentenceWithWords,
 		http.StatusAccepted,
-		expectedJSON,
+		resJSON,
 	)
 
 	// DBにレコードが追加されていない
@@ -676,7 +676,7 @@ func TestAssociateSentenceWithAllInvalidWordId(t *testing.T) {
 		invalidWordId2,
 	)
 
-	expectedJSON := `{
+	resJSON := `{
 		"word_ids": null
 	}`
 
@@ -689,7 +689,7 @@ func TestAssociateSentenceWithAllInvalidWordId(t *testing.T) {
 		reqBody,
 		sc.AssociateSentenceWithWords,
 		http.StatusAccepted,
-		expectedJSON,
+		resJSON,
 	)
 
 	// DBにレコードが追加されていない
@@ -759,7 +759,7 @@ func TestAssociateSentenceWithSomeInvalidWordId(t *testing.T) {
 		invalidWordId,
 	)
 
-	expectedJSON := fmt.Sprintf(`
+	resJSON := fmt.Sprintf(`
 		{
 			"word_ids": [%s]
 		}`,
@@ -775,7 +775,7 @@ func TestAssociateSentenceWithSomeInvalidWordId(t *testing.T) {
 		reqBody,
 		sc.AssociateSentenceWithWords,
 		http.StatusAccepted,
-		expectedJSON,
+		resJSON,
 	)
 
 	// DBにレコードが追加されていない
@@ -790,7 +790,7 @@ func TestAssociateSentenceWithSomeInvalidWordId(t *testing.T) {
 	).Scan(&countWithValidWordId)
 
 	assert.Equal(t, 1, countWithValidWordId)
-	
+
 	var countWithInvalidWordId int
 	db.QueryRow(`
 		SELECT COUNT(*) FROM sentences_words
