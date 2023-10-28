@@ -29,9 +29,19 @@ func NewSentenceController(su *usecase.SentenceUsecase) ISentenceController {
 func (sc *SentenceController) GetAllSentences(c echo.Context) error {
 	var userId uint64 = 1 // TODO セッションから取得
 	
-	sentenceResponses, err := sc.su.GetAllSentences(userId)
+	sentences, err := sc.su.GetAllSentences(userId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	var sentenceResponses []model.SentenceResponse
+	for _, sentence := range sentences {
+		sentenceRes := model.SentenceResponse{
+			Id: sentence.Id,
+			Sentence: sentence.Sentence,
+			UserId: sentence.UserId,
+		}
+		sentenceResponses = append(sentenceResponses, sentenceRes)
 	}
 
 	return c.JSON(http.StatusOK, sentenceResponses)
@@ -45,18 +55,23 @@ func (sc *SentenceController) GetSentenceById(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	sentenceResponse, err := sc.su.GetSentenceById(userId, sentenceId)
+	sentence, err := sc.su.GetSentenceById(userId, sentenceId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	if(sentenceResponse == model.SentenceResponse{}) {
+	if(sentence == model.Sentence{}) {
 		// usecaseで取得した結果がゼロ値の場合
 		// {}を返す
 		return c.JSON(http.StatusOK, make(map[string]interface{}))
-	} else {
-		return c.JSON(http.StatusOK, sentenceResponse)
 	}
+	
+	sentenceRes := model.SentenceResponse{
+		Id: sentence.Id,
+		Sentence: sentence.Sentence,
+		UserId: sentence.UserId,
+	}
+	return c.JSON(http.StatusOK, sentenceRes)
 }
 
 func (sc *SentenceController) CreateSentence(c echo.Context) error {
@@ -67,9 +82,20 @@ func (sc *SentenceController) CreateSentence(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	sentenceRes, err := sc.su.CreateSentence(userId, req)
+	sentenceCreation := model.SentenceCreation{
+		Sentence: req.Sentence,
+		UserId: userId,
+	}
+
+	sentence, err := sc.su.CreateSentence(sentenceCreation)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	sentenceRes := model.SentenceResponse{
+		Id: sentence.Id,
+		Sentence: sentence.Sentence,
+		UserId: sentence.UserId,
 	}
 	
 	return c.JSON(http.StatusCreated, sentenceRes)
@@ -82,26 +108,36 @@ func (sc *SentenceController) UpdateSentence(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
-	
+
 	sentenceId, err := strconv.ParseUint(c.Param("sentenceId"), 10, 32)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	req.Id = sentenceId
+	sentenceUpdate := model.SentenceUpdate{
+		Id: sentenceId,
+		Sentence: req.Sentence,
+		UserId: userId,
+	}
 
-	sentenceRes, err := sc.su.UpdateSentence(userId, req)
+	sentence, err := sc.su.UpdateSentence(sentenceUpdate)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 	
-	if(sentenceRes == model.SentenceResponse{}) {
+	if(sentence == model.Sentence{}) {
 		// usecaseで更新した結果がゼロ値の場合
 		// {}を返す
 		return c.JSON(http.StatusAccepted, make(map[string]interface{}))
-	} else {
-		return c.JSON(http.StatusAccepted, sentenceRes)
 	}
+	
+	sentenceRes := model.SentenceResponse{
+		Id: sentence.Id,
+		Sentence: sentence.Sentence,
+		UserId: sentence.UserId,
+	}
+
+	return c.JSON(http.StatusAccepted, sentenceRes)
 }
 
 func (sc *SentenceController) DeleteSentence(c echo.Context) error {
@@ -112,18 +148,24 @@ func (sc *SentenceController) DeleteSentence(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	sentenceRes, err := sc.su.DeleteSentence(userId, sentenceId)
+	sentence, err := sc.su.DeleteSentence(userId, sentenceId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	if(sentenceRes == model.SentenceResponse{}) {
+	if(sentence == model.Sentence{}) {
 		// usecaseで更新した結果がゼロ値の場合
 		// {}を返す
 		return c.JSON(http.StatusAccepted, make(map[string]interface{}))
-	} else {
-		return c.JSON(http.StatusAccepted, sentenceRes)
 	}
+
+	sentenceRes := model.SentenceResponse{
+		Id: sentence.Id,
+		Sentence: sentence.Sentence,
+		UserId: sentence.UserId,
+	}
+
+	return c.JSON(http.StatusAccepted, sentenceRes)
 }
 
 func (sc *SentenceController) AssociateSentenceWithWords(c echo.Context) error {
@@ -139,9 +181,17 @@ func (sc *SentenceController) AssociateSentenceWithWords(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	wordIdsRes, err := sc.su.AssociateSentenceWithWords(userId, sentenceId, req)
+	wordIds := model.WordIds{
+		WordIds: req.WordIds,
+	}
+
+	resultWordIds, err := sc.su.AssociateSentenceWithWords(userId, sentenceId, wordIds)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	wordIdsRes := model.WordIdsResponse{
+		WordIds: resultWordIds.WordIds,
 	}
 
 	return c.JSON(http.StatusAccepted, wordIdsRes)
