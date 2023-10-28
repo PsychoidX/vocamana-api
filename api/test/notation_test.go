@@ -206,7 +206,7 @@ func TestCreateNotationWithLoggingInUserId(t *testing.T) {
 	}`
 
 	// 登録されたレコードが返る
-	resJSON := fmt.Sprintf(`
+	expectedResponse := fmt.Sprintf(`
 		{
 			"id": %d,
 			"word_id": %s,
@@ -225,7 +225,7 @@ func TestCreateNotationWithLoggingInUserId(t *testing.T) {
 		reqBody,
 		nc.CreateNotation,
 		http.StatusCreated,
-		resJSON,
+		expectedResponse,
 	)
 
 	// DBにレコードが追加される

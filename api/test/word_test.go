@@ -50,7 +50,7 @@ func TestGetAllWords(t *testing.T) {
 		RETURNING id;
 	`).Scan(&idWithUserId2)
 
-	resJSON := fmt.Sprintf(`
+	expectedResponse := fmt.Sprintf(`
 		[
 			{
 				"id": %d,
@@ -71,7 +71,7 @@ func TestGetAllWords(t *testing.T) {
 		"",
 		wc.GetAllWords,
 		http.StatusOK,
-		resJSON,
+		expectedResponse,
 	)
 }
 
@@ -89,7 +89,7 @@ func TestGetWordByIdWithLoggingInUserId(t *testing.T) {
 		RETURNING id;
 	`).Scan(&id)
 
-	resJSON := fmt.Sprintf(`
+	expectedResponse := fmt.Sprintf(`
 		{
 			"id": %s,
 			"word": "testword",
@@ -108,7 +108,7 @@ func TestGetWordByIdWithLoggingInUserId(t *testing.T) {
 		"",
 		wc.GetWordById,
 		http.StatusOK,
-		resJSON,
+		expectedResponse,
 	)
 }
 
@@ -153,7 +153,7 @@ func TestCreateWord(t *testing.T) {
 	}`
 
 	// 登録されたレコードが返る
-	resJSON := fmt.Sprintf(`
+	expectedResponse := fmt.Sprintf(`
 		{
 			"id": %d,
 			"word": "testword",
@@ -172,7 +172,7 @@ func TestCreateWord(t *testing.T) {
 		reqBody,
 		wc.CreateWord,
 		http.StatusCreated,
-		resJSON,
+		expectedResponse,
 	)
 
 	// DBにレコードが追加される
@@ -209,7 +209,7 @@ func TestUpdateWordWithLoggingInUserId(t *testing.T) {
 	}`
 
 	// 変更後のレコードが返る
-	resJSON := fmt.Sprintf(`
+	expectedResponse := fmt.Sprintf(`
 		{
 			"id": %s,
 			"word": "updated word",
@@ -228,7 +228,7 @@ func TestUpdateWordWithLoggingInUserId(t *testing.T) {
 		reqBody,
 		wc.UpdateWord,
 		http.StatusAccepted,
-		resJSON,
+		expectedResponse,
 	)
 
 	// DBのレコードが更新される
@@ -305,7 +305,7 @@ func TestDeleteWordWithLoggingInUserId(t *testing.T) {
 	`).Scan(&id)
 
 	// 削除したレコードが返る
-	resJSON := fmt.Sprintf(`
+	expectedResponse := fmt.Sprintf(`
 		{
 			"id": %s,
 			"word": "word",
@@ -324,7 +324,7 @@ func TestDeleteWordWithLoggingInUserId(t *testing.T) {
 		"",
 		wc.DeleteWord,
 		http.StatusAccepted,
-		resJSON,
+		expectedResponse,
 	)
 
 	// DBからレコードが削除されている
