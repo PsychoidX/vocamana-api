@@ -10,6 +10,7 @@ type INotationRepository interface {
 	GetAllNotations(uint64) ([]model.Notation, error)
 	InsertNotation(model.NotationCreation) (model.Notation, error)
 	UpdateNotation(model.NotationUpdate) (model.Notation, error)
+	DeleteNotationById(uint64) (model.Notation, error)
 }
 
 type NotationRepository struct {
@@ -112,4 +113,27 @@ func (nr *NotationRepository) UpdateNotation(notationUpdate model.NotationUpdate
 	}
 
 	return updatedNotation, nil
+}
+
+func (nr *NotationRepository) DeleteNotationById(notationId uint64) (model.Notation, error) {
+	deletedNotation := model.Notation{}
+
+	err := nr.db.QueryRow(`
+		DELETE FROM notations
+		WHERE id = $1
+		RETURNING id, word_id, notation, created_at, updated_at;
+		`, 
+		notationId,
+	).Scan(
+		&deletedNotation.Id,
+		&deletedNotation.WordId,
+		&deletedNotation.Notation,
+		&deletedNotation.CreatedAt,
+		&deletedNotation.UpdatedAt,
+	)
+	if err != nil {
+		return model.Notation{}, err
+	}
+
+	return deletedNotation, nil
 }

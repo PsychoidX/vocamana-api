@@ -318,7 +318,7 @@ func TestUpdateNotation(t *testing.T) {
 		"notation": "updated notation"
 	}`
 
-	// 登録されたレコードが返る
+	// 更新されたレコードが返る
 	expectedResponse := fmt.Sprintf(`
 		{
 			"id": %s,
@@ -331,7 +331,7 @@ func TestUpdateNotation(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodPost,
+		http.MethodPut,
 		"/words/:wordId/notations/:notationId",
 		[]string{"wordId", "notationId"},
 		[]string{wordId, notationId},
@@ -376,7 +376,7 @@ func TestUpdateNotationWithNoRows(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodPost,
+		http.MethodPut,
 		"/words/:wordId/notations/:notationId",
 		[]string{"wordId", "notationId"},
 		[]string{wordId, "1"},
@@ -385,4 +385,117 @@ func TestUpdateNotationWithNoRows(t *testing.T) {
 		http.StatusUnauthorized,
 		"{}",
 	)
+}
+
+func TestDeleteNotationWithLoggingIn(t *testing.T) {
+	// ログイン中のUserに紐づくWordに対し、Notationを削除できることをテスト
+	// TODO ログイン機能
+	// とりあえずログインUserはuser_id=1とする
+	DeleteAllFromWords()
+	DeleteAllFromNotations()
+
+	var wordId string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'testword', 'testmemo', 1)
+		RETURNING id;
+	`).Scan(&wordId)
+
+	var notationId string
+	db.QueryRow(`
+		INSERT INTO notations
+		(id, word_id, notation)
+		VALUES(nextval('word_id_seq'), $1, 'test notation')
+		RETURNING id;
+	`,
+	wordId,
+	).Scan(&notationId)
+
+	// 削除されたレコードが返る
+	expectedResponse := fmt.Sprintf(`
+		{
+			"id": %s,
+			"word_id": %s,
+			"notation": "test notation"
+		}`,
+		notationId,
+		wordId,
+	)
+
+	DoSimpleTest(
+		t,
+		http.MethodDelete,
+		"/words/:wordId/notations/:notationId",
+		[]string{"wordId", "notationId"},
+		[]string{wordId, notationId},
+		"",
+		nc.DeleteNotation,
+		http.StatusAccepted,
+		expectedResponse,
+	)
+
+	// DBのレコードが削除される
+	var count int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM notations
+		WHERE id = $1
+			AND word_id = $2;
+	`,
+	notationId,
+	wordId,
+	).Scan(&count)
+
+	assert.Equal(t, 0, count)
+}
+
+func TestDeleteNotationWithoutLoggingIn(t *testing.T) {
+	// ログイン中のUserに紐づかないWordに対し、Notationを削除できないことをテスト
+	// TODO ログイン機能
+	// とりあえずログインUserはuser_id=1とする
+	DeleteAllFromWords()
+	DeleteAllFromNotations()
+
+	var wordId string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'testword', 'testmemo', 2)
+		RETURNING id;
+	`).Scan(&wordId)
+
+	var notationId string
+	db.QueryRow(`
+		INSERT INTO notations
+		(id, word_id, notation)
+		VALUES(nextval('word_id_seq'), $1, 'test notation')
+		RETURNING id;
+	`,
+	wordId,
+	).Scan(&notationId)
+
+	DoSimpleTest(
+		t,
+		http.MethodDelete,
+		"/words/:wordId/notations/:notationId",
+		[]string{"wordId", "notationId"},
+		[]string{wordId, notationId},
+		"",
+		nc.DeleteNotation,
+		http.StatusUnauthorized,
+		"{}",
+	)
+
+	// DBのレコードが削除される
+	var count int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM notations
+		WHERE id = $1
+			AND word_id = $2;
+	`,
+	notationId,
+	wordId,
+	).Scan(&count)
+
+	assert.Equal(t, 1, count)
 }

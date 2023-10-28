@@ -13,6 +13,7 @@ type INotationController interface {
 	GetAllNotations(c echo.Context) error
 	CreateNotation(c echo.Context) error
 	UpdateNotation(c echo.Context) error
+	DeleteNotation(c echo.Context) error
 }
 
 type NotationController struct {
@@ -118,6 +119,39 @@ func (nc *NotationController) UpdateNotation(c echo.Context) error {
 
 	if(notation == model.Notation{}) {
 		// usecaseで更新した結果がゼロ値の場合
+		// {}を返す
+		return c.JSON(http.StatusUnauthorized, make(map[string]interface{}))
+	}
+
+	notationRes := model.NotationResponse{
+		Id: notation.Id,
+		WordId: notation.WordId,
+		Notation: notation.Notation,
+	}
+	
+	return c.JSON(http.StatusAccepted, notationRes)
+}
+
+func (nc *NotationController) DeleteNotation(c echo.Context) error {
+	var userId uint64 = 1 // TODO セッションから取得
+
+	wordId, err := strconv.ParseUint(c.Param("wordId"), 10, 32)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	notationId, err := strconv.ParseUint(c.Param("notationId"), 10, 32)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	notation, err := nc.nu.DeleteNotation(userId, wordId, notationId)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	if(notation == model.Notation{}) {
+		// usecaseで削除した結果がゼロ値の場合
 		// {}を返す
 		return c.JSON(http.StatusUnauthorized, make(map[string]interface{}))
 	}

@@ -46,6 +46,7 @@ func main() {
 	n.GET("", nc.GetAllNotations)
 	n.POST("", nc.CreateNotation)
 	n.PUT("/:notationId", nc.UpdateNotation)
+	n.DELETE("/:notationId", nc.DeleteNotation)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }
