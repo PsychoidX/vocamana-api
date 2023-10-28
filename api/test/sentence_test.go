@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetAllSentencesWithNoRows(t *testing.T) {
@@ -139,8 +141,46 @@ func TestCreateSentence(t *testing.T) {
 	// ログイン中のUserに紐づくSentenceを作成できることをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のSentenceのみ作成可能とする
+	DeleteAllFromSentences()
 
-	// TODO
+	nextId := GetNextSentencesSequenceValue()
+
+	reqBody := `{
+		"sentence": "testsentence"
+	}`
+
+	// 登録されたレコードが返る
+	expectedJSON := fmt.Sprintf(`
+		{
+			"id": %d,
+			"sentence": "testsentence",
+			"user_id": 1
+		}`,
+		nextId,
+	)
+
+	DoSimpleTest(
+		t,
+		http.MethodPost,
+		"/sentences",
+		nil,
+		nil,
+		reqBody,
+		sc.CreateSentence,
+		http.StatusCreated,
+		expectedJSON,
+	)
+
+	// DBにレコードが追加される
+	var sentence string
+	db.QueryRow(`
+		SELECT sentence FROM sentences
+		WHERE id = $1;
+	`,
+	nextId,
+	).Scan(&sentence)
+
+	assert.Equal(t, "testsentence", sentence)
 }
 
 func TestUpdateSentence(t *testing.T) {
