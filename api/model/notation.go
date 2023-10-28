@@ -24,3 +24,13 @@ type NotationCreation struct {
 	WordId   uint64
 	Notation string
 }
+
+type NotationUpdateRequest struct {
+	Notation string `json:"notation"`
+}
+
+type NotationUpdate struct {
+	Id uint64
+	WordId   uint64
+	Notation string
+}

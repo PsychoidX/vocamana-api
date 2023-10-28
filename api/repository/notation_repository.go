@@ -9,6 +9,7 @@ import (
 type INotationRepository interface {
 	GetAllNotations(uint64) ([]model.Notation, error)
 	InsertNotation(model.NotationCreation) (model.Notation, error)
+	UpdateNotation(model.NotationUpdate) (model.Notation, error)
 }
 
 type NotationRepository struct {
@@ -59,7 +60,6 @@ func (nr *NotationRepository) GetAllNotations(wordId uint64) ([]model.Notation, 
 	return notations, nil
 }
 
-
 func (nr *NotationRepository) InsertNotation(notationCreation model.NotationCreation) (model.Notation, error) {
 	createdNotation := model.Notation{}
 
@@ -85,4 +85,31 @@ func (nr *NotationRepository) InsertNotation(notationCreation model.NotationCrea
 	}
 
 	return createdNotation, nil
+}
+
+func (nr *NotationRepository) UpdateNotation(notationUpdate model.NotationUpdate) (model.Notation, error) {
+	updatedNotation := model.Notation{}
+
+	err := nr.db.QueryRow(`
+		UPDATE notations
+		SET notation = $1
+		WHERE word_id = $2
+			AND id = $3
+		RETURNING id, word_id, notation, created_at, updated_at;
+		`, 
+		notationUpdate.Notation,
+		notationUpdate.WordId,
+		notationUpdate.Id,
+	).Scan(
+		&updatedNotation.Id,
+		&updatedNotation.WordId,
+		&updatedNotation.Notation,
+		&updatedNotation.CreatedAt,
+		&updatedNotation.UpdatedAt,
+	)
+	if err != nil {
+		return model.Notation{}, err
+	}
+
+	return updatedNotation, nil
 }

@@ -45,6 +45,7 @@ func main() {
 	nc := controller.NewNotationController(nu)
 	n.GET("", nc.GetAllNotations)
 	n.POST("", nc.CreateNotation)
+	n.PUT("/:notationId", nc.UpdateNotation)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

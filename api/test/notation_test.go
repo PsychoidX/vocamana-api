@@ -288,3 +288,101 @@ func TestCreateNotationWithoutLoggingInUserId(t *testing.T) {
 
 	assert.Equal(t, 0, count)
 }
+
+func TestUpdateNotation(t *testing.T) {
+	// ログイン中のUserに紐づくWordに対し、Notationを更新できることをテスト
+	// TODO ログイン機能
+	// とりあえずログインUserはuser_id=1とする
+	DeleteAllFromWords()
+	DeleteAllFromNotations()
+
+	var wordId string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'testword', 'testmemo', 1)
+		RETURNING id;
+	`).Scan(&wordId)
+
+	var notationId string
+	db.QueryRow(`
+		INSERT INTO notations
+		(id, word_id, notation)
+		VALUES(nextval('word_id_seq'), $1, 'test notation')
+		RETURNING id;
+	`,
+	wordId,
+	).Scan(&notationId)
+
+	reqBody := `{
+		"notation": "updated notation"
+	}`
+
+	// 登録されたレコードが返る
+	expectedResponse := fmt.Sprintf(`
+		{
+			"id": %s,
+			"word_id": %s,
+			"notation": "updated notation"
+		}`,
+		notationId,
+		wordId,
+	)
+
+	DoSimpleTest(
+		t,
+		http.MethodPost,
+		"/words/:wordId/notations/:notationId",
+		[]string{"wordId", "notationId"},
+		[]string{wordId, notationId},
+		reqBody,
+		nc.UpdateNotation,
+		http.StatusAccepted,
+		expectedResponse,
+	)
+
+	// DBのレコードが更新される
+	var notation string
+	db.QueryRow(`
+		SELECT notation FROM notations
+		WHERE id = $1
+			AND word_id = $2;
+	`,
+	notationId,
+	wordId,
+	).Scan(&notation)
+
+	assert.Equal(t, "updated notation", notation)
+}
+
+func TestUpdateNotationWithNoRows(t *testing.T) {
+	// ログイン中のUserに紐づくWordに対し、更新対象のNotationが無い場合、{}が返ることをテスト
+	// TODO ログイン機能
+	// とりあえずログインUserはuser_id=1とする
+	DeleteAllFromWords()
+	DeleteAllFromNotations()
+
+	var wordId string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'testword', 'testmemo', 1)
+		RETURNING id;
+	`).Scan(&wordId)
+
+	reqBody := `{
+		"notation": "updated notation"
+	}`
+
+	DoSimpleTest(
+		t,
+		http.MethodPost,
+		"/words/:wordId/notations/:notationId",
+		[]string{"wordId", "notationId"},
+		[]string{wordId, "1"},
+		reqBody,
+		nc.UpdateNotation,
+		http.StatusUnauthorized,
+		"{}",
+	)
+}
