@@ -10,6 +10,7 @@ import (
 )
 
 type INotationController interface {
+	GetAllNotations(c echo.Context) error
 	CreateNotation(c echo.Context) error
 }
 
@@ -19,6 +20,32 @@ type NotationController struct {
 
 func NewNotationController(nu *usecase.NotationUsecase) INotationController {
 	return &NotationController{nu}
+}
+
+func (nc *NotationController) GetAllNotations(c echo.Context) error {
+	var userId uint64 = 1 // TODO セッションから取得
+
+	wordId, err := strconv.ParseUint(c.Param("wordId"), 10, 32)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	notations, err := nc.nu.GetAllNotations(userId, wordId)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	var notationResponses []model.NotationResponse
+	for _, notation := range notations {
+		notationRes := model.NotationResponse{
+			Id: notation.Id,
+			WordId: notation.WordId,
+			Notation: notation.Notation,
+		}
+		notationResponses = append(notationResponses, notationRes)
+	}
+
+	return c.JSON(http.StatusOK, notationResponses)
 }
 
 func (nc *NotationController) CreateNotation(c echo.Context) error {

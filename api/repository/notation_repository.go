@@ -7,6 +7,7 @@ import (
 )
 
 type INotationRepository interface {
+	GetAllNotations(uint64) ([]model.Notation, error)
 	InsertNotation(model.NotationCreation) (model.Notation, error)
 }
 
@@ -25,6 +26,39 @@ func (nr *NotationRepository) getSequenceName() string {
 func (nr *NotationRepository) getSequenceNextvalQuery() string {
 	return fmt.Sprintf("nextval('%s')", nr.getSequenceName())
 }
+
+func (nr *NotationRepository) GetAllNotations(wordId uint64) ([]model.Notation, error) {
+	var notations []model.Notation
+
+	rows, err := nr.db.Query(`
+		SELECT id, word_id, notation, created_at, updated_at FROM notations
+		WHERE word_id = $1
+		`,
+		wordId,
+	)
+	if err != nil {
+		return []model.Notation{}, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		notation := model.Notation{}
+		err := rows.Scan(
+			&notation.Id,
+			&notation.WordId,
+			&notation.Notation,
+			&notation.CreatedAt,
+			&notation.UpdatedAt,
+		);
+		if err != nil {
+			return []model.Notation{}, err
+		}
+		notations = append(notations, notation)
+	}
+
+	return notations, nil
+}
+
 
 func (nr *NotationRepository) InsertNotation(notationCreation model.NotationCreation) (model.Notation, error) {
 	createdNotation := model.Notation{}

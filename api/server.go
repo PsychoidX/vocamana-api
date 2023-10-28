@@ -1,11 +1,12 @@
 package main
 
 import (
-	"github.com/labstack/echo/v4"
+	"api/controller"
 	"api/db"
 	"api/repository"
 	"api/usecase"
-	"api/controller"
+
+	"github.com/labstack/echo/v4"
 )
 
 func main() {
@@ -42,6 +43,7 @@ func main() {
 	n := e.Group("/words/:wordId/notations")
 	nu := usecase.NewNotationUsecase(nr, wr)
 	nc := controller.NewNotationController(nu)
+	n.GET("", nc.GetAllNotations)
 	n.POST("", nc.CreateNotation)
 
 	e.Logger.Fatal(e.Start(":8080"))
