@@ -402,7 +402,7 @@ func TestAssociateSentenceWithWords(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodDelete,
+		http.MethodPost,
 		"/sentences/association/:sentenceId",
 		[]string{"sentenceId"},
 		[]string{sentenceId},
@@ -475,7 +475,7 @@ func TestAssociateSentenceWithWordsWithMultipleWordIds(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodDelete,
+		http.MethodPost,
 		"/sentences/association/:sentenceId",
 		[]string{"sentenceId"},
 		[]string{sentenceId},
@@ -549,7 +549,7 @@ func TestAssociateSentenceWithInvalidWordId(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodDelete,
+		http.MethodPost,
 		"/sentences/association/:sentenceId",
 		[]string{"sentenceId"},
 		[]string{sentenceId},
@@ -611,7 +611,7 @@ func TestAssociateSentenceWithInvalidSentenceId(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodDelete,
+		http.MethodPost,
 		"/sentences/association/:sentenceId",
 		[]string{"sentenceId"},
 		[]string{sentenceId},
@@ -682,7 +682,7 @@ func TestAssociateSentenceWithAllInvalidWordId(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodDelete,
+		http.MethodPost,
 		"/sentences/association/:sentenceId",
 		[]string{"sentenceId"},
 		[]string{sentenceId},
@@ -768,7 +768,7 @@ func TestAssociateSentenceWithSomeInvalidWordId(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodDelete,
+		http.MethodPost,
 		"/sentences/association/:sentenceId",
 		[]string{"sentenceId"},
 		[]string{sentenceId},
