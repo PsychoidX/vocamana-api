@@ -5,14 +5,31 @@ import (
 	"api/db"
 	"api/repository"
 	"api/usecase"
+	"net/http"
+	"os"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func main() {
 	e := echo.New()
 	db := db.NewDB()
-
+	e.Use(middleware.CORSWithConfig(
+		middleware.CORSConfig{
+			AllowOrigins: []string{
+				os.Getenv("FE_URL"),
+			},
+			AllowMethods: []string{
+				http.MethodGet,
+				http.MethodPost,
+				http.MethodPut,
+				http.MethodDelete,
+			},
+			AllowHeaders: []string{
+			},
+		},
+	))
 	
 	wr := repository.NewWordRepository(db)
 	sr := repository.NewSentenceRepository(db)
