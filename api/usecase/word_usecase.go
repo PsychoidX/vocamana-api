@@ -7,16 +7,22 @@ import (
 )
 
 type WordUsecase struct {
-	wr repository.IWordRepository
+	wr  repository.IWordRepository
+	sr  repository.ISentenceRepository
+	swr repository.ISentencesWordsRepository
 }
 
-func NewWordUsecase(wr repository.IWordRepository) *WordUsecase {
-	return &WordUsecase{wr}
+func NewWordUsecase(
+	wr repository.IWordRepository,
+	sr repository.ISentenceRepository,
+	swr repository.ISentencesWordsRepository,
+) *WordUsecase {
+	return &WordUsecase{wr, sr, swr}
 }
 
 func (wu *WordUsecase) GetAllWords(userId uint64) ([]model.Word, error) {
 	// TODO: userIdがログイン中のものと一致することを確認
-	
+
 	words, err := wu.wr.GetAllWords(userId)
 	if err != nil {
 		return []model.Word{}, err
@@ -25,7 +31,7 @@ func (wu *WordUsecase) GetAllWords(userId uint64) ([]model.Word, error) {
 	return words, nil
 }
 
-func (wu *WordUsecase) GetWordById(userId uint64, wordId uint64) (model.Word, error) {	
+func (wu *WordUsecase) GetWordById(userId uint64, wordId uint64) (model.Word, error) {
 	// TODO: userIdがログイン中のものと一致することを確認
 
 	word, err := wu.wr.GetWordById(userId, wordId)
@@ -62,7 +68,7 @@ func (wu *WordUsecase) DeleteWord(userId uint64, wordId uint64) (model.Word, err
 			// Wordのゼロ値を返す
 			return model.Word{}, nil
 		}
-		
+
 		return model.Word{}, err
 	}
 
@@ -71,7 +77,7 @@ func (wu *WordUsecase) DeleteWord(userId uint64, wordId uint64) (model.Word, err
 
 func (wu *WordUsecase) UpdateWord(wordUpdate model.WordUpdate) (model.Word, error) {
 	// TODO: userIdがログイン中のものと一致することを確認
-	
+
 	updatedWord, err := wu.wr.UpdateWord(wordUpdate)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -84,4 +90,39 @@ func (wu *WordUsecase) UpdateWord(wordUpdate model.WordUpdate) (model.Word, erro
 	}
 
 	return updatedWord, nil
+}
+
+func (wu *WordUsecase) GetAssociatedSentencesByWordId(userId uint64, wordId uint64) ([]model.Sentence, error) {
+	// TODO: userIdがログイン中のものと一致することを確認
+
+	// wordIdの所有者がuserIdでない場合ゼロ値を返す
+	isWordOwner, err := wu.wr.IsWordOwner(wordId, userId)
+	if err != nil {
+		return []model.Sentence{}, err
+	}
+	if !isWordOwner {
+		return []model.Sentence{}, nil
+	}
+
+	sentences, err := wu.swr.GetAssociatedSentencesByWordId(userId, wordId)
+	if err != nil {
+		return []model.Sentence{}, err
+	}
+
+	// リポジトリの返り値のuserIdを検証
+	userSentences := []model.Sentence{}
+	for _, sentence := range sentences {
+		// sentenceの所有者がuserIdでない場合continue
+		isSentenceOwner, err := wu.sr.IsSentenceOwner(sentence.Id, userId)
+		if err != nil {
+			return []model.Sentence{}, err
+		}
+		if !isSentenceOwner {
+			continue
+		}
+
+		userSentences = append(userSentences, sentence)
+	}
+
+	return userSentences, nil
 }

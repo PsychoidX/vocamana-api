@@ -177,7 +177,7 @@ func TestCreateSentence(t *testing.T) {
 		SELECT sentence FROM sentences
 		WHERE id = $1;
 	`,
-	nextId,
+		nextId,
 	).Scan(&sentence)
 
 	assert.Equal(t, "testsentence", sentence)
@@ -229,7 +229,7 @@ func TestUpdateSentenceWithLoggingInUserId(t *testing.T) {
 		SELECT sentence FROM sentences
 		WHERE id = $1;
 	`,
-	id,
+		id,
 	).Scan(&sentence)
 
 	assert.Equal(t, "updated sentence", sentence)
@@ -271,7 +271,7 @@ func TestUpdateSentenceWithoutLoggingInUserId(t *testing.T) {
 		SELECT sentence FROM sentences
 		WHERE id = $1;
 	`,
-	id,
+		id,
 	).Scan(&sentence)
 
 	assert.Equal(t, "sentence", sentence)
@@ -319,7 +319,7 @@ func TestDeleteSentenceWithLoggingInUserId(t *testing.T) {
 		SELECT COUNT(*) FROM sentences
 		WHERE id = $1;
 	`,
-	id,
+		id,
 	).Scan(&count)
 
 	assert.Equal(t, 0, count)
@@ -357,7 +357,7 @@ func TestDeleteSentenceWithoutLoggingInUserId(t *testing.T) {
 		SELECT COUNT(*) FROM sentences
 		WHERE id = $1;
 	`,
-	id,
+		id,
 	).Scan(&count)
 
 	assert.Equal(t, 1, count)
@@ -391,7 +391,7 @@ func TestAssociateSentenceWithWords(t *testing.T) {
 			"word_ids": [%s]
 		}
 	`,
-	wordId)
+		wordId)
 
 	expectedResponse := fmt.Sprintf(`
 		{
@@ -419,8 +419,8 @@ func TestAssociateSentenceWithWords(t *testing.T) {
 		WHERE sentence_id = $1
 			AND word_id = $2;
 	`,
-	sentenceId,
-	wordId,
+		sentenceId,
+		wordId,
 	).Scan(&count)
 
 	assert.Equal(t, 1, count)
@@ -492,8 +492,8 @@ func TestAssociateSentenceWithWordsWithMultipleWordIds(t *testing.T) {
 		WHERE sentence_id = $1
 			AND word_id = $2;
 	`,
-	sentenceId,
-	wordId1,
+		sentenceId,
+		wordId1,
 	).Scan(&countWithWordId1)
 
 	assert.Equal(t, 1, countWithWordId1)
@@ -504,8 +504,8 @@ func TestAssociateSentenceWithWordsWithMultipleWordIds(t *testing.T) {
 	WHERE sentence_id = $1
 		AND word_id = $2;
 	`,
-	sentenceId,
-	wordId2,
+		sentenceId,
+		wordId2,
 	).Scan(&countWithWordId2)
 
 	assert.Equal(t, 1, countWithWordId2)
@@ -566,8 +566,8 @@ func TestAssociateSentenceWithInvalidWordId(t *testing.T) {
 		WHERE sentence_id = $1
 			AND word_id = $2;
 	`,
-	sentenceId,
-	wordId,
+		sentenceId,
+		wordId,
 	).Scan(&count)
 
 	assert.Equal(t, 0, count)
@@ -628,8 +628,8 @@ func TestAssociateSentenceWithInvalidSentenceId(t *testing.T) {
 		WHERE sentence_id = $1
 			AND word_id = $2;
 	`,
-	sentenceId,
-	wordId,
+		sentenceId,
+		wordId,
 	).Scan(&count)
 
 	assert.Equal(t, 0, count)
@@ -699,8 +699,8 @@ func TestAssociateSentenceWithAllInvalidWordId(t *testing.T) {
 		WHERE sentence_id = $1
 			AND word_id = $2;
 	`,
-	sentenceId,
-	invalidWordId1,
+		sentenceId,
+		invalidWordId1,
 	).Scan(&countWithInvalidWordId1)
 
 	assert.Equal(t, 0, countWithInvalidWordId1)
@@ -711,8 +711,8 @@ func TestAssociateSentenceWithAllInvalidWordId(t *testing.T) {
 		WHERE sentence_id = $1
 			AND word_id = $2;
 	`,
-	sentenceId,
-	invalidWordId2,
+		sentenceId,
+		invalidWordId2,
 	).Scan(&countWithInvalidWordId2)
 
 	assert.Equal(t, 0, countWithInvalidWordId2)
@@ -785,8 +785,8 @@ func TestAssociateSentenceWithSomeInvalidWordId(t *testing.T) {
 		WHERE sentence_id = $1
 			AND word_id = $2;
 	`,
-	sentenceId,
-	validWordId,
+		sentenceId,
+		validWordId,
 	).Scan(&countWithValidWordId)
 
 	assert.Equal(t, 1, countWithValidWordId)
@@ -797,9 +797,85 @@ func TestAssociateSentenceWithSomeInvalidWordId(t *testing.T) {
 		WHERE sentence_id = $1
 			AND word_id = $2;
 	`,
-	sentenceId,
-	invalidWordId,
+		sentenceId,
+		invalidWordId,
 	).Scan(&countWithInvalidWordId)
 
 	assert.Equal(t, 0, countWithInvalidWordId)
+}
+
+func TestGetAssociatedWords(t *testing.T) {
+	// WordとSentenceがどちらもログイン中のuser_idに紐づく場合、
+	// Sentenceに紐づくWordを取得できることをテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のWordのみ取得可能とする
+	DeleteAllFromWords()
+	DeleteAllFromSentences()
+
+	var sentenceId string
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('sentence_id_seq'), 'test sentence', 1)
+		RETURNING id;
+	`).Scan(&sentenceId)
+
+	var wordId1 string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'test word1', 'test memo1', 1)
+		RETURNING id;
+	`).Scan(&wordId1)
+
+	var wordId2 string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'test word2', 'test memo2', 1)
+		RETURNING id;
+	`).Scan(&wordId2)
+
+	db.QueryRow(`
+		INSERT INTO sentences_words
+		(sentence_id, word_id)
+		VALUES
+		($1, $2),
+		($1, $3);
+		`,
+		sentenceId,
+		wordId1,
+		wordId2,
+	)
+
+	expectedResponse := fmt.Sprintf(`
+		[
+			{
+				"id": %s,
+				"word": "test word1",
+				"memo": "test memo1",
+				"user_id": 1
+			},
+			{
+				"id": %s,
+				"word": "test word2",
+				"memo": "test memo2",
+				"user_id": 1
+			}
+		]`,
+		wordId1,
+		wordId2,
+	)
+
+	DoSimpleTest(
+		t,
+		http.MethodGet,
+		"/sentences/:sentenceId/associated-words",
+		[]string{"sentenceId"},
+		[]string{sentenceId},
+		"",
+		sc.GetAssociatedWords,
+		http.StatusOK,
+		expectedResponse,
+	)
 }

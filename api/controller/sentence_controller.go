@@ -16,6 +16,7 @@ type ISentenceController interface {
 	UpdateSentence(c echo.Context) error
 	DeleteSentence(c echo.Context) error
 	AssociateSentenceWithWords(c echo.Context) error
+	GetAssociatedWords(c echo.Context) error
 }
 
 type SentenceController struct {
@@ -28,7 +29,7 @@ func NewSentenceController(su *usecase.SentenceUsecase) ISentenceController {
 
 func (sc *SentenceController) GetAllSentences(c echo.Context) error {
 	var userId uint64 = 1 // TODO セッションから取得
-	
+
 	sentences, err := sc.su.GetAllSentences(userId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
@@ -37,9 +38,9 @@ func (sc *SentenceController) GetAllSentences(c echo.Context) error {
 	var sentenceResponses []model.SentenceResponse
 	for _, sentence := range sentences {
 		sentenceRes := model.SentenceResponse{
-			Id: sentence.Id,
+			Id:       sentence.Id,
 			Sentence: sentence.Sentence,
-			UserId: sentence.UserId,
+			UserId:   sentence.UserId,
 		}
 		sentenceResponses = append(sentenceResponses, sentenceRes)
 	}
@@ -60,16 +61,16 @@ func (sc *SentenceController) GetSentenceById(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	if(sentence == model.Sentence{}) {
+	if (sentence == model.Sentence{}) {
 		// usecaseで取得した結果がゼロ値の場合
 		// {}を返す
 		return c.JSON(http.StatusOK, make(map[string]interface{}))
 	}
-	
+
 	sentenceRes := model.SentenceResponse{
-		Id: sentence.Id,
+		Id:       sentence.Id,
 		Sentence: sentence.Sentence,
-		UserId: sentence.UserId,
+		UserId:   sentence.UserId,
 	}
 	return c.JSON(http.StatusOK, sentenceRes)
 }
@@ -84,7 +85,7 @@ func (sc *SentenceController) CreateSentence(c echo.Context) error {
 
 	sentenceCreation := model.SentenceCreation{
 		Sentence: req.Sentence,
-		UserId: userId,
+		UserId:   userId,
 	}
 
 	sentence, err := sc.su.CreateSentence(sentenceCreation)
@@ -93,11 +94,11 @@ func (sc *SentenceController) CreateSentence(c echo.Context) error {
 	}
 
 	sentenceRes := model.SentenceResponse{
-		Id: sentence.Id,
+		Id:       sentence.Id,
 		Sentence: sentence.Sentence,
-		UserId: sentence.UserId,
+		UserId:   sentence.UserId,
 	}
-	
+
 	return c.JSON(http.StatusCreated, sentenceRes)
 }
 
@@ -115,26 +116,26 @@ func (sc *SentenceController) UpdateSentence(c echo.Context) error {
 	}
 
 	sentenceUpdate := model.SentenceUpdate{
-		Id: sentenceId,
+		Id:       sentenceId,
 		Sentence: req.Sentence,
-		UserId: userId,
+		UserId:   userId,
 	}
 
 	sentence, err := sc.su.UpdateSentence(sentenceUpdate)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
-	
-	if(sentence == model.Sentence{}) {
+
+	if (sentence == model.Sentence{}) {
 		// usecaseで更新した結果がゼロ値の場合
 		// {}を返す
 		return c.JSON(http.StatusUnauthorized, make(map[string]interface{}))
 	}
-	
+
 	sentenceRes := model.SentenceResponse{
-		Id: sentence.Id,
+		Id:       sentence.Id,
 		Sentence: sentence.Sentence,
-		UserId: sentence.UserId,
+		UserId:   sentence.UserId,
 	}
 
 	return c.JSON(http.StatusAccepted, sentenceRes)
@@ -153,16 +154,16 @@ func (sc *SentenceController) DeleteSentence(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	if(sentence == model.Sentence{}) {
+	if (sentence == model.Sentence{}) {
 		// usecaseで更新した結果がゼロ値の場合
 		// {}を返す
 		return c.JSON(http.StatusUnauthorized, make(map[string]interface{}))
 	}
 
 	sentenceRes := model.SentenceResponse{
-		Id: sentence.Id,
+		Id:       sentence.Id,
 		Sentence: sentence.Sentence,
-		UserId: sentence.UserId,
+		UserId:   sentence.UserId,
 	}
 
 	return c.JSON(http.StatusAccepted, sentenceRes)
@@ -195,4 +196,31 @@ func (sc *SentenceController) AssociateSentenceWithWords(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusAccepted, wordIdsRes)
+}
+
+func (sc *SentenceController) GetAssociatedWords(c echo.Context) error {
+	var userId uint64 = 1 // TODO セッションから取得
+
+	sentenceId, err := strconv.ParseUint(c.Param("sentenceId"), 10, 32)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	words, err := sc.su.GetAssociatedWordsBySentenceId(userId, sentenceId)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	var wordResponses []model.WordResponse
+	for _, word := range words {
+		wordRes := model.WordResponse{
+			Id:     word.Id,
+			Word:   word.Word,
+			Memo:   word.Memo,
+			UserId: word.UserId,
+		}
+		wordResponses = append(wordResponses, wordRes)
+	}
+
+	return c.JSON(http.StatusOK, wordResponses)
 }

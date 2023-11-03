@@ -7,22 +7,22 @@ import (
 )
 
 type SentenceUsecase struct {
-	sr repository.ISentenceRepository
-	wr repository.IWordRepository
+	sr  repository.ISentenceRepository
+	wr  repository.IWordRepository
 	swr repository.ISentencesWordsRepository
 }
 
 func NewSentenceUsecase(
-		sr repository.ISentenceRepository,
-		wr repository.IWordRepository,
-		swr repository.ISentencesWordsRepository,
-	) *SentenceUsecase {
+	sr repository.ISentenceRepository,
+	wr repository.IWordRepository,
+	swr repository.ISentencesWordsRepository,
+) *SentenceUsecase {
 	return &SentenceUsecase{sr, wr, swr}
 }
 
 func (su *SentenceUsecase) GetAllSentences(userId uint64) ([]model.Sentence, error) {
 	// TODO: userIdがログイン中のものと一致することを確認
-	
+
 	sentences, err := su.sr.GetAllSentences(userId)
 	if err != nil {
 		return []model.Sentence{}, err
@@ -31,7 +31,7 @@ func (su *SentenceUsecase) GetAllSentences(userId uint64) ([]model.Sentence, err
 	return sentences, nil
 }
 
-func (su *SentenceUsecase) GetSentenceById(userId uint64, sentenceId uint64) (model.Sentence, error) {	
+func (su *SentenceUsecase) GetSentenceById(userId uint64, sentenceId uint64) (model.Sentence, error) {
 	// TODO: userIdがログイン中のものと一致することを確認
 
 	sentence, err := su.sr.GetSentenceById(userId, sentenceId)
@@ -41,7 +41,7 @@ func (su *SentenceUsecase) GetSentenceById(userId uint64, sentenceId uint64) (mo
 			// Sentenceのゼロ値を返す
 			return model.Sentence{}, nil
 		}
-		
+
 		return model.Sentence{}, err
 	}
 
@@ -95,8 +95,8 @@ func (su *SentenceUsecase) DeleteSentence(userId uint64, sentenceId uint64) (mod
 
 func (su *SentenceUsecase) AssociateSentenceWithWords(userId uint64, sentenceId uint64, wordIds model.WordIds) (model.WordIds, error) {
 	// TODO: userIdがログイン中のものと一致することを確認
-	
-	// sentenceeIdの所有者がuserIdでない場合何もしない
+
+	// sentenceIdの所有者がuserIdでない場合何もしない
 	isSentenceOwner, err := su.sr.IsSentenceOwner(sentenceId, userId)
 	if err != nil {
 		return model.WordIds{}, err
@@ -129,4 +129,39 @@ func (su *SentenceUsecase) AssociateSentenceWithWords(userId uint64, sentenceId 
 	}
 
 	return resultWordIds, nil
+}
+
+func (su *SentenceUsecase) GetAssociatedWordsBySentenceId(userId uint64, sentenceId uint64) ([]model.Word, error) {
+	// TODO: userIdがログイン中のものと一致することを確認
+
+	// sentenceIdの所有者がuserIdでない場合ゼロ値を返す
+	isSentenceOwner, err := su.sr.IsSentenceOwner(sentenceId, userId)
+	if err != nil {
+		return []model.Word{}, err
+	}
+	if !isSentenceOwner {
+		return []model.Word{}, nil
+	}
+
+	words, err := su.swr.GetAssociatedWordsBySentenceId(userId, sentenceId)
+	if err != nil {
+		return []model.Word{}, err
+	}
+
+	// リポジトリの返り値のuserIdを検証
+	userWords := []model.Word{}
+	for _, word := range words {
+		// wordの所有者がuserIdでない場合continue
+		isWordOwner, err := su.wr.IsWordOwner(word.Id, userId)
+		if err != nil {
+			return []model.Word{}, err
+		}
+		if !isWordOwner {
+			continue
+		}
+
+		userWords = append(userWords, word)
+	}
+
+	return userWords, nil
 }

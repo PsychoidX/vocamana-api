@@ -3,17 +3,17 @@ package model
 import "time"
 
 type Sentence struct {
-	Id        uint
+	Id        uint64
 	Sentence  string
-	UserId    uint
+	UserId    uint64
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
 
 type SentenceResponse struct {
-	Id       uint   `json:"id"`
+	Id       uint64 `json:"id"`
 	Sentence string `json:"sentence"`
-	UserId   uint   `json:"user_id"`
+	UserId   uint64 `json:"user_id"`
 }
 
 type SentenceCreationRequest struct {
@@ -26,7 +26,7 @@ type SentenceCreation struct {
 }
 
 type SentenceUpdateRequest struct {
-	Id       uint64 `json:"id"` 
+	Id       uint64 `json:"id"`
 	Sentence string `json:"sentence"`
 }
 

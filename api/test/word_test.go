@@ -182,7 +182,7 @@ func TestCreateWord(t *testing.T) {
 		SELECT word, memo FROM words
 		WHERE id = $1;
 	`,
-	nextId,
+		nextId,
 	).Scan(&word, &memo)
 
 	assert.Equal(t, "testword", word)
@@ -238,7 +238,7 @@ func TestUpdateWordWithLoggingInUserId(t *testing.T) {
 		SELECT word, memo FROM words
 		WHERE id = $1;
 	`,
-	id,
+		id,
 	).Scan(&word, &memo)
 
 	assert.Equal(t, "updated word", word)
@@ -283,7 +283,7 @@ func TestUpdateWordWithoutLoggingInUserId(t *testing.T) {
 		SELECT word, memo FROM words
 		WHERE id = $1;
 	`,
-	id,
+		id,
 	).Scan(&word, &memo)
 
 	assert.Equal(t, "word", word)
@@ -333,7 +333,7 @@ func TestDeleteWordWithLoggingInUserId(t *testing.T) {
 		SELECT COUNT(*) FROM words
 		WHERE id = $1;
 	`,
-	id,
+		id,
 	).Scan(&count)
 
 	assert.Equal(t, 0, count)
@@ -371,8 +371,82 @@ func TestDeleteWordWithoutLoggingInUserId(t *testing.T) {
 		SELECT COUNT(*) FROM words
 		WHERE id = $1;
 	`,
-	id,
+		id,
 	).Scan(&count)
 
 	assert.Equal(t, 1, count)
+}
+
+func TestGetAssociatedSentences(t *testing.T) {
+	// WordとSentenceがどちらもログイン中のuser_idに紐づく場合、
+	// Wordに紐づくSentenceを取得できることをテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のSentenceのみ取得可能とする
+	DeleteAllFromWords()
+	DeleteAllFromSentences()
+
+	var wordId string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'test word', 'test memo', 1)
+		RETURNING id;
+	`).Scan(&wordId)
+
+	var sentenceId1 string
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('sentence_id_seq'), 'test sentence1', 1)
+		RETURNING id;
+	`).Scan(&sentenceId1)
+
+	var sentenceId2 string
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('sentence_id_seq'), 'test sentence2', 1)
+		RETURNING id;
+	`).Scan(&sentenceId2)
+
+	db.QueryRow(`
+		INSERT INTO sentences_words
+		(word_id, sentence_id)
+		VALUES
+		($1, $2),
+		($1, $3);
+		`,
+		wordId,
+		sentenceId1,
+		sentenceId2,
+	)
+
+	expectedResponse := fmt.Sprintf(`
+		[
+			{
+				"id": %s,
+				"sentence": "test sentence1",
+				"user_id": 1
+			},
+			{
+				"id": %s,
+				"sentence": "test sentence2",
+				"user_id": 1
+			}
+		]`,
+		sentenceId1,
+		sentenceId2,
+	)
+
+	DoSimpleTest(
+		t,
+		http.MethodGet,
+		"/words/:wordId/associated-sentences",
+		[]string{"wordId"},
+		[]string{wordId},
+		"",
+		wc.GetAssociatedSentences,
+		http.StatusOK,
+		expectedResponse,
+	)
 }

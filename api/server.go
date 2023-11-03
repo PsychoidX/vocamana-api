@@ -26,40 +26,46 @@ func main() {
 				http.MethodPut,
 				http.MethodDelete,
 			},
-			AllowHeaders: []string{
-			},
+			AllowHeaders: []string{},
 		},
 	))
-	
+
+	// Repository
 	wr := repository.NewWordRepository(db)
 	sr := repository.NewSentenceRepository(db)
 	swr := repository.NewSentencesWordsRepository(db)
 	nr := repository.NewNotationRepository(db)
 
-	w := e.Group("/words")
-	wu := usecase.NewWordUsecase(wr)
+	// Usecase
+	wu := usecase.NewWordUsecase(wr, sr, swr)
+	su := usecase.NewSentenceUsecase(sr, wr, swr)
+	nu := usecase.NewNotationUsecase(nr, wr)
+
+	// Controller
 	wc := controller.NewWordController(wu)
+	sc := controller.NewSentenceController(su)
+	nc := controller.NewNotationController(nu)
+
+	w := e.Group("/words")
 	w.GET("", wc.GetAllWords)
 	w.GET("/:wordId", wc.GetWordById)
 	w.POST("", wc.CreateWord)
 	w.PUT("/:wordId", wc.UpdateWord)
 	w.DELETE("/:wordId", wc.DeleteWord)
-	
+	w.GET("/:wordId/associated-sentences", wc.GetAssociatedSentences)
+
 	s := e.Group("/sentences")
-	su := usecase.NewSentenceUsecase(sr, wr, swr)
-	sc := controller.NewSentenceController(su)
 	s.GET("", sc.GetAllSentences)
 	s.GET("/:sentenceId", sc.GetSentenceById)
 	s.POST("", sc.CreateSentence)
 	s.PUT("/:sentenceId", sc.UpdateSentence)
 	s.DELETE("/:sentenceId", sc.DeleteSentence)
+	s.GET("/:sentenceId/associated-words", sc.GetAssociatedWords)
 
 	sa := e.Group("/sentences/association")
 	sa.POST("/:sentenceId", sc.AssociateSentenceWithWords)
 
 	n := e.Group("/words/:wordId/notations")
-	nu := usecase.NewNotationUsecase(nr, wr)
-	nc := controller.NewNotationController(nu)
 	n.GET("", nc.GetAllNotations)
 	n.POST("", nc.CreateNotation)
 	n.PUT("/:notationId", nc.UpdateNotation)

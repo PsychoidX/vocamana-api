@@ -36,24 +36,24 @@ var nc controller.INotationController
 func TestMain(m *testing.M) {
 	db = setupDB()
 
-	// Word
+	// Repository
 	wr = repository.NewWordRepository(db)
-	wu = usecase.NewWordUsecase(wr)
-	wc = controller.NewWordController(wu)
-
-	// Sentence
 	sr = repository.NewSentenceRepository(db)
 	swr = repository.NewSentencesWordsRepository(db)
-	su = usecase.NewSentenceUsecase(sr, wr, swr)
-	sc = controller.NewSentenceController(su)
-
-	// Notation
 	nr = repository.NewNotationRepository(db)
+
+	// Usecase
+	wu = usecase.NewWordUsecase(wr, sr, swr)
+	su = usecase.NewSentenceUsecase(sr, wr, swr)
 	nu = usecase.NewNotationUsecase(nr, wr)
+
+	// Controller
+	wc = controller.NewWordController(wu)
+	sc = controller.NewSentenceController(su)
 	nc = controller.NewNotationController(nu)
 
 	setupUserData()
-	
+
 	exitCode := m.Run()
 
 	os.Exit(exitCode)
@@ -76,7 +76,7 @@ func setupDB() *sql.DB {
 
 func setupUserData() {
 	// テストのため、id=1, 2のユーザが存在しない場合に作成する
-	for i:=1; i<=2; i++ {
+	for i := 1; i <= 2; i++ {
 		db.Exec(`
 			INSERT INTO users
 			(id, email, password)
@@ -102,7 +102,7 @@ func GetCurrentWordsSequenceValue() int {
 	var currval int
 	db.QueryRow(
 		"SELECT currval('word_id_seq');",
-	).Scan(&currval);
+	).Scan(&currval)
 	return currval
 }
 
@@ -122,7 +122,7 @@ func GetCurrentSentencesSequenceValue() int {
 	var currval int
 	db.QueryRow(
 		"SELECT currval('sentence_id_seq');",
-	).Scan(&currval);
+	).Scan(&currval)
 	return currval
 }
 
@@ -144,7 +144,7 @@ func GetCurrentNotationsSequenceValue() int {
 	var currval int
 	db.QueryRow(
 		"SELECT currval('notation_id_seq');",
-	).Scan(&currval);
+	).Scan(&currval)
 	return currval
 }
 

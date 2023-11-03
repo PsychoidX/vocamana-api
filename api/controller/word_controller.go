@@ -15,6 +15,7 @@ type IWordController interface {
 	CreateWord(c echo.Context) error
 	DeleteWord(c echo.Context) error
 	UpdateWord(c echo.Context) error
+	GetAssociatedSentences(c echo.Context) error
 }
 
 type WordController struct {
@@ -36,9 +37,9 @@ func (wc *WordController) GetAllWords(c echo.Context) error {
 	var wordResponses []model.WordResponse
 	for _, word := range words {
 		wordRes := model.WordResponse{
-			Id: word.Id,
-			Word: word.Word,
-			Memo: word.Memo,
+			Id:     word.Id,
+			Word:   word.Word,
+			Memo:   word.Memo,
 			UserId: word.UserId,
 		}
 		wordResponses = append(wordResponses, wordRes)
@@ -60,16 +61,16 @@ func (wc *WordController) GetWordById(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	if(word == model.Word{}) {
+	if (word == model.Word{}) {
 		// usecaseで取得した結果がゼロ値の場合
 		// {}を返す
 		return c.JSON(http.StatusOK, make(map[string]interface{}))
 	}
 
 	wordRes := model.WordResponse{
-		Id: word.Id,
-		Word: word.Word,
-		Memo: word.Memo,
+		Id:     word.Id,
+		Word:   word.Word,
+		Memo:   word.Memo,
 		UserId: word.UserId,
 	}
 	return c.JSON(http.StatusOK, wordRes)
@@ -84,8 +85,8 @@ func (wc *WordController) CreateWord(c echo.Context) error {
 	}
 
 	WordCreation := model.WordCreation{
-		Word: req.Word,
-		Memo: req.Memo,
+		Word:   req.Word,
+		Memo:   req.Memo,
 		UserId: userId,
 	}
 
@@ -93,7 +94,7 @@ func (wc *WordController) CreateWord(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
-	
+
 	wordRes := model.WordResponse{
 		Id:     word.Id,
 		Word:   word.Word,
@@ -117,7 +118,7 @@ func (wc *WordController) DeleteWord(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	if(word == model.Word{}) {
+	if (word == model.Word{}) {
 		// usecaseでWordが削除されなかった場合
 		// {}を返す
 		return c.JSON(http.StatusUnauthorized, make(map[string]interface{}))
@@ -139,16 +140,16 @@ func (wc *WordController) UpdateWord(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
-	
+
 	wordId, err := strconv.ParseUint(c.Param("wordId"), 10, 32)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
 	wordUpdate := model.WordUpdate{
-		Id: wordId,
-		Word: req.Word,
-		Memo: req.Memo,
+		Id:     wordId,
+		Word:   req.Word,
+		Memo:   req.Memo,
 		UserId: userId,
 	}
 
@@ -157,7 +158,7 @@ func (wc *WordController) UpdateWord(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	if(word == model.Word{}) {
+	if (word == model.Word{}) {
 		// usecaseで更新した結果がゼロ値の場合
 		// {}を返す
 		return c.JSON(http.StatusUnauthorized, make(map[string]interface{}))
@@ -171,4 +172,30 @@ func (wc *WordController) UpdateWord(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusAccepted, wordRes)
+}
+
+func (wc *WordController) GetAssociatedSentences(c echo.Context) error {
+	var userId uint64 = 1 // TODO セッションから取得
+
+	wordId, err := strconv.ParseUint(c.Param("wordId"), 10, 32)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	sentences, err := wc.wu.GetAssociatedSentencesByWordId(userId, wordId)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	var sentenceResponses []model.SentenceResponse
+	for _, sentence := range sentences {
+		sentenceRes := model.SentenceResponse{
+			Id:       sentence.Id,
+			Sentence: sentence.Sentence,
+			UserId:   sentence.UserId,
+		}
+		sentenceResponses = append(sentenceResponses, sentenceRes)
+	}
+
+	return c.JSON(http.StatusOK, sentenceResponses)
 }
