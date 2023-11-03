@@ -879,3 +879,99 @@ func TestGetAssociatedWords(t *testing.T) {
 		expectedResponse,
 	)
 }
+
+func TestGetAssociatedWordsWithInvalidSentenceId(t *testing.T) {
+	// Sentenceがログイン中のuser_idに紐づかない場合、
+	// Sentenceに紐づくWordを取得できないことをテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のWordのみ取得可能とする
+	DeleteAllFromWords()
+	DeleteAllFromSentences()
+
+	// Sentenceのuser_idとしてログイン中のもの以外を使用
+	var sentenceId string
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('sentence_id_seq'), 'test sentence', 2)
+		RETURNING id;
+	`).Scan(&sentenceId)
+
+	var wordId string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'test word1', 'test memo1', 1)
+		RETURNING id;
+	`).Scan(&wordId)
+
+	db.QueryRow(`
+		INSERT INTO sentences_words
+		(sentence_id, word_id)
+		VALUES
+		($1, $2);
+		`,
+		sentenceId,
+		wordId,
+	)
+
+	DoSimpleTest(
+		t,
+		http.MethodGet,
+		"/sentences/:sentenceId/associated-words",
+		[]string{"sentenceId"},
+		[]string{sentenceId},
+		"",
+		sc.GetAssociatedWords,
+		http.StatusOK,
+		"null",
+	)
+}
+
+func TestGetAssociatedWordsWithInvalidWordId(t *testing.T) {
+	// Wordがログイン中のuser_idに紐づかない場合、
+	// Sentenceに紐づくWordを取得できないことをテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のWordのみ取得可能とする
+	DeleteAllFromWords()
+	DeleteAllFromSentences()
+
+	var sentenceId string
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('sentence_id_seq'), 'test sentence', 1)
+		RETURNING id;
+	`).Scan(&sentenceId)
+
+	// Wordのuser_idとしてログイン中のもの以外を使用
+	var wordId string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'test word', 'test memo', 2)
+		RETURNING id;
+	`).Scan(&wordId)
+
+	db.QueryRow(`
+		INSERT INTO sentences_words
+		(sentence_id, word_id)
+		VALUES
+		($1, $2);
+		`,
+		sentenceId,
+		wordId,
+	)
+
+	DoSimpleTest(
+		t,
+		http.MethodGet,
+		"/sentences/:sentenceId/associated-words",
+		[]string{"sentenceId"},
+		[]string{sentenceId},
+		"",
+		sc.GetAssociatedWords,
+		http.StatusOK,
+		"null",
+	)
+}
