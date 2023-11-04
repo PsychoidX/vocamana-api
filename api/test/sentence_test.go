@@ -275,6 +275,56 @@ func TestCreateSentenceIncludingWords(t *testing.T) {
 	assert.Equal(t, 0, blueCount)
 }
 
+func TestCreateSentenceIncludingInvalidWords(t *testing.T) {
+	// 登録済みのWordの中に、新規追加されたSentence中に含まれるものがあるが、
+	// 含まれるWordのUserIdがログイン中のuser_idと異なる場合
+	// sentences_wordsに追加されないことをテスト
+
+	// TODO ログイン機能
+	// とりあえずuser_id=1のSentenceのみ作成可能とする
+	DeleteAllFromWords()
+	DeleteAllFromSentences()
+
+	var wordId string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'りんご', 'test memo', 2)
+		RETURNING id;
+	`).Scan(&wordId)
+
+	sentenceId := GetNextSentencesSequenceValue()
+
+	reqBody := `{
+		"sentence": "赤いりんごを食べた"
+	}`
+
+	ExecController(
+		t,
+		http.MethodPost,
+		"/sentences",
+		nil,
+		nil,
+		reqBody,
+		sc.CreateSentence,
+	)
+
+	// 「赤いりんごを食べた」には「りんご」が含まれるが、
+	// Wordのuser_idがログイン中のものと異なるため、
+	// sentences_wordsに追加されない
+	var count int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences_words
+		WHERE sentence_id = $1
+			AND word_id = $2;
+		`,
+		sentenceId,
+		wordId,
+	).Scan(&count)
+
+	assert.Equal(t, 0, count)
+}
+
 func TestUpdateSentenceWithLoggingInUserId(t *testing.T) {
 	// ログイン中のUserに紐づくSentenceを更新できることをテスト
 	// TODO ログイン機能
