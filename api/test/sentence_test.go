@@ -183,6 +183,98 @@ func TestCreateSentence(t *testing.T) {
 	assert.Equal(t, "testsentence", sentence)
 }
 
+func TestCreateSentenceIncludingWords(t *testing.T) {
+	// 登録済みのWordの中に、新規追加されたSentence中に含まれるものがある場合、
+	// sentences_wordsに追加されることをテスト
+
+	// TODO ログイン機能
+	// とりあえずuser_id=1のSentenceのみ作成可能とする
+	DeleteAllFromWords()
+	DeleteAllFromSentences()
+
+	var appleWordId string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'りんご', 'test memo', 1)
+		RETURNING id;
+	`).Scan(&appleWordId)
+
+	var redWordId string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), '赤い', 'test memo', 1)
+		RETURNING id;
+	`).Scan(&redWordId)
+
+	var blueWordId string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), '青い', 'test memo', 1)
+		RETURNING id;
+	`).Scan(&blueWordId)
+
+	sentenceId := GetNextSentencesSequenceValue()
+
+	reqBody := `{
+		"sentence": "赤いりんごを食べた"
+	}`
+
+	ExecController(
+		t,
+		http.MethodPost,
+		"/sentences",
+		nil,
+		nil,
+		reqBody,
+		sc.CreateSentence,
+	)
+
+	// 「赤いりんごを食べた」には「赤い」が含まれるため、
+	// sentences_wordsに追加される
+	var redCount int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences_words
+		WHERE sentence_id = $1
+			AND word_id = $2;
+		`,
+		sentenceId,
+		redWordId,
+	).Scan(&redCount)
+
+	assert.Equal(t, 1, redCount)
+
+	// 「赤いりんごを食べた」には「りんご」が含まれるため、
+	// sentences_wordsに追加される
+	var appleCount int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences_words
+		WHERE sentence_id = $1
+			AND word_id = $2;
+		`,
+		sentenceId,
+		appleWordId,
+	).Scan(&appleCount)
+
+	assert.Equal(t, 1, appleCount)
+
+	// 「赤いりんごを食べた」には「青い」が含まれないため、
+	// sentences_wordsに追加されない
+	var blueCount int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences_words
+		WHERE sentence_id = $1
+			AND word_id = $2;
+		`,
+		sentenceId,
+		blueWordId,
+	).Scan(&blueCount)
+
+	assert.Equal(t, 0, blueCount)
+}
+
 func TestUpdateSentenceWithLoggingInUserId(t *testing.T) {
 	// ログイン中のUserに紐づくSentenceを更新できることをテスト
 	// TODO ログイン機能

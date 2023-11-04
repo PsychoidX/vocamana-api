@@ -4,20 +4,23 @@ import (
 	"api/model"
 	"api/repository"
 	"database/sql"
+	"strings"
 )
 
 type SentenceUsecase struct {
 	sr  repository.ISentenceRepository
 	wr  repository.IWordRepository
 	swr repository.ISentencesWordsRepository
+	nr  repository.INotationRepository
 }
 
 func NewSentenceUsecase(
 	sr repository.ISentenceRepository,
 	wr repository.IWordRepository,
 	swr repository.ISentencesWordsRepository,
+	nr repository.INotationRepository,
 ) *SentenceUsecase {
-	return &SentenceUsecase{sr, wr, swr}
+	return &SentenceUsecase{sr, wr, swr, nr}
 }
 
 func (su *SentenceUsecase) GetAllSentences(userId uint64) ([]model.Sentence, error) {
@@ -50,11 +53,15 @@ func (su *SentenceUsecase) GetSentenceById(userId uint64, sentenceId uint64) (mo
 
 func (su *SentenceUsecase) CreateSentence(sentenceCreation model.SentenceCreation) (model.Sentence, error) {
 	// TODO: userIdがログイン中のものと一致することを確認
+	userId := sentenceCreation.UserId
 
 	createdSentence, err := su.sr.InsertSentence(sentenceCreation)
 	if err != nil {
 		return model.Sentence{}, err
 	}
+
+	// 追加されたSentenceに既存のWordが含まれればsentences_wordsに追加
+	su.AssociateSentenceWithAllWords(userId, createdSentence.Id)
 
 	return createdSentence, nil
 }
@@ -164,4 +171,62 @@ func (su *SentenceUsecase) GetAssociatedWordsBySentenceId(userId uint64, sentenc
 	}
 
 	return userWords, nil
+}
+
+func (su *SentenceUsecase) AssociateSentenceWithAllWords(userId uint64, sentenceId uint64) ([]model.Word, error) {
+	// userIdに紐づく全Wordに対し、
+	// sentenceIdのSentence中にWordまたはNotationが含まれればsentences_wordsにレコード追加
+
+	// TODO: userIdがログイン中のものと一致することを確認
+
+	// sentenceIdの所有者がuserIdでない場合何もしない
+	isSentenceOwner, err := su.sr.IsSentenceOwner(sentenceId, userId)
+	if err != nil {
+		return []model.Word{}, err
+	}
+	if !isSentenceOwner {
+		return []model.Word{}, nil
+	}
+
+	sentence, err := su.GetSentenceById(userId, sentenceId)
+	if err != nil {
+		return []model.Word{}, err
+	}
+
+	userWords, err := su.wr.GetAllWords(userId)
+	if err != nil {
+		return []model.Word{}, err
+	}
+
+	var associatedWords []model.Word
+	for _, word := range userWords {
+		// Sentence中にWordが含まれるか判定
+		if strings.Contains(sentence.Sentence, word.Word) {
+			err = su.swr.AssociateSentenceWithWord(sentence.Id, word.Id)
+			if err != nil {
+				return []model.Word{}, err
+			}
+			associatedWords = append(associatedWords, word)
+			continue
+		}
+
+		// Sentence中にNotationが含まれるか判定
+		notations, err := su.nr.GetAllNotations(word.Id)
+		if err != nil {
+			return []model.Word{}, err
+		}
+
+		for _, notation := range notations {
+			if strings.Contains(sentence.Sentence, notation.Notation) {
+				err = su.swr.AssociateSentenceWithWord(sentence.Id, word.Id)
+				if err != nil {
+					return []model.Word{}, err
+				}
+				associatedWords = append(associatedWords, word)
+				break
+			}
+		}
+	}
+
+	return associatedWords, nil
 }

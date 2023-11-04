@@ -44,7 +44,7 @@ func TestMain(m *testing.M) {
 
 	// Usecase
 	wu = usecase.NewWordUsecase(wr, sr, swr, nr)
-	su = usecase.NewSentenceUsecase(sr, wr, swr)
+	su = usecase.NewSentenceUsecase(sr, wr, swr, nr)
 	nu = usecase.NewNotationUsecase(nr, wr)
 
 	// Controller
