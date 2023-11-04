@@ -37,7 +37,7 @@ func main() {
 	nr := repository.NewNotationRepository(db)
 
 	// Usecase
-	wu := usecase.NewWordUsecase(wr, sr, swr)
+	wu := usecase.NewWordUsecase(wr, sr, swr, nr)
 	su := usecase.NewSentenceUsecase(sr, wr, swr)
 	nu := usecase.NewNotationUsecase(nr, wr)
 
@@ -52,7 +52,7 @@ func main() {
 	w.POST("", wc.CreateWord)
 	w.PUT("/:wordId", wc.UpdateWord)
 	w.DELETE("/:wordId", wc.DeleteWord)
-	w.GET("/:wordId/associated-sentences", wc.GetAssociatedSentences)
+	w.GET("/:wordId/associated-sentences", wc.GetAssociatedSentencesWithLink)
 
 	s := e.Group("/sentences")
 	s.GET("", sc.GetAllSentences)

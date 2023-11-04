@@ -4,20 +4,24 @@ import (
 	"api/model"
 	"api/repository"
 	"database/sql"
+	"fmt"
+	"strings"
 )
 
 type WordUsecase struct {
 	wr  repository.IWordRepository
 	sr  repository.ISentenceRepository
 	swr repository.ISentencesWordsRepository
+	nr  repository.INotationRepository
 }
 
 func NewWordUsecase(
 	wr repository.IWordRepository,
 	sr repository.ISentenceRepository,
 	swr repository.ISentencesWordsRepository,
+	nr repository.INotationRepository,
 ) *WordUsecase {
-	return &WordUsecase{wr, sr, swr}
+	return &WordUsecase{wr, sr, swr, nr}
 }
 
 func (wu *WordUsecase) GetAllWords(userId uint64) ([]model.Word, error) {
@@ -125,4 +129,53 @@ func (wu *WordUsecase) GetAssociatedSentencesByWordId(userId uint64, wordId uint
 	}
 
 	return userSentences, nil
+}
+
+func (wu *WordUsecase) GetAssociatedSentencesWithLinkByWordId(userId, wordId uint64) ([]model.SentenceWithLink, error) {
+	// userIdがログイン中のものと一致するかの判定、
+	// wordIdの所有者がuserIdであるかの判定は、GetAssociatedSentencesByWordId内で行われる
+	userAssociatedSentences, err := wu.GetAssociatedSentencesByWordId(userId, wordId)
+	if err != nil {
+		return []model.SentenceWithLink{}, err
+	}
+
+	sentenceWithLinks := []model.SentenceWithLink{}
+	for _, sentence := range userAssociatedSentences {
+		notations, err := wu.nr.GetAllNotations(wordId)
+		if err != nil {
+			return []model.SentenceWithLink{}, err
+		}
+
+		// sentence.Sentence中に含まれるnotation.Notationをaタグに置換
+		sentenceText := sentence.Sentence
+		for _, notation := range notations {
+			sentenceText = strings.Replace(
+				sentenceText,
+				notation.Notation,
+				createWordLink(wordId, notation.Notation),
+				-1,
+			)
+		}
+
+		// 置換後のsentence.SentenceからSentenceWithLinkを作成
+		sentenceWithLink := model.SentenceWithLink{
+			Id:               sentence.Id,
+			SentenceWithLink: sentenceText,
+			UserId:           sentence.UserId,
+			CreatedAt:        sentence.CreatedAt,
+			UpdatedAt:        sentence.UpdatedAt,
+		}
+		sentenceWithLinks = append(sentenceWithLinks, sentenceWithLink)
+	}
+
+	return sentenceWithLinks, nil
+}
+
+func createWordLink(wordId uint64, notation string) string {
+	// wordに遷移する<a>を作成
+	return fmt.Sprintf(
+		"<a href=\"words/%d\">%s</a>",
+		wordId,
+		notation,
+	)
 }

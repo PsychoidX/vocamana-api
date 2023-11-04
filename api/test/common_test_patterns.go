@@ -13,16 +13,16 @@ import (
 // 複数のテストで共通して使うパターンを切り出しまとめたファイル
 
 func DoSimpleTest(
-		t *testing.T,
-		httpMethod string,
-		path string,
-		paramNames []string,
-		paramValues []string,
-		body string,
-		controllerMethod func(echo.Context) error,
-		expectedStatusCode int,
-		expectedJSON string,
-	) {
+	t *testing.T,
+	httpMethod string,
+	path string,
+	paramNames []string,
+	paramValues []string,
+	body string,
+	controllerMethod func(echo.Context) error,
+	expectedStatusCode int,
+	expectedJSON string,
+) {
 	e := echo.New()
 
 	var bodyReader io.Reader
@@ -45,7 +45,6 @@ func DoSimpleTest(
 		c.SetParamNames(paramNames...)
 		c.SetParamValues(paramValues...)
 	}
-
 
 	if assert.NoError(t, controllerMethod(c)) {
 		assert.Equal(t, expectedStatusCode, rec.Code)

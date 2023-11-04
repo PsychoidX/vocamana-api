@@ -16,6 +16,7 @@ type IWordController interface {
 	DeleteWord(c echo.Context) error
 	UpdateWord(c echo.Context) error
 	GetAssociatedSentences(c echo.Context) error
+	GetAssociatedSentencesWithLink(c echo.Context) error
 }
 
 type WordController struct {
@@ -198,4 +199,31 @@ func (wc *WordController) GetAssociatedSentences(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, sentenceResponses)
+}
+
+func (wc *WordController) GetAssociatedSentencesWithLink(c echo.Context) error {
+	var userId uint64 = 1 // TODO セッションから取得
+
+	wordId, err := strconv.ParseUint(c.Param("wordId"), 10, 32)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	sentenceWithLinks, err := wc.wu.GetAssociatedSentencesWithLinkByWordId(userId, wordId)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	var sentenceWithLinkResponses []model.SentenceWIthLinkResponse
+	for _, sentenceWithLink := range sentenceWithLinks {
+		sentenceWithLinkRes := model.SentenceWIthLinkResponse{
+			Id:               sentenceWithLink.Id,
+			SentenceWithLink: sentenceWithLink.SentenceWithLink,
+			UserId:           sentenceWithLink.UserId,
+		}
+
+		sentenceWithLinkResponses = append(sentenceWithLinkResponses, sentenceWithLinkRes)
+	}
+
+	return c.JSON(http.StatusOK, sentenceWithLinkResponses)
 }

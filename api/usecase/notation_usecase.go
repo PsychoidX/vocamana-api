@@ -12,9 +12,9 @@ type NotationUsecase struct {
 }
 
 func NewNotationUsecase(
-		nr repository.INotationRepository,
-		wr repository.IWordRepository,
-	) *NotationUsecase {
+	nr repository.INotationRepository,
+	wr repository.IWordRepository,
+) *NotationUsecase {
 	return &NotationUsecase{nr, wr}
 }
 
@@ -40,7 +40,7 @@ func (nu *NotationUsecase) GetAllNotations(userId, wordId uint64) ([]model.Notat
 
 func (nu *NotationUsecase) CreateNotation(userId uint64, notationCreation model.NotationCreation) (model.Notation, error) {
 	// TODO: userIdがログイン中のものと一致することを確認
-	
+
 	// 追加先のWordIdの所有者がuserIdでない場合何もしない
 	isWordOwner, err := nu.wr.IsWordOwner(notationCreation.WordId, userId)
 	if err != nil {
@@ -49,7 +49,7 @@ func (nu *NotationUsecase) CreateNotation(userId uint64, notationCreation model.
 	if !isWordOwner {
 		return model.Notation{}, nil
 	}
-	
+
 	createdNotation, err := nu.nr.InsertNotation(notationCreation)
 	if err != nil {
 		return model.Notation{}, err
@@ -60,7 +60,7 @@ func (nu *NotationUsecase) CreateNotation(userId uint64, notationCreation model.
 
 func (nu *NotationUsecase) UpdateNotation(userId uint64, notationUpdate model.NotationUpdate) (model.Notation, error) {
 	// TODO: userIdがログイン中のものと一致することを確認
-	
+
 	// WordIdの所有者がuserIdでない場合何もしない
 	isWordOwner, err := nu.wr.IsWordOwner(notationUpdate.WordId, userId)
 	if err != nil {
@@ -69,7 +69,7 @@ func (nu *NotationUsecase) UpdateNotation(userId uint64, notationUpdate model.No
 	if !isWordOwner {
 		return model.Notation{}, nil
 	}
-	
+
 	updatedNotation, err := nu.nr.UpdateNotation(notationUpdate)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -86,7 +86,7 @@ func (nu *NotationUsecase) UpdateNotation(userId uint64, notationUpdate model.No
 
 func (nu *NotationUsecase) DeleteNotation(userId, wordId, notationId uint64) (model.Notation, error) {
 	// TODO: userIdがログイン中のものと一致することを確認
-	
+
 	// WordIdの所有者がuserIdでない場合何もしない
 	isWordOwner, err := nu.wr.IsWordOwner(wordId, userId)
 	if err != nil {
@@ -95,7 +95,7 @@ func (nu *NotationUsecase) DeleteNotation(userId, wordId, notationId uint64) (mo
 	if !isWordOwner {
 		return model.Notation{}, nil
 	}
-	
+
 	deletedNotation, err := nu.nr.DeleteNotationById(notationId)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -103,7 +103,7 @@ func (nu *NotationUsecase) DeleteNotation(userId, wordId, notationId uint64) (mo
 			// Notationのゼロ値を返す
 			return model.Notation{}, nil
 		}
-		
+
 		return model.Notation{}, err
 	}
 

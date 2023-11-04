@@ -556,3 +556,73 @@ func TestGetAssociatedSentencesWithInvalidSentenceId(t *testing.T) {
 		"null",
 	)
 }
+
+func TestGetAssociatedSentencesWithLink(t *testing.T) {
+	// WordとSentenceがどちらもログイン中のuser_idに紐づく場合、
+	// Wordに紐づくSentenceをリンク付きで取得できることをテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のSentenceのみ取得可能とする
+	DeleteAllFromWords()
+	DeleteAllFromSentences()
+
+	var sentenceId string
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('sentence_id_seq'), 'text word notation 1 text word notation 2 text', 1)
+		RETURNING id;
+	`).Scan(&sentenceId)
+
+	var wordId string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'word', 'word memo', 1)
+		RETURNING id;
+	`).Scan(&wordId)
+
+	db.QueryRow(`
+		INSERT INTO notations
+		(id, word_id, notation)
+		VALUES
+		(nextval('word_id_seq'), $1, 'word notation 1'),
+		(nextval('word_id_seq'), $1, 'word notation 2');
+		`,
+		wordId,
+	)
+
+	db.QueryRow(`
+		INSERT INTO sentences_words
+		(sentence_id, word_id)
+		VALUES
+		($1, $2);
+		`,
+		sentenceId,
+		wordId,
+	)
+
+	expectedResponse := fmt.Sprintf(`
+		[
+			{
+				"id": %s,
+				"sentence": "text <a href=\"words/%s\">word notation 1</a> text <a href=\"words/%s\">word notation 2</a> text",
+				"user_id": 1
+			}
+		]`,
+		sentenceId,
+		wordId,
+		wordId,
+	)
+
+	DoSimpleTest(
+		t,
+		http.MethodGet,
+		"/words/:wordId/associated-sentences",
+		[]string{"wordId"},
+		[]string{wordId},
+		"",
+		wc.GetAssociatedSentencesWithLink,
+		http.StatusOK,
+		expectedResponse,
+	)
+}

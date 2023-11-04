@@ -43,7 +43,7 @@ func TestMain(m *testing.M) {
 	nr = repository.NewNotationRepository(db)
 
 	// Usecase
-	wu = usecase.NewWordUsecase(wr, sr, swr)
+	wu = usecase.NewWordUsecase(wr, sr, swr, nr)
 	su = usecase.NewSentenceUsecase(sr, wr, swr)
 	nu = usecase.NewNotationUsecase(nr, wr)
 
