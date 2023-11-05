@@ -207,6 +207,8 @@ func (su *SentenceUsecase) AssociateSentenceWithAllWords(userId uint64, sentence
 				return []model.Word{}, err
 			}
 			associatedWords = append(associatedWords, word)
+			// Sentenceの中にWordが含まれる場合、
+			// continueし、Notationが含まれるかの判定はしない
 			continue
 		}
 
@@ -223,6 +225,8 @@ func (su *SentenceUsecase) AssociateSentenceWithAllWords(userId uint64, sentence
 					return []model.Word{}, err
 				}
 				associatedWords = append(associatedWords, word)
+				// Sentenceの中にNotationが含まれる場合、
+				// sentences_wordsに2つ目のレコードが追加されないようbreak
 				break
 			}
 		}
