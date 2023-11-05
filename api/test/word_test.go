@@ -688,50 +688,72 @@ func TestGetAssociatedSentencesWithLink(t *testing.T) {
 	db.QueryRow(`
 		INSERT INTO sentences
 		(id, sentence, user_id)
-		VALUES(nextval('sentence_id_seq'), 'りんごとリンゴと林檎が同一であるとみなす', 1)
+		VALUES(nextval('sentence_id_seq'), 'リンゴと林檎、レモンと檸檬が同一であるとみなす', 1)
 		RETURNING id;
 	`).Scan(&sentenceId)
 
-	var wordId string
+	var appleWordId string
 	db.QueryRow(`
 		INSERT INTO words
 		(id, word, memo, user_id)
-		VALUES(nextval('word_id_seq'), 'りんご', 'word memo', 1)
+		VALUES(nextval('word_id_seq'), 'リンゴ', 'word memo', 1)
 		RETURNING id;
-	`).Scan(&wordId)
+	`).Scan(&appleWordId)
 
 	db.QueryRow(`
 		INSERT INTO notations
 		(id, word_id, notation)
 		VALUES
-		(nextval('word_id_seq'), $1, '林檎'),
-		(nextval('word_id_seq'), $1, 'リンゴ');
+		(nextval('word_id_seq'), $1, '林檎');
 		`,
-		wordId,
+		appleWordId,
+	)
+
+	var lemonWordId string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'レモン', 'word memo', 1)
+		RETURNING id;
+	`).Scan(&lemonWordId)
+
+	db.QueryRow(`
+		INSERT INTO notations
+		(id, word_id, notation)
+		VALUES
+		(nextval('word_id_seq'), $1, '檸檬');
+		`,
+		lemonWordId,
 	)
 
 	db.QueryRow(`
 		INSERT INTO sentences_words
 		(sentence_id, word_id)
 		VALUES
-		($1, $2);
+		($1, $2),
+		($1, $3);
 		`,
 		sentenceId,
-		wordId,
+		appleWordId,
+		lemonWordId,
 	)
 
+	// :wordId == appleWordId では、紐づくSentenceとして「リンゴと林檎、レモンと檸檬が同一であるとみなす」が取得される
+	// このうち「レモン」「檸檬」のwordIdはappleWordIdと同値でないが、
+	// APIアクセスに使用したwordIdでない単語（レモン・檸檬）に関しても、userIdが同じであれば、リンク作成はされる
 	expectedResponse := fmt.Sprintf(`
 		[
 			{
 				"id": %s,
-				"sentence": "<a href=\"/words/%s\">りんご</a>と<a href=\"/words/%s\">リンゴ</a>と<a href=\"/words/%s\">林檎</a>が同一であるとみなす",
+				"sentence": "<a href=\"/words/%s\">リンゴ</a>と<a href=\"/words/%s\">林檎</a>、<a href=\"/words/%s\">レモン</a>と<a href=\"/words/%s\">檸檬</a>が同一であるとみなす",
 				"user_id": 1
 			}
 		]`,
 		sentenceId,
-		wordId,
-		wordId,
-		wordId,
+		appleWordId,
+		appleWordId,
+		lemonWordId,
+		lemonWordId,
 	)
 
 	DoSimpleTest(
@@ -739,7 +761,7 @@ func TestGetAssociatedSentencesWithLink(t *testing.T) {
 		http.MethodGet,
 		"/words/:wordId/associated-sentences",
 		[]string{"wordId"},
-		[]string{wordId},
+		[]string{appleWordId},
 		"",
 		wc.GetAssociatedSentencesWithLink,
 		http.StatusOK,

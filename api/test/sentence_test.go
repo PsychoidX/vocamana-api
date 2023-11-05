@@ -216,6 +216,14 @@ func TestCreateSentenceIncludingWords(t *testing.T) {
 		RETURNING id;
 	`).Scan(&blueWordId)
 
+	var ateWordId string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), '食べた', 'test memo', 1)
+		RETURNING id;
+	`).Scan(&ateWordId)
+
 	sentenceId := GetNextSentencesSequenceValue()
 
 	reqBody := `{
@@ -232,6 +240,7 @@ func TestCreateSentenceIncludingWords(t *testing.T) {
 		sc.CreateSentence,
 	)
 
+	// 該当するWordがsentences_wordsに追加されることをテスト：
 	// 「赤いりんごを食べた」には「赤い」が含まれるため、
 	// sentences_wordsに追加される
 	var redCount int
@@ -246,6 +255,7 @@ func TestCreateSentenceIncludingWords(t *testing.T) {
 
 	assert.Equal(t, 1, redCount)
 
+	// 該当するNotationがsentences_wordsに追加されることをテスト：
 	// 「赤いりんごを食べた」には「りんご」が含まれるため、
 	// sentences_wordsに追加される
 	var appleCount int
@@ -260,6 +270,7 @@ func TestCreateSentenceIncludingWords(t *testing.T) {
 
 	assert.Equal(t, 1, appleCount)
 
+	// 該当しないWordがsentences_wordsに追加されないことをテスト：
 	// 「赤いりんごを食べた」には「青い」が含まれないため、
 	// sentences_wordsに追加されない
 	var blueCount int
@@ -273,6 +284,21 @@ func TestCreateSentenceIncludingWords(t *testing.T) {
 	).Scan(&blueCount)
 
 	assert.Equal(t, 0, blueCount)
+
+	// 2つ目の該当するWordがsentences_wordsに追加されることをテスト：
+	// 「赤いりんごを食べた」には「食べた」が含まれるため、
+	// sentences_wordsに追加される
+	var ateCount int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences_words
+		WHERE sentence_id = $1
+			AND word_id = $2;
+		`,
+		sentenceId,
+		ateWordId,
+	).Scan(&ateCount)
+
+	assert.Equal(t, 1, ateCount)
 }
 
 func TestCreateSentenceIncludingInvalidWords(t *testing.T) {

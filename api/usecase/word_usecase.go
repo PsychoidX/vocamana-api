@@ -155,32 +155,35 @@ func (wu *WordUsecase) GetAssociatedSentencesWithLinkByWordId(userId, wordId uin
 	for _, sentence := range userAssociatedSentences {
 		sentenceText := sentence.Sentence
 
-		// sentence.Sentence中に含まれるword.Wordをaタグに置換
-		word, err := wu.wr.GetWordById(userId, wordId)
+		// sentenceに紐づくWordを全件取得し、sentence中におけるそのWordの出現箇所をリンクに変換
+		words, err := wu.swr.GetAssociatedWordsBySentenceId(userId, sentence.Id)
 		if err != nil {
 			return []model.SentenceWithLink{}, err
 		}
 
-		sentenceText = strings.Replace(
-			sentenceText,
-			word.Word,
-			createWordLink(wordId, word.Word),
-			-1,
-		)
-
-		// sentence.Sentence中に含まれるnotation.Notationをaタグに置換
-		notations, err := wu.nr.GetAllNotations(wordId)
-		if err != nil {
-			return []model.SentenceWithLink{}, err
-		}
-
-		for _, notation := range notations {
+		for _, word := range words {
+			// sentence.Sentence中に含まれるword.Wordをaタグに置換
 			sentenceText = strings.Replace(
 				sentenceText,
-				notation.Notation,
-				createWordLink(wordId, notation.Notation),
+				word.Word,
+				createWordLink(word.Id, word.Word),
 				-1,
 			)
+
+			// sentence.Sentence中に含まれるnotation.Notationをaタグに置換
+			notations, err := wu.nr.GetAllNotations(word.Id)
+			if err != nil {
+				return []model.SentenceWithLink{}, err
+			}
+
+			for _, notation := range notations {
+				sentenceText = strings.Replace(
+					sentenceText,
+					notation.Notation,
+					createWordLink(word.Id, notation.Notation),
+					-1,
+				)
+			}
 		}
 
 		// 置換後のsentence.SentenceからSentenceWithLinkを作成
