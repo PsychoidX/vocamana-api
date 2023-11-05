@@ -30,7 +30,7 @@ func TestGetAllNotations(t *testing.T) {
 		VALUES(nextval('word_id_seq'), $1, 'test notation1')
 		RETURNING id;
 	`,
-	wordId,
+		wordId,
 	).Scan(&notationId1)
 
 	var notationId2 string
@@ -40,7 +40,7 @@ func TestGetAllNotations(t *testing.T) {
 		VALUES(nextval('word_id_seq'), $1, 'test notation2')
 		RETURNING id;
 	`,
-	wordId,
+		wordId,
 	).Scan(&notationId2)
 
 	expectedResponse := fmt.Sprintf(`
@@ -134,7 +134,7 @@ func TestGetAllNotationsWithInvalidWordId(t *testing.T) {
 		VALUES(nextval('word_id_seq'), $1, 'test notation1')
 		RETURNING id;
 	`,
-	wordIdWithUserId1,
+		wordIdWithUserId1,
 	).Scan(&notationIdWithUserId1)
 
 	var notationIdWithUserId2 string
@@ -144,7 +144,7 @@ func TestGetAllNotationsWithInvalidWordId(t *testing.T) {
 		VALUES(nextval('word_id_seq'), $1, 'test notation2')
 		RETURNING id;
 	`,
-	wordIdWithUserId2,
+		wordIdWithUserId2,
 	).Scan(&notationIdWithUserId2)
 
 	expectedResponse := fmt.Sprintf(`
@@ -235,8 +235,8 @@ func TestCreateNotationWithLoggingInUserId(t *testing.T) {
 		WHERE id = $1
 			AND word_id = $2;
 	`,
-	id,
-	wordId,
+		id,
+		wordId,
 	).Scan(&notation)
 
 	assert.Equal(t, "testnotation", notation)
@@ -282,8 +282,144 @@ func TestCreateNotationWithoutLoggingInUserId(t *testing.T) {
 		WHERE id = $1
 			AND word_id = $2;
 	`,
-	id,
-	wordId,
+		id,
+		wordId,
+	).Scan(&count)
+
+	assert.Equal(t, 0, count)
+}
+
+func TestCreateNotationInSentence(t *testing.T) {
+	// ログイン中のUserに紐づくWordに対し、Notationを追加をした時、
+	// 既存のSentence中に新規Notationを含むものがある場合、
+	// sentences_wordsに追加されることをテスト
+
+	// TODO ログイン機能
+	// とりあえずログインUserはuser_id=1とする
+	DeleteAllFromWords()
+	DeleteAllFromSentences()
+	DeleteAllFromNotations()
+
+	var wordId string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'りんご', 'test memo', 1)
+		RETURNING id;
+	`).Scan(&wordId)
+
+	var appleSentenceId string
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('sentence_id_seq'), '赤い林檎を食べた', 1)
+		RETURNING id;
+	`).Scan(&appleSentenceId)
+
+	var lemonSentenceId string
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('sentence_id_seq'), '黄色い檸檬を食べた', 1)
+		RETURNING id;
+	`).Scan(&lemonSentenceId)
+
+	reqBody := `{
+		"notation": "林檎"
+	}`
+
+	ExecController(
+		t,
+		http.MethodPost,
+		"/words/:wordId/notations",
+		[]string{"wordId"},
+		[]string{wordId},
+		reqBody,
+		nc.CreateNotation,
+	)
+
+	// 「赤い林檎を食べた」には「林檎」が含まれるため、
+	// sentences_wordsに追加される
+	var appleCount int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences_words
+		WHERE sentence_id = $1
+			AND word_id = $2;
+		`,
+		appleSentenceId,
+		wordId,
+	).Scan(&appleCount)
+
+	assert.Equal(t, 1, appleCount)
+
+	// 「黄色い檸檬を食べた」には「林檎」が含まれないため、
+	// sentences_wordsに追加されない
+	var lemonCount int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences_words
+		WHERE sentence_id = $1
+			AND word_id = $2;
+		`,
+		lemonSentenceId,
+		wordId,
+	).Scan(&lemonCount)
+
+	assert.Equal(t, 0, lemonCount)
+}
+
+func TestCreateNotationInInvalidSentence(t *testing.T) {
+	// ログイン中のUserに紐づくWordに対し、Notationを追加をした時、
+	// 既存のSentence中に新規Notationを含むものがあるが、
+	// 該当Sentenceのuser_idがログイン中のものと異なる場合、
+	// sentences_wordsに追加されることをテスト
+
+	// TODO ログイン機能
+	// とりあえずログインUserはuser_id=1とする
+	DeleteAllFromWords()
+	DeleteAllFromSentences()
+	DeleteAllFromNotations()
+
+	var wordId string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'りんご', 'test memo', 1)
+		RETURNING id;
+	`).Scan(&wordId)
+
+	var sentenceId string
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('sentence_id_seq'), '赤い林檎を食べた', 2)
+		RETURNING id;
+	`).Scan(&sentenceId)
+
+	reqBody := `{
+		"notation": "林檎"
+	}`
+
+	ExecController(
+		t,
+		http.MethodPost,
+		"/words/:wordId/notations",
+		[]string{"wordId"},
+		[]string{wordId},
+		reqBody,
+		nc.CreateNotation,
+	)
+
+	// 「赤い林檎を食べた」には「林檎」が含まれるが、
+	// user_idが異なるため、
+	// sentences_wordsに追加されない
+	var count int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences_words
+		WHERE sentence_id = $1
+			AND word_id = $2;
+		`,
+		sentenceId,
+		wordId,
 	).Scan(&count)
 
 	assert.Equal(t, 0, count)
@@ -311,7 +447,7 @@ func TestUpdateNotation(t *testing.T) {
 		VALUES(nextval('word_id_seq'), $1, 'test notation')
 		RETURNING id;
 	`,
-	wordId,
+		wordId,
 	).Scan(&notationId)
 
 	reqBody := `{
@@ -348,8 +484,8 @@ func TestUpdateNotation(t *testing.T) {
 		WHERE id = $1
 			AND word_id = $2;
 	`,
-	notationId,
-	wordId,
+		notationId,
+		wordId,
 	).Scan(&notation)
 
 	assert.Equal(t, "updated notation", notation)
@@ -409,7 +545,7 @@ func TestDeleteNotationWithLoggingIn(t *testing.T) {
 		VALUES(nextval('word_id_seq'), $1, 'test notation')
 		RETURNING id;
 	`,
-	wordId,
+		wordId,
 	).Scan(&notationId)
 
 	// 削除されたレコードが返る
@@ -442,8 +578,8 @@ func TestDeleteNotationWithLoggingIn(t *testing.T) {
 		WHERE id = $1
 			AND word_id = $2;
 	`,
-	notationId,
-	wordId,
+		notationId,
+		wordId,
 	).Scan(&count)
 
 	assert.Equal(t, 0, count)
@@ -471,7 +607,7 @@ func TestDeleteNotationWithoutLoggingIn(t *testing.T) {
 		VALUES(nextval('word_id_seq'), $1, 'test notation')
 		RETURNING id;
 	`,
-	wordId,
+		wordId,
 	).Scan(&notationId)
 
 	DoSimpleTest(
@@ -493,8 +629,8 @@ func TestDeleteNotationWithoutLoggingIn(t *testing.T) {
 		WHERE id = $1
 			AND word_id = $2;
 	`,
-	notationId,
-	wordId,
+		notationId,
+		wordId,
 	).Scan(&count)
 
 	assert.Equal(t, 1, count)

@@ -189,6 +189,125 @@ func TestCreateWord(t *testing.T) {
 	assert.Equal(t, "testmemo", memo)
 }
 
+func TestCreateWordInSentences(t *testing.T) {
+	// 既存のSentence中に、新規追加したWordを含むものがある場合、
+	// sentences_wordsに追加されることをテスト
+
+	// TODO ログイン機能
+	// とりあえずuser_id=1のSentenceのみ作成可能とする
+	DeleteAllFromWords()
+	DeleteAllFromSentences()
+
+	var appleSentenceId string
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('sentence_id_seq'), '赤いりんごを食べた', 1)
+		RETURNING id;
+	`).Scan(&appleSentenceId)
+
+	var lemonSentenceId string
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('sentence_id_seq'), '黄色いレモンを食べた', 1)
+		RETURNING id;
+	`).Scan(&lemonSentenceId)
+
+	wordId := GetNextWordsSequenceValue()
+
+	reqBody := `{
+		"word": "りんご",
+		"memo": "test memo"
+	}`
+
+	ExecController(
+		t,
+		http.MethodPost,
+		"/words",
+		nil,
+		nil,
+		reqBody,
+		wc.CreateWord,
+	)
+
+	// 「赤いりんごを食べた」には「赤い」が含まれるため、
+	// sentences_wordsに追加される
+	var appleCount int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences_words
+		WHERE sentence_id = $1
+			AND word_id = $2;
+		`,
+		appleSentenceId,
+		wordId,
+	).Scan(&appleCount)
+
+	assert.Equal(t, 1, appleCount)
+
+	// 「黄色いレモンを食べた」には「りんご」が含まれないため、
+	// sentences_wordsに追加されない
+	var lemonCount int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences_words
+		WHERE sentence_id = $1
+			AND word_id = $2;
+		`,
+		lemonSentenceId,
+		wordId,
+	).Scan(&lemonCount)
+
+	assert.Equal(t, 0, lemonCount)
+}
+
+func TestCreateWordInInvalidSentences(t *testing.T) {
+	// 既存のSentence中に、新規追加したWordを含むものがあるが、
+	// ログイン中のuser_idと異なる場合、
+	// sentences_wordsに追加されないことをテスト
+
+	// TODO ログイン機能
+	// とりあえずuser_id=1のSentenceのみ作成可能とする
+	DeleteAllFromWords()
+	DeleteAllFromSentences()
+
+	var sentenceId string
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('sentence_id_seq'), '赤いりんごを食べた', 0)
+		RETURNING id;
+	`).Scan(&sentenceId)
+
+	wordId := GetNextWordsSequenceValue()
+
+	reqBody := `{
+		"word": "りんご",
+		"memo": "test memo"
+	}`
+
+	ExecController(
+		t,
+		http.MethodPost,
+		"/words",
+		nil,
+		nil,
+		reqBody,
+		wc.CreateWord,
+	)
+
+	var count int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences_words
+		WHERE sentence_id = $1
+			AND word_id = $2;
+		`,
+		sentenceId,
+		wordId,
+	).Scan(&count)
+
+	assert.Equal(t, 0, count)
+}
+
 func TestUpdateWordWithLoggingInUserId(t *testing.T) {
 	// ログイン中のUserに紐づくWordをUpdateできることをテスト
 	// TODO ログイン機能
