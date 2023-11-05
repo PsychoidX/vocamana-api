@@ -7,15 +7,19 @@ import (
 )
 
 type NotationUsecase struct {
-	nr repository.INotationRepository
-	wr repository.IWordRepository
+	wr  repository.IWordRepository
+	sr  repository.ISentenceRepository
+	swr repository.ISentencesWordsRepository
+	nr  repository.INotationRepository
 }
 
 func NewNotationUsecase(
-	nr repository.INotationRepository,
 	wr repository.IWordRepository,
+	sr repository.ISentenceRepository,
+	swr repository.ISentencesWordsRepository,
+	nr repository.INotationRepository,
 ) *NotationUsecase {
-	return &NotationUsecase{nr, wr}
+	return &NotationUsecase{wr, sr, swr, nr}
 }
 
 func (nu *NotationUsecase) GetAllNotations(userId, wordId uint64) ([]model.Notation, error) {
@@ -54,6 +58,16 @@ func (nu *NotationUsecase) CreateNotation(userId uint64, notationCreation model.
 	if err != nil {
 		return model.Notation{}, err
 	}
+
+	// 既存のSentenceに追加されたWord含まれればsentences_wordsに追加
+	AssociateWordWithAllSentences(
+		userId,
+		createdNotation.WordId,
+		nu.wr,
+		nu.sr,
+		nu.swr,
+		nu.nr,
+	)
 
 	return createdNotation, nil
 }

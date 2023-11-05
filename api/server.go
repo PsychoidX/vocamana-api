@@ -39,7 +39,7 @@ func main() {
 	// Usecase
 	wu := usecase.NewWordUsecase(wr, sr, swr, nr)
 	su := usecase.NewSentenceUsecase(sr, wr, swr, nr)
-	nu := usecase.NewNotationUsecase(nr, wr)
+	nu := usecase.NewNotationUsecase(wr, sr, swr, nr)
 
 	// Controller
 	wc := controller.NewWordController(wu)
