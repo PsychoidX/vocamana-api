@@ -678,7 +678,7 @@ func TestGetAssociatedSentencesWithInvalidSentenceId(t *testing.T) {
 
 func TestGetAssociatedSentencesWithLink(t *testing.T) {
 	// WordとSentenceがどちらもログイン中のuser_idに紐づく場合、
-	// Wordに紐づくSentenceをリンク付きで取得できることをテスト
+	// Sentenceを、WordとNotationがaタグに変換された状態で取得できることをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のSentenceのみ取得可能とする
 	DeleteAllFromWords()
@@ -688,7 +688,7 @@ func TestGetAssociatedSentencesWithLink(t *testing.T) {
 	db.QueryRow(`
 		INSERT INTO sentences
 		(id, sentence, user_id)
-		VALUES(nextval('sentence_id_seq'), 'text word notation 1 text word notation 2 text', 1)
+		VALUES(nextval('sentence_id_seq'), 'りんごとリンゴと林檎が同一であるとみなす', 1)
 		RETURNING id;
 	`).Scan(&sentenceId)
 
@@ -696,7 +696,7 @@ func TestGetAssociatedSentencesWithLink(t *testing.T) {
 	db.QueryRow(`
 		INSERT INTO words
 		(id, word, memo, user_id)
-		VALUES(nextval('word_id_seq'), 'word', 'word memo', 1)
+		VALUES(nextval('word_id_seq'), 'りんご', 'word memo', 1)
 		RETURNING id;
 	`).Scan(&wordId)
 
@@ -704,8 +704,8 @@ func TestGetAssociatedSentencesWithLink(t *testing.T) {
 		INSERT INTO notations
 		(id, word_id, notation)
 		VALUES
-		(nextval('word_id_seq'), $1, 'word notation 1'),
-		(nextval('word_id_seq'), $1, 'word notation 2');
+		(nextval('word_id_seq'), $1, '林檎'),
+		(nextval('word_id_seq'), $1, 'リンゴ');
 		`,
 		wordId,
 	)
@@ -724,11 +724,12 @@ func TestGetAssociatedSentencesWithLink(t *testing.T) {
 		[
 			{
 				"id": %s,
-				"sentence": "text <a href=\"words/%s\">word notation 1</a> text <a href=\"words/%s\">word notation 2</a> text",
+				"sentence": "<a href=\"/words/%s\">りんご</a>と<a href=\"/words/%s\">リンゴ</a>と<a href=\"/words/%s\">林檎</a>が同一であるとみなす",
 				"user_id": 1
 			}
 		]`,
 		sentenceId,
+		wordId,
 		wordId,
 		wordId,
 	)
