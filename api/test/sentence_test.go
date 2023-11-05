@@ -325,6 +325,192 @@ func TestCreateSentenceIncludingInvalidWords(t *testing.T) {
 	assert.Equal(t, 0, count)
 }
 
+func TestCreateSentenceIncludingNotations(t *testing.T) {
+	// 登録済みのNotationの中に、新規追加されたSentence中に含まれるものがある場合、
+	// sentences_wordsに追加されることをテスト
+
+	// TODO ログイン機能
+	// とりあえずuser_id=1のSentenceのみ作成可能とする
+	DeleteAllFromWords()
+	DeleteAllFromSentences()
+
+	var appleWordId string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'りんご', 'test memo', 1)
+		RETURNING id;
+	`).Scan(&appleWordId)
+
+	// 「りんご」の別表記として「林檎」を追加
+	var appleNotationId string
+	db.QueryRow(`
+		INSERT INTO notations
+		(id, word_id, notation)
+		VALUES(nextval('notation_id_seq'), $1, '林檎')
+		RETURNING id;
+	`,
+		appleWordId,
+	).Scan(&appleNotationId)
+
+	var eatWordId string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), '食べる', 'test memo', 1)
+		RETURNING id;
+	`).Scan(&eatWordId)
+
+	// 「食べる」の別表記として「食う」を追加
+	var eatNotationId string
+	db.QueryRow(`
+		INSERT INTO notations
+		(id, word_id, notation)
+		VALUES(nextval('notation_id_seq'), $1, '食う')
+		RETURNING id;
+	`,
+		eatWordId,
+	).Scan(&eatNotationId)
+
+	var fruitWordId string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), '果物', 'test memo', 1)
+		RETURNING id;
+	`).Scan(&fruitWordId)
+
+	// 「果物」の別表記として「果実」を追加
+	var fruitNotationId string
+	db.QueryRow(`
+		INSERT INTO notations
+		(id, word_id, notation)
+		VALUES(nextval('notation_id_seq'), $1, '果実')
+		RETURNING id;
+	`,
+		fruitWordId,
+	).Scan(&fruitNotationId)
+
+	sentenceId := GetNextSentencesSequenceValue()
+
+	reqBody := `{
+		"sentence": "赤い林檎を食う"
+	}`
+
+	ExecController(
+		t,
+		http.MethodPost,
+		"/sentences",
+		nil,
+		nil,
+		reqBody,
+		sc.CreateSentence,
+	)
+
+	// 「赤い林檎を食う」には「りんご」の別表記「林檎」が含まれるため、
+	// sentences_wordsに追加される
+	var appleCount int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences_words
+		WHERE sentence_id = $1
+			AND word_id = $2;
+		`,
+		sentenceId,
+		appleWordId,
+	).Scan(&appleCount)
+
+	assert.Equal(t, 1, appleCount)
+
+	// 「赤い林檎を食う」には「食べる」の別表記「食う」が含まれるため、
+	// sentences_wordsに追加される
+	var eatCount int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences_words
+		WHERE sentence_id = $1
+			AND word_id = $2;
+		`,
+		sentenceId,
+		eatWordId,
+	).Scan(&eatCount)
+
+	assert.Equal(t, 1, eatCount)
+
+	// 「赤い林檎を食う」には「果物」も、その別表記「果実」も含まれないため、
+	// sentences_wordsに追加されない
+	var fruitCount int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences_words
+		WHERE sentence_id = $1
+			AND word_id = $2;
+		`,
+		sentenceId,
+		fruitWordId,
+	).Scan(&fruitCount)
+
+	assert.Equal(t, 0, fruitCount)
+}
+
+func TestCreateSentenceIncludingInvalidNotations(t *testing.T) {
+	// 登録済みのNotationの中に、新規追加されたSentence中に含まれるものがあるが、
+	// 含まれるNotationが紐づくWordのUserIdがログイン中のuser_idと異なる場合
+	// sentences_wordsに追加されることをテスト
+
+	// TODO ログイン機能
+	// とりあえずuser_id=1のSentenceのみ作成可能とする
+	DeleteAllFromWords()
+	DeleteAllFromSentences()
+
+	var appleWordId string
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), 'りんご', 'test memo', 2)
+		RETURNING id;
+	`).Scan(&appleWordId)
+
+	// 「りんご」の別表記として「林檎」を追加
+	var appleNotationId string
+	db.QueryRow(`
+		INSERT INTO notations
+		(id, word_id, notation)
+		VALUES(nextval('notation_id_seq'), $1, '林檎')
+		RETURNING id;
+	`,
+		appleWordId,
+	).Scan(&appleNotationId)
+
+	sentenceId := GetNextSentencesSequenceValue()
+
+	reqBody := `{
+		"sentence": "赤い林檎を食う"
+	}`
+
+	ExecController(
+		t,
+		http.MethodPost,
+		"/sentences",
+		nil,
+		nil,
+		reqBody,
+		sc.CreateSentence,
+	)
+
+	// 「赤い林檎を食う」には「りんご」の別表記「林檎」が含まれるが、
+	// Wordのuser_idがログイン中のものと異なるため、
+	// sentences_wordsに追加されない
+	var appleCount int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences_words
+		WHERE sentence_id = $1
+			AND word_id = $2;
+		`,
+		sentenceId,
+		appleWordId,
+	).Scan(&appleCount)
+
+	assert.Equal(t, 0, appleCount)
+}
+
 func TestUpdateSentenceWithLoggingInUserId(t *testing.T) {
 	// ログイン中のUserに紐づくSentenceを更新できることをテスト
 	// TODO ログイン機能
