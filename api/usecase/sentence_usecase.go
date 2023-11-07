@@ -51,9 +51,9 @@ func (su *SentenceUsecase) GetSentenceById(userId uint64, sentenceId uint64) (mo
 	return sentence, nil
 }
 
-func (su *SentenceUsecase) CreateSentence(sentenceCreation model.SentenceCreation) (model.Sentence, error) {
-	// TODO: userIdがログイン中のものと一致することを確認
-	userId := sentenceCreation.UserId
+func (su *SentenceUsecase) createSentence(userId uint64, sentenceCreation model.SentenceCreation) (model.Sentence, error) {
+	// sentenceCreationで入力されたSentenceを1件DBに追加
+	// user_idの検証は行わないため、呼び出し元での検証が必須
 
 	createdSentence, err := su.sr.InsertSentence(sentenceCreation)
 	if err != nil {
@@ -64,6 +64,39 @@ func (su *SentenceUsecase) CreateSentence(sentenceCreation model.SentenceCreatio
 	su.AssociateSentenceWithAllWords(userId, createdSentence.Id)
 
 	return createdSentence, nil
+}
+
+
+func (su *SentenceUsecase) CreateSingleSentence(sentenceCreation model.SentenceCreation) (model.Sentence, error) {
+	// TODO: userIdがログイン中のものと一致することを確認
+	userId := sentenceCreation.UserId
+
+	createdSentence, err := su.createSentence(userId, sentenceCreation)
+	if err != nil {
+		return model.Sentence{}, err
+	}
+
+	return createdSentence, nil
+}
+
+func (su *SentenceUsecase) CreateMultipleSentences(sentenceCreations []model.SentenceCreation) ([]model.Sentence, error) {
+	// TODO: userIdがログイン中のものと一致することを確認
+	// 将来的にuserIdはreqBodyに含めずセッションから取得するため、
+	// 汚いが一旦以下の実装とする
+	userId := sentenceCreations[0].UserId
+
+	// TODO 1件でも失敗したらロールバックする実装に変更
+	var createdSentences []model.Sentence
+	for _, sentenceCreation := range sentenceCreations {
+		createdSentence, err := su.createSentence(userId, sentenceCreation)
+		if err != nil {
+			return []model.Sentence{}, err
+		}
+
+		createdSentences = append(createdSentences, createdSentence)
+	}
+	
+	return createdSentences, nil
 }
 
 func (su *SentenceUsecase) UpdateSentence(sentenceUpdate model.SentenceUpdate) (model.Sentence, error) {

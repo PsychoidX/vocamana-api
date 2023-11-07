@@ -13,6 +13,7 @@ type ISentenceController interface {
 	GetAllSentences(c echo.Context) error
 	GetSentenceById(c echo.Context) error
 	CreateSentence(c echo.Context) error
+	CreateMultipleSentences(c echo.Context) error
 	UpdateSentence(c echo.Context) error
 	DeleteSentence(c echo.Context) error
 	AssociateSentenceWithWords(c echo.Context) error
@@ -88,7 +89,7 @@ func (sc *SentenceController) CreateSentence(c echo.Context) error {
 		UserId:   userId,
 	}
 
-	sentence, err := sc.su.CreateSentence(sentenceCreation)
+	sentence, err := sc.su.CreateSingleSentence(sentenceCreation)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -100,6 +101,41 @@ func (sc *SentenceController) CreateSentence(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, sentenceRes)
+}
+
+func (sc *SentenceController) CreateMultipleSentences(c echo.Context) error {
+	var userId uint64 = 1 // TODO セッションから取得
+
+	var req model.MultipleSentencesCreationRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	var sentenceCreations []model.SentenceCreation
+	for _, sentenceCreationReq := range req.Sentences {
+		sentenceCreation := model.SentenceCreation{
+			Sentence: sentenceCreationReq.Sentence,
+			UserId:   userId,
+		}
+		sentenceCreations = append(sentenceCreations, sentenceCreation)
+	} 
+
+	sentences, err := sc.su.CreateMultipleSentences(sentenceCreations)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	var sentenceResponses []model.SentenceResponse
+	for _, sentence := range sentences {
+		sentenceRes := model.SentenceResponse{
+			Id:       sentence.Id,
+			Sentence: sentence.Sentence,
+			UserId:   sentence.UserId,
+		}
+		sentenceResponses = append(sentenceResponses, sentenceRes)
+	}
+
+	return c.JSON(http.StatusCreated, sentenceResponses)
 }
 
 func (sc *SentenceController) UpdateSentence(c echo.Context) error {

@@ -20,6 +20,10 @@ type SentenceCreationRequest struct {
 	Sentence string `json:"sentence"`
 }
 
+type MultipleSentencesCreationRequest struct {
+	Sentences []SentenceCreationRequest `json:"sentences"`
+}
+
 type SentenceCreation struct {
 	Sentence string
 	UserId   uint64

@@ -58,6 +58,7 @@ func main() {
 	s.GET("", sc.GetAllSentences)
 	s.GET("/:sentenceId", sc.GetSentenceById)
 	s.POST("", sc.CreateSentence)
+	s.POST("/multiple", sc.CreateMultipleSentences)
 	s.PUT("/:sentenceId", sc.UpdateSentence)
 	s.DELETE("/:sentenceId", sc.DeleteSentence)
 	s.GET("/:sentenceId/associated-words", sc.GetAssociatedWords)

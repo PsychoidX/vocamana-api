@@ -537,6 +537,78 @@ func TestCreateSentenceIncludingInvalidNotations(t *testing.T) {
 	assert.Equal(t, 0, appleCount)
 }
 
+func TestCreateMultipleSentences(t *testing.T) {
+	// ログイン中のUserに紐づくSentenceを作成できることをテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のSentenceのみ作成可能とする
+	DeleteAllFromSentences()
+
+	sentenceId1 := GetNextSentencesSequenceValue()
+	sentenceId2 := sentenceId1 + 1
+
+	reqBody := `{
+		"sentences": [
+				{
+					"sentence": "test sentence 1"
+				},
+				{
+					"sentence": "test sentence 2"
+				}
+			]
+		}`
+
+	// 登録されたレコードが返る
+	expectedResponse := fmt.Sprintf(`
+		[
+			{
+				"id": %d,
+				"sentence": "test sentence 1",
+				"user_id": 1
+			},
+			{
+				"id": %d,
+				"sentence": "test sentence 2",
+				"user_id": 1
+			}
+		]`,
+		sentenceId1,
+		sentenceId2,
+	)
+
+	DoSimpleTest(
+		t,
+		http.MethodPost,
+		"/sentences/multiple",
+		nil,
+		nil,
+		reqBody,
+		sc.CreateMultipleSentences,
+		http.StatusCreated,
+		expectedResponse,
+	)
+
+	// DBにレコードが追加される
+	var sentence1 string
+	db.QueryRow(`
+		SELECT sentence FROM sentences
+		WHERE id = $1;
+	`,
+		sentenceId1,
+	).Scan(&sentence1)
+
+	assert.Equal(t, "test sentence 1", sentence1)
+
+	var sentence2 string
+	db.QueryRow(`
+		SELECT sentence FROM sentences
+		WHERE id = $1;
+	`,
+		sentenceId2,
+	).Scan(&sentence2)
+
+	assert.Equal(t, "test sentence 2", sentence2)
+}
+
 func TestUpdateSentenceWithLoggingInUserId(t *testing.T) {
 	// ログイン中のUserに紐づくSentenceを更新できることをテスト
 	// TODO ログイン機能
