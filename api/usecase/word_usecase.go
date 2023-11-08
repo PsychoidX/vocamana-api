@@ -47,8 +47,10 @@ func (wu *WordUsecase) GetWordById(loginUserId, wordId uint64) (model.Word, erro
 	return word, nil
 }
 
-func (wu *WordUsecase) CreateWord(loginUserId uint64, wordCreation model.WordCreation) (model.Word, error) {
-	createdWord, err := wu.wr.InsertWord(loginUserId, wordCreation)
+func (wu *WordUsecase) CreateWord(wordCreation model.WordCreation) (model.Word, error) {
+	loginUserId := wordCreation.UserId
+
+	createdWord, err := wu.wr.InsertWord(wordCreation)
 	if err != nil {
 		return model.Word{}, err
 	}
@@ -66,11 +68,11 @@ func (wu *WordUsecase) CreateWord(loginUserId uint64, wordCreation model.WordCre
 	return createdWord, nil
 }
 
-func (wu *WordUsecase) CreateMultipleWord(loginUserId uint64, wordCreations []model.WordCreation) ([]model.Word, error) {
+func (wu *WordUsecase) CreateMultipleWord(wordCreations []model.WordCreation) ([]model.Word, error) {
 	// TODO 1件でも失敗したらロールバックする実装に変更
 	var createdWords []model.Word
 	for _, wordCreation := range wordCreations {
-		createdWord, err := wu.CreateWord(loginUserId, wordCreation)
+		createdWord, err := wu.CreateWord(wordCreation)
 		if err != nil {
 			return []model.Word{}, err
 		}
@@ -96,10 +98,10 @@ func (wu *WordUsecase) DeleteWord(loginUserId, wordId uint64) (model.Word, error
 	return deletedWord, nil
 }
 
-func (wu *WordUsecase) UpdateWord(loginUserId uint64, wordUpdate model.WordUpdate) (model.Word, error) {
+func (wu *WordUsecase) UpdateWord(wordUpdate model.WordUpdate) (model.Word, error) {
 	// TODO: userIdがログイン中のものと一致することを確認
 
-	updatedWord, err := wu.wr.UpdateWord(loginUserId, wordUpdate)
+	updatedWord, err := wu.wr.UpdateWord(wordUpdate)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// レコードが更新されなかった場合

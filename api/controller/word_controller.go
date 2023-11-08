@@ -97,9 +97,10 @@ func (wc *WordController) CreateWord(c echo.Context) error {
 	WordCreation := model.WordCreation{
 		Word:   req.Word,
 		Memo:   req.Memo,
+		UserId: loginUserId,
 	}
 
-	word, err := wc.wu.CreateWord(loginUserId, WordCreation)
+	word, err := wc.wu.CreateWord(WordCreation)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -165,9 +166,10 @@ func (wc *WordController) UpdateWord(c echo.Context) error {
 		Id:     wordId,
 		Word:   req.Word,
 		Memo:   req.Memo,
+		UserId: loginUserId,
 	}
 
-	word, err := wc.wu.UpdateWord(loginUserId, wordUpdate)
+	word, err := wc.wu.UpdateWord(wordUpdate)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}

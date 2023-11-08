@@ -9,9 +9,9 @@ import (
 type IWordRepository interface {
 	GetAllWords(userId uint64) ([]model.Word, error)
 	GetWordById(userId, wordId uint64) (model.Word, error)
-	InsertWord(userId uint64, wordCreation model.WordCreation) (model.Word, error)
+	InsertWord(wordCreation model.WordCreation) (model.Word, error)
 	DeleteWordById(userId, wordId uint64) (model.Word, error)
-	UpdateWord(userId uint64, wordUpate model.WordUpdate) (model.Word, error)
+	UpdateWord(wordUpate model.WordUpdate) (model.Word, error)
 	IsWordOwner(uint64, uint64) (bool, error)
 }
 
@@ -74,7 +74,7 @@ func (wr *WordRepository) GetWordById(userId uint64, wordId uint64) (model.Word,
 	return word, nil
 }
 
-func (wr *WordRepository) InsertWord(userId uint64, newWord model.WordCreation) (model.Word, error) {
+func (wr *WordRepository) InsertWord(wordCreation model.WordCreation) (model.Word, error) {
 	createdWord := model.Word{}
 
 	err := wr.db.QueryRow(
@@ -82,9 +82,9 @@ func (wr *WordRepository) InsertWord(userId uint64, newWord model.WordCreation) 
 		" (id, word, memo, user_id)" +
 		" VALUES(" + wr.getSequenceNextvalQuery() + ", $1, $2, $3)" +
 		" RETURNING id, word, memo, user_id, created_at, updated_at;",
-		newWord.Word,
-		newWord.Memo,
-		userId,
+		wordCreation.Word,
+		wordCreation.Memo,
+		wordCreation.UserId,
 	).Scan(
 		&createdWord.Id,
 		&createdWord.Word,
@@ -126,7 +126,7 @@ func (wr *WordRepository) DeleteWordById(userId, wordId uint64) (model.Word, err
 	return deletedWord, nil
 }
 
-func (wr *WordRepository) UpdateWord(userId uint64, wordUpdate model.WordUpdate) (model.Word, error) {
+func (wr *WordRepository) UpdateWord(wordUpdate model.WordUpdate) (model.Word, error) {
 	updatedWord := model.Word{}
 
 	err := wr.db.QueryRow(`
@@ -139,7 +139,7 @@ func (wr *WordRepository) UpdateWord(userId uint64, wordUpdate model.WordUpdate)
 		`,
 		wordUpdate.Word,
 		wordUpdate.Memo,
-		userId,
+		wordUpdate.UserId,
 		wordUpdate.Id,
 	).Scan(
 		&updatedWord.Id,
