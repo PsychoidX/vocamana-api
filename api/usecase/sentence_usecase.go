@@ -23,10 +23,8 @@ func NewSentenceUsecase(
 	return &SentenceUsecase{sr, wr, swr, nr}
 }
 
-func (su *SentenceUsecase) GetAllSentences(userId uint64) ([]model.Sentence, error) {
-	// TODO: userIdがログイン中のものと一致することを確認
-
-	sentences, err := su.sr.GetAllSentences(userId)
+func (su *SentenceUsecase) GetAllSentences(loginUserId uint64) ([]model.Sentence, error) {
+	sentences, err := su.sr.GetAllSentences(loginUserId)
 	if err != nil {
 		return []model.Sentence{}, err
 	}
@@ -34,10 +32,8 @@ func (su *SentenceUsecase) GetAllSentences(userId uint64) ([]model.Sentence, err
 	return sentences, nil
 }
 
-func (su *SentenceUsecase) GetSentenceById(userId uint64, sentenceId uint64) (model.Sentence, error) {
-	// TODO: userIdがログイン中のものと一致することを確認
-
-	sentence, err := su.sr.GetSentenceById(userId, sentenceId)
+func (su *SentenceUsecase) GetSentenceById(loginUserId uint64, sentenceId uint64) (model.Sentence, error) {
+	sentence, err := su.sr.GetSentenceById(loginUserId, sentenceId)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// マッチするレコードが無い場合
@@ -51,9 +47,8 @@ func (su *SentenceUsecase) GetSentenceById(userId uint64, sentenceId uint64) (mo
 	return sentence, nil
 }
 
-func (su *SentenceUsecase) createSentence(userId uint64, sentenceCreation model.SentenceCreation) (model.Sentence, error) {
-	// sentenceCreationで入力されたSentenceを1件DBに追加
-	// user_idの検証は行わないため、呼び出し元での検証が必須
+func (su *SentenceUsecase) CreateSentence(sentenceCreation model.SentenceCreation) (model.Sentence, error) {
+	loginUserId := sentenceCreation.UserId
 
 	createdSentence, err := su.sr.InsertSentence(sentenceCreation)
 	if err != nil {
@@ -61,34 +56,16 @@ func (su *SentenceUsecase) createSentence(userId uint64, sentenceCreation model.
 	}
 
 	// 追加されたSentenceに既存のWordが含まれればsentences_wordsに追加
-	su.AssociateSentenceWithAllWords(userId, createdSentence.Id)
-
-	return createdSentence, nil
-}
-
-
-func (su *SentenceUsecase) CreateSingleSentence(sentenceCreation model.SentenceCreation) (model.Sentence, error) {
-	// TODO: userIdがログイン中のものと一致することを確認
-	userId := sentenceCreation.UserId
-
-	createdSentence, err := su.createSentence(userId, sentenceCreation)
-	if err != nil {
-		return model.Sentence{}, err
-	}
+	su.AssociateSentenceWithAllWords(loginUserId, createdSentence.Id)
 
 	return createdSentence, nil
 }
 
 func (su *SentenceUsecase) CreateMultipleSentences(sentenceCreations []model.SentenceCreation) ([]model.Sentence, error) {
-	// TODO: userIdがログイン中のものと一致することを確認
-	// 将来的にuserIdはreqBodyに含めずセッションから取得するため、
-	// 汚いが一旦以下の実装とする
-	userId := sentenceCreations[0].UserId
-
 	// TODO 1件でも失敗したらロールバックする実装に変更
 	var createdSentences []model.Sentence
 	for _, sentenceCreation := range sentenceCreations {
-		createdSentence, err := su.createSentence(userId, sentenceCreation)
+		createdSentence, err := su.CreateSentence(sentenceCreation)
 		if err != nil {
 			return []model.Sentence{}, err
 		}
@@ -100,8 +77,6 @@ func (su *SentenceUsecase) CreateMultipleSentences(sentenceCreations []model.Sen
 }
 
 func (su *SentenceUsecase) UpdateSentence(sentenceUpdate model.SentenceUpdate) (model.Sentence, error) {
-	// TODO: userIdがログイン中のものと一致することを確認
-
 	updatedSentence, err := su.sr.UpdateSentence(sentenceUpdate)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -116,10 +91,8 @@ func (su *SentenceUsecase) UpdateSentence(sentenceUpdate model.SentenceUpdate) (
 	return updatedSentence, nil
 }
 
-func (su *SentenceUsecase) DeleteSentence(userId uint64, sentenceId uint64) (model.Sentence, error) {
-	// TODO: userIdがログイン中のものと一致することを確認
-
-	deletedSentence, err := su.sr.DeleteSentenceById(userId, sentenceId)
+func (su *SentenceUsecase) DeleteSentence(loginUserId uint64, sentenceId uint64) (model.Sentence, error) {
+	deletedSentence, err := su.sr.DeleteSentenceById(loginUserId, sentenceId)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// レコードが削除されなかった場合
@@ -133,11 +106,9 @@ func (su *SentenceUsecase) DeleteSentence(userId uint64, sentenceId uint64) (mod
 	return deletedSentence, nil
 }
 
-func (su *SentenceUsecase) AssociateSentenceWithWords(userId uint64, sentenceId uint64, wordIds model.WordIds) (model.WordIds, error) {
-	// TODO: userIdがログイン中のものと一致することを確認
-
-	// sentenceIdの所有者がuserIdでない場合何もしない
-	isSentenceOwner, err := su.sr.IsSentenceOwner(sentenceId, userId)
+func (su *SentenceUsecase) AssociateSentenceWithWords(loginUserId uint64, sentenceId uint64, wordIds model.WordIds) (model.WordIds, error) {
+	// sentenceIdの所有者がloginUserIdでない場合何もしない
+	isSentenceOwner, err := su.sr.IsSentenceOwner(sentenceId, loginUserId)
 	if err != nil {
 		return model.WordIds{}, err
 	}
@@ -148,8 +119,8 @@ func (su *SentenceUsecase) AssociateSentenceWithWords(userId uint64, sentenceId 
 	var associatedWordIds []uint64
 
 	for _, wordId := range wordIds.WordIds {
-		// wordIdの所有者がuserIdでない場合continue
-		isWordOwner, err := su.wr.IsWordOwner(wordId, userId)
+		// wordIdの所有者がloginUserIdでない場合continue
+		isWordOwner, err := su.wr.IsWordOwner(wordId, loginUserId)
 		if err != nil {
 			return model.WordIds{}, err
 		}
@@ -171,11 +142,9 @@ func (su *SentenceUsecase) AssociateSentenceWithWords(userId uint64, sentenceId 
 	return resultWordIds, nil
 }
 
-func (su *SentenceUsecase) GetAssociatedWordsBySentenceId(userId uint64, sentenceId uint64) ([]model.Word, error) {
-	// TODO: userIdがログイン中のものと一致することを確認
-
-	// sentenceIdの所有者がuserIdでない場合ゼロ値を返す
-	isSentenceOwner, err := su.sr.IsSentenceOwner(sentenceId, userId)
+func (su *SentenceUsecase) GetAssociatedWordsBySentenceId(loginUserId uint64, sentenceId uint64) ([]model.Word, error) {
+	// sentenceIdの所有者がloginUserIdでない場合ゼロ値を返す
+	isSentenceOwner, err := su.sr.IsSentenceOwner(sentenceId, loginUserId)
 	if err != nil {
 		return []model.Word{}, err
 	}
@@ -183,7 +152,7 @@ func (su *SentenceUsecase) GetAssociatedWordsBySentenceId(userId uint64, sentenc
 		return []model.Word{}, nil
 	}
 
-	words, err := su.swr.GetAssociatedWordsBySentenceId(userId, sentenceId)
+	words, err := su.swr.GetAssociatedWordsBySentenceId(loginUserId, sentenceId)
 	if err != nil {
 		return []model.Word{}, err
 	}
@@ -191,8 +160,8 @@ func (su *SentenceUsecase) GetAssociatedWordsBySentenceId(userId uint64, sentenc
 	// リポジトリの返り値のuserIdを検証
 	userWords := []model.Word{}
 	for _, word := range words {
-		// wordの所有者がuserIdでない場合continue
-		isWordOwner, err := su.wr.IsWordOwner(word.Id, userId)
+		// wordの所有者がloginUserIdでない場合continue
+		isWordOwner, err := su.wr.IsWordOwner(word.Id, loginUserId)
 		if err != nil {
 			return []model.Word{}, err
 		}
@@ -206,14 +175,12 @@ func (su *SentenceUsecase) GetAssociatedWordsBySentenceId(userId uint64, sentenc
 	return userWords, nil
 }
 
-func (su *SentenceUsecase) AssociateSentenceWithAllWords(userId uint64, sentenceId uint64) ([]model.Word, error) {
-	// userIdに紐づく全Wordに対し、
+func (su *SentenceUsecase) AssociateSentenceWithAllWords(loginUserId uint64, sentenceId uint64) ([]model.Word, error) {
+	// loginUserIdに紐づく全Wordに対し、
 	// sentenceIdのSentence中にWordまたはNotationが含まれればsentences_wordsにレコード追加
 
-	// TODO: userIdがログイン中のものと一致することを確認
-
-	// sentenceIdの所有者がuserIdでない場合何もしない
-	isSentenceOwner, err := su.sr.IsSentenceOwner(sentenceId, userId)
+	// sentenceIdの所有者がloginUserIdでない場合何もしない
+	isSentenceOwner, err := su.sr.IsSentenceOwner(sentenceId, loginUserId)
 	if err != nil {
 		return []model.Word{}, err
 	}
@@ -221,12 +188,12 @@ func (su *SentenceUsecase) AssociateSentenceWithAllWords(userId uint64, sentence
 		return []model.Word{}, nil
 	}
 
-	sentence, err := su.GetSentenceById(userId, sentenceId)
+	sentence, err := su.GetSentenceById(loginUserId, sentenceId)
 	if err != nil {
 		return []model.Word{}, err
 	}
 
-	userWords, err := su.wr.GetAllWords(userId)
+	userWords, err := su.wr.GetAllWords(loginUserId)
 	if err != nil {
 		return []model.Word{}, err
 	}

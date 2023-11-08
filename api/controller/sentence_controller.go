@@ -29,9 +29,12 @@ func NewSentenceController(su *usecase.SentenceUsecase) ISentenceController {
 }
 
 func (sc *SentenceController) GetAllSentences(c echo.Context) error {
-	var userId uint64 = 1 // TODO セッションから取得
+	loginUserId, err := GetLoginUserId()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
 
-	sentences, err := sc.su.GetAllSentences(userId)
+	sentences, err := sc.su.GetAllSentences(loginUserId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -50,14 +53,17 @@ func (sc *SentenceController) GetAllSentences(c echo.Context) error {
 }
 
 func (sc *SentenceController) GetSentenceById(c echo.Context) error {
-	var userId uint64 = 1 // TODO セッションから取得
+	loginUserId, err := GetLoginUserId()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
 
 	sentenceId, err := strconv.ParseUint(c.Param("sentenceId"), 10, 32)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	sentence, err := sc.su.GetSentenceById(userId, sentenceId)
+	sentence, err := sc.su.GetSentenceById(loginUserId, sentenceId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -77,7 +83,10 @@ func (sc *SentenceController) GetSentenceById(c echo.Context) error {
 }
 
 func (sc *SentenceController) CreateSentence(c echo.Context) error {
-	var userId uint64 = 1 // TODO セッションから取得
+	loginUserId, err := GetLoginUserId()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
 
 	var req model.SentenceCreationRequest
 	if err := c.Bind(&req); err != nil {
@@ -86,10 +95,10 @@ func (sc *SentenceController) CreateSentence(c echo.Context) error {
 
 	sentenceCreation := model.SentenceCreation{
 		Sentence: req.Sentence,
-		UserId:   userId,
+		UserId:   loginUserId,
 	}
 
-	sentence, err := sc.su.CreateSingleSentence(sentenceCreation)
+	sentence, err := sc.su.CreateSentence(sentenceCreation)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -104,7 +113,10 @@ func (sc *SentenceController) CreateSentence(c echo.Context) error {
 }
 
 func (sc *SentenceController) CreateMultipleSentences(c echo.Context) error {
-	var userId uint64 = 1 // TODO セッションから取得
+	loginUserId, err := GetLoginUserId()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
 
 	var req model.MultipleSentencesCreationRequest
 	if err := c.Bind(&req); err != nil {
@@ -115,7 +127,7 @@ func (sc *SentenceController) CreateMultipleSentences(c echo.Context) error {
 	for _, sentenceCreationReq := range req.Sentences {
 		sentenceCreation := model.SentenceCreation{
 			Sentence: sentenceCreationReq.Sentence,
-			UserId:   userId,
+			UserId:   loginUserId,
 		}
 		sentenceCreations = append(sentenceCreations, sentenceCreation)
 	} 
@@ -139,7 +151,10 @@ func (sc *SentenceController) CreateMultipleSentences(c echo.Context) error {
 }
 
 func (sc *SentenceController) UpdateSentence(c echo.Context) error {
-	var userId uint64 = 1 // TODO セッションから取得
+	loginUserId, err := GetLoginUserId()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
 
 	var req model.SentenceUpdateRequest
 	if err := c.Bind(&req); err != nil {
@@ -154,7 +169,7 @@ func (sc *SentenceController) UpdateSentence(c echo.Context) error {
 	sentenceUpdate := model.SentenceUpdate{
 		Id:       sentenceId,
 		Sentence: req.Sentence,
-		UserId:   userId,
+		UserId:   loginUserId,
 	}
 
 	sentence, err := sc.su.UpdateSentence(sentenceUpdate)
@@ -178,14 +193,17 @@ func (sc *SentenceController) UpdateSentence(c echo.Context) error {
 }
 
 func (sc *SentenceController) DeleteSentence(c echo.Context) error {
-	var userId uint64 = 1 // TODO セッションから取得
+	loginUserId, err := GetLoginUserId()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
 
 	sentenceId, err := strconv.ParseUint(c.Param("sentenceId"), 10, 32)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	sentence, err := sc.su.DeleteSentence(userId, sentenceId)
+	sentence, err := sc.su.DeleteSentence(loginUserId, sentenceId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -206,7 +224,10 @@ func (sc *SentenceController) DeleteSentence(c echo.Context) error {
 }
 
 func (sc *SentenceController) AssociateSentenceWithWords(c echo.Context) error {
-	var userId uint64 = 1 // TODO セッションから取得
+	loginUserId, err := GetLoginUserId()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
 
 	sentenceId, err := strconv.ParseUint(c.Param("sentenceId"), 10, 32)
 	if err != nil {
@@ -222,7 +243,7 @@ func (sc *SentenceController) AssociateSentenceWithWords(c echo.Context) error {
 		WordIds: req.WordIds,
 	}
 
-	resultWordIds, err := sc.su.AssociateSentenceWithWords(userId, sentenceId, wordIds)
+	resultWordIds, err := sc.su.AssociateSentenceWithWords(loginUserId, sentenceId, wordIds)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -235,14 +256,17 @@ func (sc *SentenceController) AssociateSentenceWithWords(c echo.Context) error {
 }
 
 func (sc *SentenceController) GetAssociatedWords(c echo.Context) error {
-	var userId uint64 = 1 // TODO セッションから取得
+	loginUserId, err := GetLoginUserId()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
 
 	sentenceId, err := strconv.ParseUint(c.Param("sentenceId"), 10, 32)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	words, err := sc.su.GetAssociatedWordsBySentenceId(userId, sentenceId)
+	words, err := sc.su.GetAssociatedWordsBySentenceId(loginUserId, sentenceId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
