@@ -28,9 +28,12 @@ func NewWordController(wu *usecase.WordUsecase) IWordController {
 }
 
 func (wc *WordController) GetAllWords(c echo.Context) error {
-	var userId uint64 = 1 // TODO セッションから取得
+	loginUserId, err := GetLoginUserId()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
 
-	words, err := wc.wu.GetAllWords(userId)
+	words, err := wc.wu.GetAllWords(loginUserId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -50,14 +53,17 @@ func (wc *WordController) GetAllWords(c echo.Context) error {
 }
 
 func (wc *WordController) GetWordById(c echo.Context) error {
-	var userId uint64 = 1 // TODO セッションから取得
+	loginUserId, err := GetLoginUserId()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
 
 	wordId, err := strconv.ParseUint(c.Param("wordId"), 10, 32)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	word, err := wc.wu.GetWordById(userId, wordId)
+	word, err := wc.wu.GetWordById(loginUserId, wordId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -78,7 +84,10 @@ func (wc *WordController) GetWordById(c echo.Context) error {
 }
 
 func (wc *WordController) CreateWord(c echo.Context) error {
-	var userId uint64 = 1 // TODO セッションから取得
+	loginUserId, err := GetLoginUserId()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
 
 	var req model.WordCreationRequest
 	if err := c.Bind(&req); err != nil {
@@ -88,10 +97,9 @@ func (wc *WordController) CreateWord(c echo.Context) error {
 	WordCreation := model.WordCreation{
 		Word:   req.Word,
 		Memo:   req.Memo,
-		UserId: userId,
 	}
 
-	word, err := wc.wu.CreateWord(WordCreation)
+	word, err := wc.wu.CreateWord(loginUserId, WordCreation)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -107,14 +115,17 @@ func (wc *WordController) CreateWord(c echo.Context) error {
 }
 
 func (wc *WordController) DeleteWord(c echo.Context) error {
-	var userId uint64 = 1 // TODO セッションから取得
+	loginUserId, err := GetLoginUserId()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
 
 	wordId, err := strconv.ParseUint(c.Param("wordId"), 10, 32)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	word, err := wc.wu.DeleteWord(userId, wordId)
+	word, err := wc.wu.DeleteWord(loginUserId, wordId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -135,7 +146,10 @@ func (wc *WordController) DeleteWord(c echo.Context) error {
 }
 
 func (wc *WordController) UpdateWord(c echo.Context) error {
-	var userId uint64 = 1 // TODO セッションから取得
+	loginUserId, err := GetLoginUserId()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
 
 	var req model.WordUpdateRequest
 	if err := c.Bind(&req); err != nil {
@@ -151,10 +165,9 @@ func (wc *WordController) UpdateWord(c echo.Context) error {
 		Id:     wordId,
 		Word:   req.Word,
 		Memo:   req.Memo,
-		UserId: userId,
 	}
 
-	word, err := wc.wu.UpdateWord(wordUpdate)
+	word, err := wc.wu.UpdateWord(loginUserId, wordUpdate)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -176,14 +189,17 @@ func (wc *WordController) UpdateWord(c echo.Context) error {
 }
 
 func (wc *WordController) GetAssociatedSentences(c echo.Context) error {
-	var userId uint64 = 1 // TODO セッションから取得
+	loginUserId, err := GetLoginUserId()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
 
 	wordId, err := strconv.ParseUint(c.Param("wordId"), 10, 32)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	sentences, err := wc.wu.GetAssociatedSentencesByWordId(userId, wordId)
+	sentences, err := wc.wu.GetAssociatedSentencesByWordId(loginUserId, wordId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -202,14 +218,17 @@ func (wc *WordController) GetAssociatedSentences(c echo.Context) error {
 }
 
 func (wc *WordController) GetAssociatedSentencesWithLink(c echo.Context) error {
-	var userId uint64 = 1 // TODO セッションから取得
+	loginUserId, err := GetLoginUserId()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
 
 	wordId, err := strconv.ParseUint(c.Param("wordId"), 10, 32)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	sentenceWithLinks, err := wc.wu.GetAssociatedSentencesWithLinkByWordId(userId, wordId)
+	sentenceWithLinks, err := wc.wu.GetAssociatedSentencesWithLinkByWordId(loginUserId, wordId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}

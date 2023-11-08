@@ -24,10 +24,8 @@ func NewWordUsecase(
 	return &WordUsecase{wr, sr, swr, nr}
 }
 
-func (wu *WordUsecase) GetAllWords(userId uint64) ([]model.Word, error) {
-	// TODO: userIdがログイン中のものと一致することを確認
-
-	words, err := wu.wr.GetAllWords(userId)
+func (wu *WordUsecase) GetAllWords(loginUserId uint64) ([]model.Word, error) {
+	words, err := wu.wr.GetAllWords(loginUserId)
 	if err != nil {
 		return []model.Word{}, err
 	}
@@ -35,10 +33,8 @@ func (wu *WordUsecase) GetAllWords(userId uint64) ([]model.Word, error) {
 	return words, nil
 }
 
-func (wu *WordUsecase) GetWordById(userId uint64, wordId uint64) (model.Word, error) {
-	// TODO: userIdがログイン中のものと一致することを確認
-
-	word, err := wu.wr.GetWordById(userId, wordId)
+func (wu *WordUsecase) GetWordById(loginUserId, wordId uint64) (model.Word, error) {
+	word, err := wu.wr.GetWordById(loginUserId, wordId)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// マッチするレコードが無い場合
@@ -51,19 +47,15 @@ func (wu *WordUsecase) GetWordById(userId uint64, wordId uint64) (model.Word, er
 	return word, nil
 }
 
-func (wu *WordUsecase) CreateWord(wordCreation model.WordCreation) (model.Word, error) {
-	userId := wordCreation.UserId
-
-	// TODO: userIdがログイン中のものと一致することを確認
-
-	createdWord, err := wu.wr.InsertWord(wordCreation)
+func (wu *WordUsecase) CreateWord(loginUserId uint64, wordCreation model.WordCreation) (model.Word, error) {
+	createdWord, err := wu.wr.InsertWord(loginUserId, wordCreation)
 	if err != nil {
 		return model.Word{}, err
 	}
 
 	// 既存のSentenceに追加されたWord含まれればsentences_wordsに追加
 	AssociateWordWithAllSentences(
-		userId,
+		loginUserId,
 		createdWord.Id,
 		wu.wr,
 		wu.sr,
@@ -74,10 +66,23 @@ func (wu *WordUsecase) CreateWord(wordCreation model.WordCreation) (model.Word, 
 	return createdWord, nil
 }
 
-func (wu *WordUsecase) DeleteWord(userId uint64, wordId uint64) (model.Word, error) {
-	// TODO: userIdがログイン中のものと一致することを確認
+func (wu *WordUsecase) CreateMultipleWord(loginUserId uint64, wordCreations []model.WordCreation) ([]model.Word, error) {
+	// TODO 1件でも失敗したらロールバックする実装に変更
+	var createdWords []model.Word
+	for _, wordCreation := range wordCreations {
+		createdWord, err := wu.CreateWord(loginUserId, wordCreation)
+		if err != nil {
+			return []model.Word{}, err
+		}
 
-	deletedWord, err := wu.wr.DeleteWordById(userId, wordId)
+		createdWords = append(createdWords, createdWord)
+	}
+
+	return createdWords, nil
+}
+
+func (wu *WordUsecase) DeleteWord(loginUserId, wordId uint64) (model.Word, error) {
+	deletedWord, err := wu.wr.DeleteWordById(loginUserId, wordId)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// レコードが削除されなかった場合
@@ -91,10 +96,10 @@ func (wu *WordUsecase) DeleteWord(userId uint64, wordId uint64) (model.Word, err
 	return deletedWord, nil
 }
 
-func (wu *WordUsecase) UpdateWord(wordUpdate model.WordUpdate) (model.Word, error) {
+func (wu *WordUsecase) UpdateWord(loginUserId uint64, wordUpdate model.WordUpdate) (model.Word, error) {
 	// TODO: userIdがログイン中のものと一致することを確認
 
-	updatedWord, err := wu.wr.UpdateWord(wordUpdate)
+	updatedWord, err := wu.wr.UpdateWord(loginUserId, wordUpdate)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// レコードが更新されなかった場合
@@ -108,11 +113,9 @@ func (wu *WordUsecase) UpdateWord(wordUpdate model.WordUpdate) (model.Word, erro
 	return updatedWord, nil
 }
 
-func (wu *WordUsecase) GetAssociatedSentencesByWordId(userId uint64, wordId uint64) ([]model.Sentence, error) {
-	// TODO: userIdがログイン中のものと一致することを確認
-
-	// wordIdの所有者がuserIdでない場合ゼロ値を返す
-	isWordOwner, err := wu.wr.IsWordOwner(wordId, userId)
+func (wu *WordUsecase) GetAssociatedSentencesByWordId(loginUserId, wordId uint64) ([]model.Sentence, error) {
+	// wordIdの所有者がloginUserIdでない場合ゼロ値を返す
+	isWordOwner, err := wu.wr.IsWordOwner(wordId, loginUserId)
 	if err != nil {
 		return []model.Sentence{}, err
 	}
@@ -120,7 +123,7 @@ func (wu *WordUsecase) GetAssociatedSentencesByWordId(userId uint64, wordId uint
 		return []model.Sentence{}, nil
 	}
 
-	sentences, err := wu.swr.GetAssociatedSentencesByWordId(userId, wordId)
+	sentences, err := wu.swr.GetAssociatedSentencesByWordId(loginUserId, wordId)
 	if err != nil {
 		return []model.Sentence{}, err
 	}
@@ -128,8 +131,8 @@ func (wu *WordUsecase) GetAssociatedSentencesByWordId(userId uint64, wordId uint
 	// リポジトリの返り値のuserIdを検証
 	userSentences := []model.Sentence{}
 	for _, sentence := range sentences {
-		// sentenceの所有者がuserIdでない場合continue
-		isSentenceOwner, err := wu.sr.IsSentenceOwner(sentence.Id, userId)
+		// sentenceの所有者がloginUserIdでない場合continue
+		isSentenceOwner, err := wu.sr.IsSentenceOwner(sentence.Id, loginUserId)
 		if err != nil {
 			return []model.Sentence{}, err
 		}
@@ -143,10 +146,8 @@ func (wu *WordUsecase) GetAssociatedSentencesByWordId(userId uint64, wordId uint
 	return userSentences, nil
 }
 
-func (wu *WordUsecase) GetAssociatedSentencesWithLinkByWordId(userId, wordId uint64) ([]model.SentenceWithLink, error) {
-	// userIdがログイン中のものと一致するかの判定、
-	// wordIdの所有者がuserIdであるかの判定は、GetAssociatedSentencesByWordId内で行われる
-	userAssociatedSentences, err := wu.GetAssociatedSentencesByWordId(userId, wordId)
+func (wu *WordUsecase) GetAssociatedSentencesWithLinkByWordId(loginUserId, wordId uint64) ([]model.SentenceWithLink, error) {
+	userAssociatedSentences, err := wu.GetAssociatedSentencesByWordId(loginUserId, wordId)
 	if err != nil {
 		return []model.SentenceWithLink{}, err
 	}
@@ -156,13 +157,13 @@ func (wu *WordUsecase) GetAssociatedSentencesWithLinkByWordId(userId, wordId uin
 		sentenceText := sentence.Sentence
 
 		// sentenceに紐づくWordを全件取得し、sentence中におけるそのWordの出現箇所をリンクに変換
-		words, err := wu.swr.GetAssociatedWordsBySentenceId(userId, sentence.Id)
+		words, err := wu.swr.GetAssociatedWordsBySentenceId(loginUserId, sentence.Id)
 		if err != nil {
 			return []model.SentenceWithLink{}, err
 		}
 
 		for _, word := range words {
-			// sentence.Sentence中に含まれるword.Wordをaタグに置換
+			// sentenceText中に含まれるword.Wordをaタグに置換
 			sentenceText = strings.Replace(
 				sentenceText,
 				word.Word,
@@ -170,7 +171,7 @@ func (wu *WordUsecase) GetAssociatedSentencesWithLinkByWordId(userId, wordId uin
 				-1,
 			)
 
-			// sentence.Sentence中に含まれるnotation.Notationをaタグに置換
+			// sentenceText中に含まれるnotation.Notationをaタグに置換
 			notations, err := wu.nr.GetAllNotations(word.Id)
 			if err != nil {
 				return []model.SentenceWithLink{}, err
@@ -186,7 +187,7 @@ func (wu *WordUsecase) GetAssociatedSentencesWithLinkByWordId(userId, wordId uin
 			}
 		}
 
-		// 置換後のsentence.SentenceからSentenceWithLinkを作成
+		// 置換後のsentenceTextからSentenceWithLinkを作成
 		sentenceWithLink := model.SentenceWithLink{
 			Id:               sentence.Id,
 			SentenceWithLink: sentenceText,

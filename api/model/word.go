@@ -23,10 +23,13 @@ type WordCreationRequest struct {
 	Memo   string `json:"memo"`
 }
 
+type MultipleWordCreationRequest struct {
+	Words []WordCreationRequest `json:"words"`
+}
+
 type WordCreation struct {
 	Word   string
 	Memo   string
-	UserId uint64
 }
 
 type WordUpdateRequest struct {
@@ -39,5 +42,4 @@ type WordUpdate struct {
 	Id   uint64
 	Word string
 	Memo string
-	UserId uint64
 }

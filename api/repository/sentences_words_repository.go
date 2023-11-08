@@ -6,9 +6,9 @@ import (
 )
 
 type ISentencesWordsRepository interface {
-	AssociateSentenceWithWord(uint64, uint64) error
-	GetAssociatedSentencesByWordId(uint64, uint64) ([]model.Sentence, error)
-	GetAssociatedWordsBySentenceId(uint64, uint64) ([]model.Word, error)
+	AssociateSentenceWithWord(sentenceId uint64, wordId uint64) error
+	GetAssociatedSentencesByWordId(userId uint64, wordId uint64) ([]model.Sentence, error)
+	GetAssociatedWordsBySentenceId(userId uint64, sentenceId uint64) ([]model.Word, error)
 }
 
 type SentencesWordsRepository struct {
