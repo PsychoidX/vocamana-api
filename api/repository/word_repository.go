@@ -84,7 +84,7 @@ func (wr *WordRepository) InsertWord(wordCreation model.WordCreation) (model.Wor
 		" RETURNING id, word, memo, user_id, created_at, updated_at;",
 		wordCreation.Word,
 		wordCreation.Memo,
-		wordCreation.UserId,
+		wordCreation.LoginUserId,
 	).Scan(
 		&createdWord.Id,
 		&createdWord.Word,
@@ -139,7 +139,7 @@ func (wr *WordRepository) UpdateWord(wordUpdate model.WordUpdate) (model.Word, e
 		`,
 		wordUpdate.Word,
 		wordUpdate.Memo,
-		wordUpdate.UserId,
+		wordUpdate.LoginUserId,
 		wordUpdate.Id,
 	).Scan(
 		&updatedWord.Id,

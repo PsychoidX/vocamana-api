@@ -97,7 +97,7 @@ func (wc *WordController) CreateWord(c echo.Context) error {
 	WordCreation := model.WordCreation{
 		Word:   req.Word,
 		Memo:   req.Memo,
-		UserId: loginUserId,
+		LoginUserId: loginUserId,
 	}
 
 	word, err := wc.wu.CreateWord(WordCreation)
@@ -166,7 +166,7 @@ func (wc *WordController) UpdateWord(c echo.Context) error {
 		Id:     wordId,
 		Word:   req.Word,
 		Memo:   req.Memo,
-		UserId: loginUserId,
+		LoginUserId: loginUserId,
 	}
 
 	word, err := wc.wu.UpdateWord(wordUpdate)

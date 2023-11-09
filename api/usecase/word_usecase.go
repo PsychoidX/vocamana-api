@@ -48,7 +48,7 @@ func (wu *WordUsecase) GetWordById(loginUserId, wordId uint64) (model.Word, erro
 }
 
 func (wu *WordUsecase) CreateWord(wordCreation model.WordCreation) (model.Word, error) {
-	loginUserId := wordCreation.UserId
+	loginUserId := wordCreation.LoginUserId
 
 	createdWord, err := wu.wr.InsertWord(wordCreation)
 	if err != nil {

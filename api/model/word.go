@@ -28,9 +28,9 @@ type MultipleWordCreationRequest struct {
 }
 
 type WordCreation struct {
-	Word   string
-	Memo   string
-	UserId uint64
+	Word        string
+	Memo        string
+	LoginUserId uint64
 }
 
 type WordUpdateRequest struct {
@@ -40,8 +40,8 @@ type WordUpdateRequest struct {
 }
 
 type WordUpdate struct {
-	Id     uint64
-	Word   string
-	Memo   string
-	UserId uint64
+	Id          uint64
+	Word        string
+	Memo        string
+	LoginUserId uint64
 }
