@@ -25,14 +25,17 @@ func NewNotationController(nu *usecase.NotationUsecase) INotationController {
 }
 
 func (nc *NotationController) GetAllNotations(c echo.Context) error {
-	var userId uint64 = 1 // TODO セッションから取得
+	loginUserId, err := GetLoginUserId()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
 
 	wordId, err := strconv.ParseUint(c.Param("wordId"), 10, 32)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	notations, err := nc.nu.GetAllNotations(userId, wordId)
+	notations, err := nc.nu.GetAllNotations(loginUserId, wordId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -51,7 +54,10 @@ func (nc *NotationController) GetAllNotations(c echo.Context) error {
 }
 
 func (nc *NotationController) CreateNotation(c echo.Context) error {
-	var userId uint64 = 1 // TODO セッションから取得
+	loginUserId, err := GetLoginUserId()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
 
 	var req model.NotationCreationRequest
 	if err := c.Bind(&req); err != nil {
@@ -66,9 +72,10 @@ func (nc *NotationController) CreateNotation(c echo.Context) error {
 	notationCreation := model.NotationCreation{
 		WordId: wordId,
 		Notation: req.Notation,
+		LoginUserId: loginUserId,
 	}
 
-	notation, err := nc.nu.CreateNotation(userId, notationCreation)
+	notation, err := nc.nu.CreateNotation(notationCreation)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -89,7 +96,10 @@ func (nc *NotationController) CreateNotation(c echo.Context) error {
 }
 
 func (nc *NotationController) UpdateNotation(c echo.Context) error {
-	var userId uint64 = 1 // TODO セッションから取得
+	loginUserId, err := GetLoginUserId()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
 
 	var req model.NotationUpdateRequest
 	if err := c.Bind(&req); err != nil {
@@ -110,9 +120,10 @@ func (nc *NotationController) UpdateNotation(c echo.Context) error {
 		Id: notationId,
 		WordId: wordId,
 		Notation: req.Notation,
+		LoginUserId: loginUserId,
 	}
 
-	notation, err := nc.nu.UpdateNotation(userId, notationUpdate)
+	notation, err := nc.nu.UpdateNotation(notationUpdate)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -133,7 +144,10 @@ func (nc *NotationController) UpdateNotation(c echo.Context) error {
 }
 
 func (nc *NotationController) DeleteNotation(c echo.Context) error {
-	var userId uint64 = 1 // TODO セッションから取得
+	loginUserId, err := GetLoginUserId()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
 
 	wordId, err := strconv.ParseUint(c.Param("wordId"), 10, 32)
 	if err != nil {
@@ -145,7 +159,7 @@ func (nc *NotationController) DeleteNotation(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	notation, err := nc.nu.DeleteNotation(userId, wordId, notationId)
+	notation, err := nc.nu.DeleteNotation(loginUserId, wordId, notationId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}

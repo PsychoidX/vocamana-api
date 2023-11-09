@@ -22,11 +22,9 @@ func NewNotationUsecase(
 	return &NotationUsecase{wr, sr, swr, nr}
 }
 
-func (nu *NotationUsecase) GetAllNotations(userId, wordId uint64) ([]model.Notation, error) {
-	// TODO: userIdがログイン中のものと一致することを確認
-
-	// wordIdの所有者がuserIdの場合ゼロ値を返す
-	isWordOwner, err := nu.wr.IsWordOwner(wordId, userId)
+func (nu *NotationUsecase) GetAllNotations(loginUserId, wordId uint64) ([]model.Notation, error) {
+	// wordIdの所有者がloginUserIdの場合ゼロ値を返す
+	isWordOwner, err := nu.wr.IsWordOwner(wordId, loginUserId)
 	if err != nil {
 		return []model.Notation{}, err
 	}
@@ -42,11 +40,11 @@ func (nu *NotationUsecase) GetAllNotations(userId, wordId uint64) ([]model.Notat
 	return notations, nil
 }
 
-func (nu *NotationUsecase) CreateNotation(userId uint64, notationCreation model.NotationCreation) (model.Notation, error) {
-	// TODO: userIdがログイン中のものと一致することを確認
+func (nu *NotationUsecase) CreateNotation(notationCreation model.NotationCreation) (model.Notation, error) {
+	loginUserId := notationCreation.LoginUserId
 
-	// 追加先のWordIdの所有者がuserIdでない場合何もしない
-	isWordOwner, err := nu.wr.IsWordOwner(notationCreation.WordId, userId)
+	// 追加先のWordIdの所有者がloginUserIdでない場合何もしない
+	isWordOwner, err := nu.wr.IsWordOwner(notationCreation.WordId, loginUserId)
 	if err != nil {
 		return model.Notation{}, err
 	}
@@ -61,7 +59,7 @@ func (nu *NotationUsecase) CreateNotation(userId uint64, notationCreation model.
 
 	// 既存のSentenceに追加されたWord含まれればsentences_wordsに追加
 	AssociateWordWithAllSentences(
-		userId,
+		loginUserId,
 		createdNotation.WordId,
 		nu.wr,
 		nu.sr,
@@ -72,11 +70,9 @@ func (nu *NotationUsecase) CreateNotation(userId uint64, notationCreation model.
 	return createdNotation, nil
 }
 
-func (nu *NotationUsecase) UpdateNotation(userId uint64, notationUpdate model.NotationUpdate) (model.Notation, error) {
-	// TODO: userIdがログイン中のものと一致することを確認
-
+func (nu *NotationUsecase) UpdateNotation(notationUpdate model.NotationUpdate) (model.Notation, error) {
 	// WordIdの所有者がuserIdでない場合何もしない
-	isWordOwner, err := nu.wr.IsWordOwner(notationUpdate.WordId, userId)
+	isWordOwner, err := nu.wr.IsWordOwner(notationUpdate.WordId, notationUpdate.LoginUserId)
 	if err != nil {
 		return model.Notation{}, err
 	}
@@ -98,11 +94,9 @@ func (nu *NotationUsecase) UpdateNotation(userId uint64, notationUpdate model.No
 	return updatedNotation, nil
 }
 
-func (nu *NotationUsecase) DeleteNotation(userId, wordId, notationId uint64) (model.Notation, error) {
-	// TODO: userIdがログイン中のものと一致することを確認
-
+func (nu *NotationUsecase) DeleteNotation(loginUserId, wordId, notationId uint64) (model.Notation, error) {
 	// WordIdの所有者がuserIdでない場合何もしない
-	isWordOwner, err := nu.wr.IsWordOwner(wordId, userId)
+	isWordOwner, err := nu.wr.IsWordOwner(wordId, loginUserId)
 	if err != nil {
 		return model.Notation{}, err
 	}

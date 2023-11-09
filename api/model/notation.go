@@ -21,8 +21,9 @@ type NotationCreationRequest struct {
 }
 
 type NotationCreation struct {
-	WordId   uint64
-	Notation string
+	WordId       uint64
+	Notation     string
+	LoginUserId  uint64
 }
 
 type NotationUpdateRequest struct {
@@ -30,7 +31,8 @@ type NotationUpdateRequest struct {
 }
 
 type NotationUpdate struct {
-	Id uint64
-	WordId   uint64
-	Notation string
+	Id          uint64
+	WordId      uint64
+	Notation    string
+	LoginUserId uint64
 }
