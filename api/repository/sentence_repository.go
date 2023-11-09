@@ -84,7 +84,7 @@ func (sr *SentenceRepository) InsertSentence(newSentence model.SentenceCreation)
 		" VALUES(" + sr.getSequenceNextvalQuery() + ", $1, $2)" +
 		" RETURNING id, sentence, user_id, created_at, updated_at;",
 		newSentence.Sentence,
-		newSentence.UserId,
+		newSentence.LoginUserId,
 	).Scan(
 		&createdSentence.Id,
 		&createdSentence.Sentence,
@@ -110,7 +110,7 @@ func (sr *SentenceRepository) UpdateSentence(sentenceUpdate model.SentenceUpdate
 		RETURNING id, sentence, user_id, created_at, updated_at;
 		`,
 		sentenceUpdate.Sentence,
-		sentenceUpdate.UserId,
+		sentenceUpdate.LoginUserId,
 		sentenceUpdate.Id,
 	).Scan(
 		&updatedSentence.Id,
@@ -153,9 +153,7 @@ func (sr *SentenceRepository) DeleteSentenceById(userId, sentenceId uint64) (mod
 
 func (sr *SentenceRepository) IsSentenceOwner(sentenceId uint64, userId uint64) (bool, error) {
 	// sentenceIdの所持者がuserIdであるかを判定
-
 	var count int
-
 	err := sr.db.QueryRow(
 		"SELECT COUNT(*) FROM sentences" +
 		" WHERE id = $1" + 

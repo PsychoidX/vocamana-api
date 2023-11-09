@@ -48,7 +48,7 @@ func (su *SentenceUsecase) GetSentenceById(loginUserId uint64, sentenceId uint64
 }
 
 func (su *SentenceUsecase) CreateSentence(sentenceCreation model.SentenceCreation) (model.Sentence, error) {
-	loginUserId := sentenceCreation.UserId
+	loginUserId := sentenceCreation.LoginUserId
 
 	createdSentence, err := su.sr.InsertSentence(sentenceCreation)
 	if err != nil {

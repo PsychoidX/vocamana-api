@@ -25,8 +25,8 @@ type MultipleSentencesCreationRequest struct {
 }
 
 type SentenceCreation struct {
-	Sentence string
-	UserId   uint64
+	Sentence    string
+	LoginUserId uint64
 }
 
 type SentenceUpdateRequest struct {
@@ -35,9 +35,9 @@ type SentenceUpdateRequest struct {
 }
 
 type SentenceUpdate struct {
-	Id       uint64
-	Sentence string
-	UserId   uint64
+	Id          uint64
+	Sentence    string
+	LoginUserId uint64
 }
 
 type SentenceWithLink struct {
@@ -47,6 +47,7 @@ type SentenceWithLink struct {
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 }
+
 type SentenceWIthLinkResponse struct {
 	Id               uint64 `json:"id"`
 	SentenceWithLink string `json:"sentence"`

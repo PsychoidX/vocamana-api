@@ -95,7 +95,7 @@ func (sc *SentenceController) CreateSentence(c echo.Context) error {
 
 	sentenceCreation := model.SentenceCreation{
 		Sentence: req.Sentence,
-		UserId:   loginUserId,
+		LoginUserId:   loginUserId,
 	}
 
 	sentence, err := sc.su.CreateSentence(sentenceCreation)
@@ -127,7 +127,7 @@ func (sc *SentenceController) CreateMultipleSentences(c echo.Context) error {
 	for _, sentenceCreationReq := range req.Sentences {
 		sentenceCreation := model.SentenceCreation{
 			Sentence: sentenceCreationReq.Sentence,
-			UserId:   loginUserId,
+			LoginUserId:   loginUserId,
 		}
 		sentenceCreations = append(sentenceCreations, sentenceCreation)
 	} 
@@ -169,7 +169,7 @@ func (sc *SentenceController) UpdateSentence(c echo.Context) error {
 	sentenceUpdate := model.SentenceUpdate{
 		Id:       sentenceId,
 		Sentence: req.Sentence,
-		UserId:   loginUserId,
+		LoginUserId:   loginUserId,
 	}
 
 	sentence, err := sc.su.UpdateSentence(sentenceUpdate)
