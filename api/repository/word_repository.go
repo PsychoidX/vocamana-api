@@ -76,7 +76,6 @@ func (wr *WordRepository) GetWordById(userId uint64, wordId uint64) (model.Word,
 
 func (wr *WordRepository) InsertWord(wordCreation model.WordCreation) (model.Word, error) {
 	createdWord := model.Word{}
-
 	err := wr.db.QueryRow(
 		"INSERT INTO words" +
 		" (id, word, memo, user_id)" +
@@ -96,7 +95,7 @@ func (wr *WordRepository) InsertWord(wordCreation model.WordCreation) (model.Wor
 	if err != nil {
 		return model.Word{}, err
 	}
-
+	
 	return createdWord, nil
 }
 

@@ -23,7 +23,7 @@ type WordCreationRequest struct {
 	Memo   string `json:"memo"`
 }
 
-type MultipleWordCreationRequest struct {
+type MultipleWordsCreationRequest struct {
 	Words []WordCreationRequest `json:"words"`
 }
 

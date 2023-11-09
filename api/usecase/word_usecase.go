@@ -68,7 +68,7 @@ func (wu *WordUsecase) CreateWord(wordCreation model.WordCreation) (model.Word, 
 	return createdWord, nil
 }
 
-func (wu *WordUsecase) CreateMultipleWord(wordCreations []model.WordCreation) ([]model.Word, error) {
+func (wu *WordUsecase) CreateMultipleWords(wordCreations []model.WordCreation) ([]model.Word, error) {
 	// TODO 1件でも失敗したらロールバックする実装に変更
 	var createdWords []model.Word
 	for _, wordCreation := range wordCreations {

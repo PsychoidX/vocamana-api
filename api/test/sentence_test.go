@@ -538,7 +538,7 @@ func TestCreateSentenceIncludingInvalidNotations(t *testing.T) {
 }
 
 func TestCreateMultipleSentences(t *testing.T) {
-	// ログイン中のUserに紐づくSentenceを作成できることをテスト
+	// ログイン中のUserに紐づくSentenceを複数同時に作成できることをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のSentenceのみ作成可能とする
 	DeleteAllFromSentences()

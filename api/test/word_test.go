@@ -189,6 +189,86 @@ func TestCreateWord(t *testing.T) {
 	assert.Equal(t, "testmemo", memo)
 }
 
+func TestCreateMultipleWords(t *testing.T) {
+	// ログイン中のUserに紐づくWordを複数同時に作成できることをテスト
+	// TODO ログイン機能
+	// とりあえずログインUserはuser_id=1とする
+	DeleteAllFromWords()
+
+	wordId1 := GetNextWordsSequenceValue()
+	wordId2 := wordId1 + 1
+
+	reqBody := `{
+		"words": [
+			{
+				"word": "test word 1",
+				"memo": "test memo 1"
+			},
+			{
+				"word": "test word 2",
+				"memo": "test memo 2"
+			}
+		]
+	}`
+
+	// 登録されたレコードが返る
+	expectedResponse := fmt.Sprintf(`
+		[
+			{
+				"id": %d,
+				"word": "test word 1",
+				"memo": "test memo 1",
+				"user_id": 1
+			},
+			{
+				"id": %d,
+				"word": "test word 2",
+				"memo": "test memo 2",
+				"user_id": 1
+			}
+		]`,
+		wordId1,
+		wordId2,
+	)
+
+	DoSimpleTest(
+		t,
+		http.MethodPost,
+		"/words/multiple",
+		nil,
+		nil,
+		reqBody,
+		wc.CreateMultipleWords,
+		http.StatusCreated,
+		expectedResponse,
+	)
+
+	// DBにレコードが追加される
+	var word1 string
+	var memo1 string
+	db.QueryRow(`
+		SELECT word, memo FROM words
+		WHERE id = $1;
+		`,
+		wordId1,
+	).Scan(&word1, &memo1)
+
+	assert.Equal(t, "test word 1", word1)
+	assert.Equal(t, "test memo 1", memo1)
+
+	var word2 string
+	var memo2 string
+	db.QueryRow(`
+		SELECT word, memo FROM words
+		WHERE id = $1;
+		`,
+		wordId2,
+	).Scan(&word2, &memo2)
+
+	assert.Equal(t, "test word 2", word2)
+	assert.Equal(t, "test memo 2", memo2)
+}
+
 func TestCreateWordInSentences(t *testing.T) {
 	// 既存のSentence中に、新規追加したWordを含むものがある場合、
 	// sentences_wordsに追加されることをテスト

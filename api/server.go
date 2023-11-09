@@ -50,6 +50,7 @@ func main() {
 	w.GET("", wc.GetAllWords)
 	w.GET("/:wordId", wc.GetWordById)
 	w.POST("", wc.CreateWord)
+	w.POST("/multiple", wc.CreateMultipleWords)
 	w.PUT("/:wordId", wc.UpdateWord)
 	w.DELETE("/:wordId", wc.DeleteWord)
 	w.GET("/:wordId/associated-sentences", wc.GetAssociatedSentencesWithLink)

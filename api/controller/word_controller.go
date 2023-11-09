@@ -13,6 +13,7 @@ type IWordController interface {
 	GetAllWords(c echo.Context) error
 	GetWordById(c echo.Context) error
 	CreateWord(c echo.Context) error
+	CreateMultipleWords(c echo.Context) error
 	DeleteWord(c echo.Context) error
 	UpdateWord(c echo.Context) error
 	GetAssociatedSentences(c echo.Context) error
@@ -113,6 +114,46 @@ func (wc *WordController) CreateWord(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, wordRes)
+}
+
+func (wc *WordController) CreateMultipleWords(c echo.Context) error {
+	loginUserId, err := GetLoginUserId()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	var req model.MultipleWordsCreationRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	var wordCreations []model.WordCreation
+	for _, wordCreationReq := range req.Words {
+		wordCreation := model.WordCreation{
+			Word: wordCreationReq.Word,
+			Memo: wordCreationReq.Memo,
+			LoginUserId:   loginUserId,
+		}
+		wordCreations = append(wordCreations, wordCreation)
+	} 
+
+	words, err := wc.wu.CreateMultipleWords(wordCreations)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	var wordResponses []model.WordResponse
+	for _, word := range words {
+		wordRes := model.WordResponse{
+			Id:       word.Id,
+			Word: word.Word,
+			Memo: word.Memo,
+			UserId: word.UserId,
+		}
+		wordResponses = append(wordResponses, wordRes)
+	}
+
+	return c.JSON(http.StatusCreated, wordResponses)
 }
 
 func (wc *WordController) DeleteWord(c echo.Context) error {
