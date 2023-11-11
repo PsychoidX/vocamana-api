@@ -354,7 +354,7 @@ func TestCreateWordInInvalidSentences(t *testing.T) {
 	db.QueryRow(`
 		INSERT INTO sentences
 		(id, sentence, user_id)
-		VALUES(nextval('sentence_id_seq'), '赤いりんごを食べた', 0)
+		VALUES(nextval('sentence_id_seq'), '赤いりんごを食べた', 2)
 		RETURNING id;
 	`).Scan(&sentenceId)
 
