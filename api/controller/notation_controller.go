@@ -143,17 +143,12 @@ func (nc *NotationController) DeleteNotation(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	wordId, err := strconv.ParseUint(c.Param("wordId"), 10, 32)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
-	}
-
 	notationId, err := strconv.ParseUint(c.Param("notationId"), 10, 32)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	notation, err := nc.nu.DeleteNotation(loginUserId, wordId, notationId)
+	notation, err := nc.nu.DeleteNotation(loginUserId, notationId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}

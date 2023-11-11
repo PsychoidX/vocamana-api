@@ -562,9 +562,9 @@ func TestDeleteNotationWithLoggingIn(t *testing.T) {
 	DoSimpleTest(
 		t,
 		http.MethodDelete,
-		"/words/:wordId/notations/:notationId",
-		[]string{"wordId", "notationId"},
-		[]string{wordId, notationId},
+		"/notations/:notationId",
+		[]string{"notationId"},
+		[]string{notationId},
 		"",
 		nc.DeleteNotation,
 		http.StatusAccepted,
@@ -613,8 +613,8 @@ func TestDeleteNotationWithoutLoggingIn(t *testing.T) {
 	DoSimpleTest(
 		t,
 		http.MethodDelete,
-		"/words/:wordId/notations/:notationId",
-		[]string{"wordId", "notationId"},
+		"/notations/:notationId",
+		[]string{"notationId"},
 		[]string{wordId, notationId},
 		"",
 		nc.DeleteNotation,

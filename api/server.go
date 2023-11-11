@@ -70,10 +70,10 @@ func main() {
 	wn := e.Group("/words/:wordId/notations")
 	wn.GET("", nc.GetAllNotations)
 	wn.POST("", nc.CreateNotation)
-	wn.DELETE("/:notationId", nc.DeleteNotation)
 
 	n := e.Group("/notations")
 	n.PUT("/:notationId", nc.UpdateNotation)
+	n.DELETE("/:notationId", nc.DeleteNotation)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

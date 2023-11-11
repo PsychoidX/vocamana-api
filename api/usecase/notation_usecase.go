@@ -105,9 +105,20 @@ func (nu *NotationUsecase) UpdateNotation(notationUpdate model.NotationUpdate) (
 	return updatedNotation, nil
 }
 
-func (nu *NotationUsecase) DeleteNotation(loginUserId, wordId, notationId uint64) (model.Notation, error) {
+func (nu *NotationUsecase) DeleteNotation(loginUserId, notationId uint64) (model.Notation, error) {
+	notation, err := nu.nr.GetNotationById(notationId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// 削除対象のNotationが存在しない場合
+			// Notationのゼロ値を返す
+			return model.Notation{}, nil
+		}
+
+		return model.Notation{}, err
+	}
+
 	// WordIdの所有者がuserIdでない場合何もしない
-	isWordOwner, err := nu.wr.IsWordOwner(wordId, loginUserId)
+	isWordOwner, err := nu.wr.IsWordOwner(notation.WordId, loginUserId)
 	if err != nil {
 		return model.Notation{}, err
 	}
@@ -118,7 +129,7 @@ func (nu *NotationUsecase) DeleteNotation(loginUserId, wordId, notationId uint64
 	deletedNotation, err := nu.nr.DeleteNotationById(notationId)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			// レコードが更新されなかった場合
+			// レコードが削除されなかった場合
 			// Notationのゼロ値を返す
 			return model.Notation{}, nil
 		}
