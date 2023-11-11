@@ -32,7 +32,6 @@ type NotationUpdateRequest struct {
 
 type NotationUpdate struct {
 	Id          uint64
-	WordId      uint64
 	Notation    string
 	LoginUserId uint64
 }

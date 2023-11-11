@@ -8,6 +8,7 @@ import (
 
 type INotationRepository interface {
 	GetAllNotations(uint64) ([]model.Notation, error)
+	GetNotationById(uint64) (model.Notation, error)
 	InsertNotation(model.NotationCreation) (model.Notation, error)
 	UpdateNotation(model.NotationUpdate) (model.Notation, error)
 	DeleteNotationById(uint64) (model.Notation, error)
@@ -61,6 +62,29 @@ func (nr *NotationRepository) GetAllNotations(wordId uint64) ([]model.Notation, 
 	return notations, nil
 }
 
+func (nr *NotationRepository) GetNotationById(id uint64) (model.Notation, error) {
+	notation := model.Notation{}
+
+	err := nr.db.QueryRow(`
+		SELECT id, word_id, notation, created_at, updated_at FROM notations
+		WHERE id = $1
+		`,
+		id,
+	).Scan(
+		&notation.Id,
+		&notation.WordId,
+		&notation.Notation,
+		&notation.CreatedAt,
+		&notation.UpdatedAt,
+	);
+
+	if err != nil {
+		return model.Notation{}, err
+	}
+
+	return notation, nil
+}
+
 func (nr *NotationRepository) InsertNotation(notationCreation model.NotationCreation) (model.Notation, error) {
 	createdNotation := model.Notation{}
 
@@ -94,12 +118,10 @@ func (nr *NotationRepository) UpdateNotation(notationUpdate model.NotationUpdate
 	err := nr.db.QueryRow(`
 		UPDATE notations
 		SET notation = $1
-		WHERE word_id = $2
-			AND id = $3
+		WHERE id = $2
 		RETURNING id, word_id, notation, created_at, updated_at;
 		`, 
 		notationUpdate.Notation,
-		notationUpdate.WordId,
 		notationUpdate.Id,
 	).Scan(
 		&updatedNotation.Id,

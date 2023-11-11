@@ -71,8 +71,19 @@ func (nu *NotationUsecase) CreateNotation(notationCreation model.NotationCreatio
 }
 
 func (nu *NotationUsecase) UpdateNotation(notationUpdate model.NotationUpdate) (model.Notation, error) {
+	notation, err := nu.nr.GetNotationById(notationUpdate.Id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// 更新対象のNotationが存在しない場合
+			// Notationのゼロ値を返す
+			return model.Notation{}, nil
+		}
+
+		return model.Notation{}, err
+	}
+
 	// WordIdの所有者がuserIdでない場合何もしない
-	isWordOwner, err := nu.wr.IsWordOwner(notationUpdate.WordId, notationUpdate.LoginUserId)
+	isWordOwner, err := nu.wr.IsWordOwner(notation.WordId, notationUpdate.LoginUserId)
 	if err != nil {
 		return model.Notation{}, err
 	}

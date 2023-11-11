@@ -105,11 +105,6 @@ func (nc *NotationController) UpdateNotation(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
-	
-	wordId, err := strconv.ParseUint(c.Param("wordId"), 10, 32)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
-	}
 
 	notationId, err := strconv.ParseUint(c.Param("notationId"), 10, 32)
 	if err != nil {
@@ -118,7 +113,6 @@ func (nc *NotationController) UpdateNotation(c echo.Context) error {
 
 	notationUpdate := model.NotationUpdate{
 		Id: notationId,
-		WordId: wordId,
 		Notation: req.Notation,
 		LoginUserId: loginUserId,
 	}
