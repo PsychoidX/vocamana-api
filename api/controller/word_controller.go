@@ -118,6 +118,9 @@ func (wc *WordController) CreateWord(c echo.Context) error {
 
 func (wc *WordController) CreateMultipleWords(c echo.Context) error {
 	loginUserId, err := GetLoginUserId()
+	// TODO: words[]の中に不適切な形式のデータが入っていた場合、
+	// すべてを登録失敗とするのではなく、不適切なデータのみを弾く実装にする
+	
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}

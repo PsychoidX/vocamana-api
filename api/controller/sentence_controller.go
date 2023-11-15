@@ -118,6 +118,8 @@ func (sc *SentenceController) CreateMultipleSentences(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
+	// TODO: words[]の中に不適切な形式のデータが入っていた場合、
+	// すべてを登録失敗とするのではなく、不適切なデータのみを弾く実装にする
 	var req model.MultipleSentencesCreationRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
