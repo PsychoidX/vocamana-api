@@ -16,7 +16,6 @@ type IWordController interface {
 	CreateMultipleWords(c echo.Context) error
 	DeleteWord(c echo.Context) error
 	UpdateWord(c echo.Context) error
-	GetAssociatedSentences(c echo.Context) error
 	GetAssociatedSentencesWithLink(c echo.Context) error
 }
 
@@ -232,35 +231,6 @@ func (wc *WordController) UpdateWord(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusAccepted, wordRes)
-}
-
-func (wc *WordController) GetAssociatedSentences(c echo.Context) error {
-	loginUserId, err := GetLoginUserId()
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
-	}
-
-	wordId, err := strconv.ParseUint(c.Param("wordId"), 10, 32)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
-	}
-
-	sentences, err := wc.wu.GetAssociatedSentencesByWordId(loginUserId, wordId)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
-	}
-
-	var sentenceResponses []model.SentenceResponse
-	for _, sentence := range sentences {
-		sentenceRes := model.SentenceResponse{
-			Id:       sentence.Id,
-			Sentence: sentence.Sentence,
-			UserId:   sentence.UserId,
-		}
-		sentenceResponses = append(sentenceResponses, sentenceRes)
-	}
-
-	return c.JSON(http.StatusOK, sentenceResponses)
 }
 
 func (wc *WordController) GetAssociatedSentencesWithLink(c echo.Context) error {
