@@ -75,7 +75,7 @@ func TestGetAllWords(t *testing.T) {
 	)
 }
 
-func TestGetWordByIdWithLoggingInUserId(t *testing.T) {
+func TestGetWordById(t *testing.T) {
 	// ログイン中のUserに紐づくWordを取得できることをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のWordのみ取得可能とする
@@ -112,7 +112,7 @@ func TestGetWordByIdWithLoggingInUserId(t *testing.T) {
 	)
 }
 
-func TestGetWordByIdWithoutLoggingInUserId(t *testing.T) {
+func TestGetWordByIdWithInvalidUser(t *testing.T) {
 	// ログイン中のUserに紐づかないWordを取得できないことをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のWordのみ取得可能とする
@@ -388,7 +388,7 @@ func TestCreateWordInInvalidSentences(t *testing.T) {
 	assert.Equal(t, 0, count)
 }
 
-func TestUpdateWordWithLoggingInUserId(t *testing.T) {
+func TestUpdateWord(t *testing.T) {
 	// ログイン中のUserに紐づくWordをUpdateできることをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のWordのみUpdate可能とする
@@ -444,7 +444,7 @@ func TestUpdateWordWithLoggingInUserId(t *testing.T) {
 	assert.Equal(t, "updated memo", memo)
 }
 
-func TestUpdateWordWithoutLoggingInUserId(t *testing.T) {
+func TestUpdateWordWithInvalidUser(t *testing.T) {
 	// ログイン中のUserに紐づかないWordをUpdateできないことをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のWordのみUpdate可能とする
@@ -489,7 +489,7 @@ func TestUpdateWordWithoutLoggingInUserId(t *testing.T) {
 	assert.Equal(t, "memo", memo)
 }
 
-func TestDeleteWordWithLoggingInUserId(t *testing.T) {
+func TestDeleteWord(t *testing.T) {
 	// ログイン中のUserに紐づくWordを削除できることをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のWordのみDelete可能とする
@@ -538,7 +538,7 @@ func TestDeleteWordWithLoggingInUserId(t *testing.T) {
 	assert.Equal(t, 0, count)
 }
 
-func TestDeleteWordWithoutLoggingInUserId(t *testing.T) {
+func TestDeleteWordWithInvalidUser(t *testing.T) {
 	// ログイン中のUserに紐づかないWordは削除できないことをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のWordのみDelete可能とする

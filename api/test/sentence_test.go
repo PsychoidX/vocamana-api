@@ -74,7 +74,7 @@ func TestGetAllSentences(t *testing.T) {
 	)
 }
 
-func TestGetSentenceByIdWithLoggingInUserId(t *testing.T) {
+func TestGetSentenceById(t *testing.T) {
 	// ログイン中のUserに紐づくSentenceを取得できることをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のSentenceのみ取得可能とする
@@ -110,7 +110,7 @@ func TestGetSentenceByIdWithLoggingInUserId(t *testing.T) {
 	)
 }
 
-func TestGetSentenceByIdWithoutLoggingInUserId(t *testing.T) {
+func TestGetSentenceByIdWithInvalidUser(t *testing.T) {
 	// ログイン中のUserに紐づかないSentenceを取得できないことをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のSentenceのみ取得可能とする
@@ -609,7 +609,7 @@ func TestCreateMultipleSentences(t *testing.T) {
 	assert.Equal(t, "test sentence 2", sentence2)
 }
 
-func TestUpdateSentenceWithLoggingInUserId(t *testing.T) {
+func TestUpdateSentence(t *testing.T) {
 	// ログイン中のUserに紐づくSentenceを更新できることをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のSentenceのみ更新可能とする
@@ -661,7 +661,7 @@ func TestUpdateSentenceWithLoggingInUserId(t *testing.T) {
 	assert.Equal(t, "updated sentence", sentence)
 }
 
-func TestUpdateSentenceWithoutLoggingInUserId(t *testing.T) {
+func TestUpdateSentenceWithInvalidUser(t *testing.T) {
 	// ログイン中のUserに紐づかないSentenceを更新できないことをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のSentenceのみ更新可能とする
@@ -703,7 +703,7 @@ func TestUpdateSentenceWithoutLoggingInUserId(t *testing.T) {
 	assert.Equal(t, "sentence", sentence)
 }
 
-func TestDeleteSentenceWithLoggingInUserId(t *testing.T) {
+func TestDeleteSentence(t *testing.T) {
 	// ログイン中のUserに紐づくSentenceを削除できることをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のSentenceのみ削除可能とする
@@ -751,7 +751,7 @@ func TestDeleteSentenceWithLoggingInUserId(t *testing.T) {
 	assert.Equal(t, 0, count)
 }
 
-func TestDeleteSentenceWithoutLoggingInUserId(t *testing.T) {
+func TestDeleteSentenceWithInvalidUser(t *testing.T) {
 	// ログイン中のUserに紐づかないSentenceを削除できないことをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のSentenceのみ削除可能とする

@@ -184,7 +184,7 @@ func TestGetAllNotationsWithInvalidWordId(t *testing.T) {
 	)
 }
 
-func TestCreateNotationWithLoggingInUserId(t *testing.T) {
+func TestCreateNotation(t *testing.T) {
 	// ログイン中のUserに紐づくWordに対し、Notationを作成できることをテスト
 	// TODO ログイン機能
 	// とりあえずログインUserはuser_id=1とする
@@ -242,7 +242,7 @@ func TestCreateNotationWithLoggingInUserId(t *testing.T) {
 	assert.Equal(t, "testnotation", notation)
 }
 
-func TestCreateNotationWithoutLoggingInUserId(t *testing.T) {
+func TestCreateNotationWithInvalidUser(t *testing.T) {
 	// ログイン中のUserに紐づかないWordに対し、Notationを作成できないことをテスト
 	// TODO ログイン機能
 	// とりあえずログインUserはuser_id=1とする
@@ -523,7 +523,7 @@ func TestUpdateNotationWithNoRows(t *testing.T) {
 	)
 }
 
-func TestDeleteNotationWithLoggingIn(t *testing.T) {
+func TestDeleteNotation(t *testing.T) {
 	// ログイン中のUserに紐づくWordに対し、Notationを削除できることをテスト
 	// TODO ログイン機能
 	// とりあえずログインUserはuser_id=1とする
@@ -585,7 +585,7 @@ func TestDeleteNotationWithLoggingIn(t *testing.T) {
 	assert.Equal(t, 0, count)
 }
 
-func TestDeleteNotationWithoutLoggingIn(t *testing.T) {
+func TestDeleteNotationWithInvalidUser(t *testing.T) {
 	// ログイン中のUserに紐づかないWordに対し、Notationを削除できないことをテスト
 	// TODO ログイン機能
 	// とりあえずログインUserはuser_id=1とする
