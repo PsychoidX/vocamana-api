@@ -64,9 +64,6 @@ func main() {
 	s.DELETE("/:sentenceId", sc.DeleteSentence)
 	s.GET("/:sentenceId/associated-words", sc.GetAssociatedWords)
 
-	sa := e.Group("/sentences/association")
-	sa.POST("/:sentenceId", sc.AssociateSentenceWithWords)
-
 	wn := e.Group("/words/:wordId/notations")
 	wn.GET("", nc.GetAllNotations)
 	wn.POST("", nc.CreateNotation)

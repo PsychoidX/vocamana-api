@@ -106,42 +106,6 @@ func (su *SentenceUsecase) DeleteSentence(loginUserId uint64, sentenceId uint64)
 	return deletedSentence, nil
 }
 
-func (su *SentenceUsecase) AssociateSentenceWithWords(loginUserId uint64, sentenceId uint64, wordIds model.WordIds) (model.WordIds, error) {
-	// sentenceIdの所有者がloginUserIdでない場合何もしない
-	isSentenceOwner, err := su.sr.IsSentenceOwner(sentenceId, loginUserId)
-	if err != nil {
-		return model.WordIds{}, err
-	}
-	if !isSentenceOwner {
-		return model.WordIds{}, nil
-	}
-
-	var associatedWordIds []uint64
-
-	for _, wordId := range wordIds.WordIds {
-		// wordIdの所有者がloginUserIdでない場合continue
-		isWordOwner, err := su.wr.IsWordOwner(wordId, loginUserId)
-		if err != nil {
-			return model.WordIds{}, err
-		}
-		if !isWordOwner {
-			continue
-		}
-
-		err = su.swr.AssociateSentenceWithWord(sentenceId, wordId)
-		if err != nil {
-			return model.WordIds{}, err
-		}
-		associatedWordIds = append(associatedWordIds, wordId)
-	}
-
-	resultWordIds := model.WordIds{
-		WordIds: associatedWordIds,
-	}
-
-	return resultWordIds, nil
-}
-
 func (su *SentenceUsecase) GetAssociatedWordsBySentenceId(loginUserId uint64, sentenceId uint64) ([]model.Word, error) {
 	// sentenceIdの所有者がloginUserIdでない場合ゼロ値を返す
 	isSentenceOwner, err := su.sr.IsSentenceOwner(sentenceId, loginUserId)

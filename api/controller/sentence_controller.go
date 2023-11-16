@@ -16,7 +16,6 @@ type ISentenceController interface {
 	CreateMultipleSentences(c echo.Context) error
 	UpdateSentence(c echo.Context) error
 	DeleteSentence(c echo.Context) error
-	AssociateSentenceWithWords(c echo.Context) error
 	GetAssociatedWords(c echo.Context) error
 }
 
@@ -223,38 +222,6 @@ func (sc *SentenceController) DeleteSentence(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusAccepted, sentenceRes)
-}
-
-func (sc *SentenceController) AssociateSentenceWithWords(c echo.Context) error {
-	loginUserId, err := GetLoginUserId()
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
-	}
-
-	sentenceId, err := strconv.ParseUint(c.Param("sentenceId"), 10, 32)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
-	}
-
-	var req model.WordIdsRequest
-	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
-	}
-
-	wordIds := model.WordIds{
-		WordIds: req.WordIds,
-	}
-
-	resultWordIds, err := sc.su.AssociateSentenceWithWords(loginUserId, sentenceId, wordIds)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
-	}
-
-	wordIdsRes := model.WordIdsResponse{
-		WordIds: resultWordIds.WordIds,
-	}
-
-	return c.JSON(http.StatusAccepted, wordIdsRes)
 }
 
 func (sc *SentenceController) GetAssociatedWords(c echo.Context) error {
