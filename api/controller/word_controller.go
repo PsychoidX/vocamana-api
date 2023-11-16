@@ -283,6 +283,7 @@ func (wc *WordController) GetAssociatedSentencesWithLink(c echo.Context) error {
 	for _, sentenceWithLink := range sentenceWithLinks {
 		sentenceWithLinkRes := model.SentenceWIthLinkResponse{
 			Id:               sentenceWithLink.Id,
+			Sentence:         sentenceWithLink.Sentence,
 			SentenceWithLink: sentenceWithLink.SentenceWithLink,
 			UserId:           sentenceWithLink.UserId,
 		}

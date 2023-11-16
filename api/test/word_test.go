@@ -825,7 +825,8 @@ func TestGetAssociatedSentencesWithLink(t *testing.T) {
 		[
 			{
 				"id": %s,
-				"sentence": "<a href=\"/words/%s\">リンゴ</a>と<a href=\"/words/%s\">林檎</a>、<a href=\"/words/%s\">レモン</a>と<a href=\"/words/%s\">檸檬</a>が同一であるとみなす",
+				"sentence": "リンゴと林檎、レモンと檸檬が同一であるとみなす",
+				"sentence_with_link": "<a href=\"/words/%s\">リンゴ</a>と<a href=\"/words/%s\">林檎</a>、<a href=\"/words/%s\">レモン</a>と<a href=\"/words/%s\">檸檬</a>が同一であるとみなす",
 				"user_id": 1
 			}
 		]`,

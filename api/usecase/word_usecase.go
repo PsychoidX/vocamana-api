@@ -192,6 +192,7 @@ func (wu *WordUsecase) GetAssociatedSentencesWithLinkByWordId(loginUserId, wordI
 		// 置換後のsentenceTextからSentenceWithLinkを作成
 		sentenceWithLink := model.SentenceWithLink{
 			Id:               sentence.Id,
+			Sentence:         sentence.Sentence,
 			SentenceWithLink: sentenceText,
 			UserId:           sentence.UserId,
 			CreatedAt:        sentence.CreatedAt,

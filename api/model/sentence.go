@@ -42,6 +42,7 @@ type SentenceUpdate struct {
 
 type SentenceWithLink struct {
 	Id               uint64
+	Sentence         string
 	SentenceWithLink string
 	UserId           uint64
 	CreatedAt        time.Time
@@ -50,6 +51,7 @@ type SentenceWithLink struct {
 
 type SentenceWIthLinkResponse struct {
 	Id               uint64 `json:"id"`
-	SentenceWithLink string `json:"sentence"`
+	Sentence         string `json:"sentence"`
+	SentenceWithLink string `json:"sentence_with_link"`
 	UserId           uint64 `json:"user_id"`
 }
