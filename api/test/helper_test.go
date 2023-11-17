@@ -3,7 +3,6 @@ package test
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http/httptest"
 )
 
@@ -70,11 +69,11 @@ func GetNextNotationsSequenceValue() int {
 
 func getBodyValueFromRecorder(rec *httptest.ResponseRecorder, key string) string {
 	// recに記録されたリクエストボディ内の、keyの値を取得
-	resp := rec.Result()
-	body, _ := io.ReadAll(resp.Body)
 
+	// io.ReadAll(rec.Body)を使うと、内部でrec.Readが呼ばれ、バッファが解放される
+	// これにより、ReadAllでは最初の1回しかリクエストボディを取得できないため、Bytes()を使用
 	var bodyMap map[string]interface{}
-	json.Unmarshal(body, &bodyMap)
+	json.Unmarshal(rec.Body.Bytes(), &bodyMap)
 
 	// interface型のbody[key]をstring型に変換
 	return fmt.Sprintf("%v", bodyMap[key])
