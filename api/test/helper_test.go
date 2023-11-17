@@ -70,7 +70,7 @@ func GetNextNotationsSequenceValue() int {
 func getBodyValueFromRecorder(rec *httptest.ResponseRecorder, key string) string {
 	// recに記録されたリクエストボディ内の、keyの値を取得
 
-	// io.ReadAll(rec.Body)を使うと、内部でrec.Readが呼ばれ、バッファが解放される
+	// io.ReadAll(rec.Body)を使うと、内部でrec.Body.Readが呼ばれ、バッファが解放される
 	// これにより、ReadAllでは最初の1回しかリクエストボディを取得できないため、Bytes()を使用
 	var bodyMap map[string]interface{}
 	json.Unmarshal(rec.Body.Bytes(), &bodyMap)
