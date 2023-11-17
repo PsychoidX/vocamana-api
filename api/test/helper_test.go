@@ -1,5 +1,12 @@
 package test
 
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http/httptest"
+)
+
 func DeleteAllFromWords() {
 	// wordsテーブルのレコードを全件削除
 	db.Exec("TRUNCATE TABLE words CASCADE;")
@@ -61,3 +68,14 @@ func GetNextNotationsSequenceValue() int {
 	return GetCurrentNotationsSequenceValue() + 1
 }
 
+func getBodyValueFromRecorder(rec *httptest.ResponseRecorder, key string) string {
+	// recに記録されたリクエストボディ内の、keyの値を取得
+	resp := rec.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	var bodyMap map[string]interface{}
+	json.Unmarshal(body, &bodyMap)
+
+	// interface型のbody[key]をstring型に変換
+	return fmt.Sprintf("%v", bodyMap[key])
+}

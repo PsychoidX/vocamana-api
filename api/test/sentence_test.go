@@ -3,7 +3,6 @@ package test
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -970,16 +969,13 @@ func TestUpdateSentence_UpdatedAssociation(t *testing.T) {
 	DeleteAllFromSentences()
 	DeleteAllFromWords()
 
-	sentenceId := GetNextSentencesSequenceValue()
-	redWordId := GetNextWordsSequenceValue()
-
 	// Word「赤い」「青い」とSentence「赤いりんごを食べた」を作成
 	createWordReqBodyRed := `{
 		"word": "赤い",
 		"memo": ""
 	}`
 
-	ExecController(
+	_, rec := ExecController(
 		t,
 		http.MethodPost,
 		"/words",
@@ -989,14 +985,14 @@ func TestUpdateSentence_UpdatedAssociation(t *testing.T) {
 		wc.CreateWord,
 	)
 
-	blueWordId := GetNextWordsSequenceValue()
+	redWordId := getBodyValueFromRecorder(rec, "id")
 
 	createWordReqBodyBlue := `{
 		"word": "青い",
 		"memo": ""
 	}`
 
-	ExecController(
+	_, rec = ExecController(
 		t,
 		http.MethodPost,
 		"/words",
@@ -1009,8 +1005,10 @@ func TestUpdateSentence_UpdatedAssociation(t *testing.T) {
 	createSentenceReqBody := `{
 		"sentence": "赤いりんごを食べた"
 	}`
+
+	blueWordId := getBodyValueFromRecorder(rec, "id")
 	
-	ExecController(
+	_, rec = ExecController(
 		t,
 		http.MethodPost,
 		"/sentences",
@@ -1019,6 +1017,8 @@ func TestUpdateSentence_UpdatedAssociation(t *testing.T) {
 		createSentenceReqBody,
 		sc.CreateSentence,
 	)
+
+	sentenceId := getBodyValueFromRecorder(rec, "id")
 
 	updateSentenceReqBody := `{
 		"sentence": "青いりんごを食べた"
@@ -1029,7 +1029,7 @@ func TestUpdateSentence_UpdatedAssociation(t *testing.T) {
 		http.MethodPut,
 		"/words/:sentenceId",
 		[]string{"sentenceId"},
-		[]string{strconv.Itoa(sentenceId)},
+		[]string{sentenceId},
 		updateSentenceReqBody,
 		sc.UpdateSentence,
 	)
