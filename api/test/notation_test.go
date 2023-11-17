@@ -75,7 +75,7 @@ func TestGetAllNotations(t *testing.T) {
 	)
 }
 
-func TestGetAllNotationsWithNoRows(t *testing.T) {
+func TestGetAllNotations_WithNoRows(t *testing.T) {
 	// Wordがログイン中のUserに紐づき、
 	// かつWordに紐づくNotationの数が0の場合、nullが返ることをテスト
 	// TODO ログイン機能
@@ -104,7 +104,7 @@ func TestGetAllNotationsWithNoRows(t *testing.T) {
 	)
 }
 
-func TestGetAllNotationsWithInvalidWordId(t *testing.T) {
+func TestGetAllNotations_WithInvalidWordId(t *testing.T) {
 	// Wordがログイン中のUserに紐づかない場合、Wordに紐づくNotationを取得できないことをテスト
 	// TODO ログイン機能
 	// とりあえずWordに紐づくUserがuser_id=1の場合のみ取得可能とする
@@ -242,7 +242,7 @@ func TestCreateNotation(t *testing.T) {
 	assert.Equal(t, "testnotation", notation)
 }
 
-func TestCreateNotationWithInvalidUser(t *testing.T) {
+func TestCreateNotation_WithInvalidUser(t *testing.T) {
 	// ログイン中のUserに紐づかないWordに対し、Notationを作成できないことをテスト
 	// TODO ログイン機能
 	// とりあえずログインUserはuser_id=1とする
@@ -289,7 +289,7 @@ func TestCreateNotationWithInvalidUser(t *testing.T) {
 	assert.Equal(t, 0, count)
 }
 
-func TestCreateNotationInSentence(t *testing.T) {
+func TestCreateNotation_InSentence(t *testing.T) {
 	// ログイン中のUserに紐づくWordに対し、Notationを追加をした時、
 	// 既存のSentence中に新規Notationを含むものがある場合、
 	// sentences_wordsに追加されることをテスト
@@ -367,7 +367,7 @@ func TestCreateNotationInSentence(t *testing.T) {
 	assert.Equal(t, 0, lemonCount)
 }
 
-func TestCreateNotationInInvalidSentence(t *testing.T) {
+func TestCreateNotation_InInvalidSentence(t *testing.T) {
 	// ログイン中のUserに紐づくWordに対し、Notationを追加をした時、
 	// 既存のSentence中に新規Notationを含むものがあるが、
 	// 該当Sentenceのuser_idがログイン中のものと異なる場合、
@@ -491,7 +491,7 @@ func TestUpdateNotation(t *testing.T) {
 	assert.Equal(t, "updated notation", notation)
 }
 
-func TestUpdateNotationWithNoRows(t *testing.T) {
+func TestUpdateNotation_WithNoRows(t *testing.T) {
 	// ログイン中のUserに紐づくWordに対し、更新対象のNotationが無い場合、{}が返ることをテスト
 	// TODO ログイン機能
 	// とりあえずログインUserはuser_id=1とする
@@ -585,7 +585,7 @@ func TestDeleteNotation(t *testing.T) {
 	assert.Equal(t, 0, count)
 }
 
-func TestDeleteNotationWithInvalidUser(t *testing.T) {
+func TestDeleteNotation_WithInvalidUser(t *testing.T) {
 	// ログイン中のUserに紐づかないWordに対し、Notationを削除できないことをテスト
 	// TODO ログイン機能
 	// とりあえずログインUserはuser_id=1とする

@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetAllWordsWithNoRows(t *testing.T) {
+func TestGetAllWords_WithNoRows(t *testing.T) {
 	// ログイン中のUserに紐づくWordが1つも無い場合nullが返ることをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のWordのみ取得可能とする
@@ -112,7 +112,7 @@ func TestGetWordById(t *testing.T) {
 	)
 }
 
-func TestGetWordByIdWithInvalidUser(t *testing.T) {
+func TestGetWordById_WithInvalidUser(t *testing.T) {
 	// ログイン中のUserに紐づかないWordを取得できないことをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のWordのみ取得可能とする
@@ -269,7 +269,7 @@ func TestCreateMultipleWords(t *testing.T) {
 	assert.Equal(t, "test memo 2", memo2)
 }
 
-func TestCreateWordInSentences(t *testing.T) {
+func TestCreateWord_InSentences(t *testing.T) {
 	// 既存のSentence中に、新規追加したWordを含むものがある場合、
 	// sentences_wordsに追加されることをテスト
 
@@ -340,7 +340,7 @@ func TestCreateWordInSentences(t *testing.T) {
 	assert.Equal(t, 0, lemonCount)
 }
 
-func TestCreateWordInInvalidSentences(t *testing.T) {
+func TestCreateWord_InInvalidSentences(t *testing.T) {
 	// 既存のSentence中に、新規追加したWordを含むものがあるが、
 	// ログイン中のuser_idと異なる場合、
 	// sentences_wordsに追加されないことをテスト
@@ -444,7 +444,7 @@ func TestUpdateWord(t *testing.T) {
 	assert.Equal(t, "updated memo", memo)
 }
 
-func TestUpdateWordWithInvalidUser(t *testing.T) {
+func TestUpdateWord_WithInvalidUser(t *testing.T) {
 	// ログイン中のUserに紐づかないWordをUpdateできないことをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のWordのみUpdate可能とする
@@ -538,7 +538,7 @@ func TestDeleteWord(t *testing.T) {
 	assert.Equal(t, 0, count)
 }
 
-func TestDeleteWordWithInvalidUser(t *testing.T) {
+func TestDeleteWord_WithInvalidUser(t *testing.T) {
 	// ログイン中のUserに紐づかないWordは削除できないことをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のWordのみDelete可能とする

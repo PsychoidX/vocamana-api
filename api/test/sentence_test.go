@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetAllSentencesWithNoRows(t *testing.T) {
+func TestGetAllSentences_WithNoRows(t *testing.T) {
 	// ログイン中のUserに紐づくSentenceが1つも無い場合nullが返ることをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のSentenceのみ取得可能とする
@@ -110,7 +110,7 @@ func TestGetSentenceById(t *testing.T) {
 	)
 }
 
-func TestGetSentenceByIdWithInvalidUser(t *testing.T) {
+func TestGetSentenceById_WithInvalidUser(t *testing.T) {
 	// ログイン中のUserに紐づかないSentenceを取得できないことをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のSentenceのみ取得可能とする
@@ -183,7 +183,7 @@ func TestCreateSentence(t *testing.T) {
 	assert.Equal(t, "testsentence", sentence)
 }
 
-func TestCreateSentenceIncludingWords(t *testing.T) {
+func TestCreateSentence_IncludingWords(t *testing.T) {
 	// 登録済みのWordの中に、新規追加されたSentence中に含まれるものがある場合、
 	// sentences_wordsに追加されることをテスト
 
@@ -301,7 +301,7 @@ func TestCreateSentenceIncludingWords(t *testing.T) {
 	assert.Equal(t, 1, ateCount)
 }
 
-func TestCreateSentenceIncludingInvalidWords(t *testing.T) {
+func TestCreateSentence_IncludingInvalidWords(t *testing.T) {
 	// 登録済みのWordの中に、新規追加されたSentence中に含まれるものがあるが、
 	// 含まれるWordのUserIdがログイン中のuser_idと異なる場合
 	// sentences_wordsに追加されないことをテスト
@@ -351,7 +351,7 @@ func TestCreateSentenceIncludingInvalidWords(t *testing.T) {
 	assert.Equal(t, 0, count)
 }
 
-func TestCreateSentenceIncludingNotations(t *testing.T) {
+func TestCreateSentence_IncludingNotations(t *testing.T) {
 	// 登録済みのNotationの中に、新規追加されたSentence中に含まれるものがある場合、
 	// sentences_wordsに追加されることをテスト
 
@@ -476,7 +476,7 @@ func TestCreateSentenceIncludingNotations(t *testing.T) {
 	assert.Equal(t, 0, fruitCount)
 }
 
-func TestCreateSentenceIncludingInvalidNotations(t *testing.T) {
+func TestCreateSentence_IncludingInvalidNotations(t *testing.T) {
 	// 登録済みのNotationの中に、新規追加されたSentence中に含まれるものがあるが、
 	// 含まれるNotationが紐づくWordのUserIdがログイン中のuser_idと異なる場合
 	// sentences_wordsに追加されることをテスト
@@ -661,7 +661,7 @@ func TestUpdateSentence(t *testing.T) {
 	assert.Equal(t, "updated sentence", sentence)
 }
 
-func TestUpdateSentenceWithInvalidUser(t *testing.T) {
+func TestUpdateSentence_WithInvalidUser(t *testing.T) {
 	// ログイン中のUserに紐づかないSentenceを更新できないことをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のSentenceのみ更新可能とする
@@ -751,7 +751,7 @@ func TestDeleteSentence(t *testing.T) {
 	assert.Equal(t, 0, count)
 }
 
-func TestDeleteSentenceWithInvalidUser(t *testing.T) {
+func TestDeleteSentence_WithInvalidUser(t *testing.T) {
 	// ログイン中のUserに紐づかないSentenceを削除できないことをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のSentenceのみ削除可能とする
@@ -865,7 +865,7 @@ func TestGetAssociatedWords(t *testing.T) {
 	)
 }
 
-func TestGetAssociatedWordsWithInvalidSentenceId(t *testing.T) {
+func TestGetAssociatedWords_WithInvalidSentenceId(t *testing.T) {
 	// Sentenceがログイン中のuser_idに紐づかない場合、
 	// Sentenceに紐づくWordを取得できないことをテスト
 	// TODO ログイン機能
@@ -913,7 +913,7 @@ func TestGetAssociatedWordsWithInvalidSentenceId(t *testing.T) {
 	)
 }
 
-func TestGetAssociatedWordsWithInvalidWordId(t *testing.T) {
+func TestGetAssociatedWords_WithInvalidWordId(t *testing.T) {
 	// Wordがログイン中のuser_idに紐づかない場合、
 	// Sentenceに紐づくWordを取得できないことをテスト
 	// TODO ログイン機能
