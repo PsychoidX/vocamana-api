@@ -3,6 +3,7 @@ package test
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -960,3 +961,108 @@ func TestGetAssociatedWords_WithInvalidWordId(t *testing.T) {
 		"null",
 	)
 }
+
+func TestUpdateSentence_UpdatedAssociation(t *testing.T) {
+	// ログイン中のUserに紐づくSentenceを更新した時、
+	// sentences_wordsが正常に再構築されることをテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のSentenceのみ更新可能とする
+	DeleteAllFromSentences()
+	DeleteAllFromWords()
+
+	sentenceId := GetNextSentencesSequenceValue()
+	redWordId := GetNextWordsSequenceValue()
+
+	// Word「赤い」「青い」とSentence「赤いりんごを食べた」を作成
+	createWordReqBodyRed := `{
+		"word": "赤い",
+		"memo": ""
+	}`
+
+	ExecController(
+		t,
+		http.MethodPost,
+		"/words",
+		nil,
+		nil,
+		createWordReqBodyRed,
+		wc.CreateWord,
+	)
+
+	blueWordId := GetNextWordsSequenceValue()
+
+	createWordReqBodyBlue := `{
+		"word": "青い",
+		"memo": ""
+	}`
+
+	ExecController(
+		t,
+		http.MethodPost,
+		"/words",
+		nil,
+		nil,
+		createWordReqBodyBlue,
+		wc.CreateWord,
+	)
+
+	createSentenceReqBody := `{
+		"sentence": "赤いりんごを食べた"
+	}`
+	
+	ExecController(
+		t,
+		http.MethodPost,
+		"/sentences",
+		nil,
+		nil,
+		createSentenceReqBody,
+		sc.CreateSentence,
+	)
+
+	updateSentenceReqBody := `{
+		"sentence": "青いりんごを食べた"
+	}`
+	
+	ExecController(
+		t,
+		http.MethodPut,
+		"/words/:sentenceId",
+		[]string{"sentenceId"},
+		[]string{strconv.Itoa(sentenceId)},
+		updateSentenceReqBody,
+		sc.UpdateSentence,
+	)
+
+	// Sentenceを変更したことで、
+	// 単語「赤い」がSentence中に含まれなくなるため
+	// sentences_wordsからも削除される
+	var redCount int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences_words
+		WHERE sentence_id = $1
+			AND word_id = $2;
+		`,
+		sentenceId,
+		redWordId,
+	).Scan(&redCount)
+	assert.Equal(t, 0, redCount)
+
+	// 単語「青い」がSentence中に含まれるようになるため
+	// sentences_wordsに追加される
+	var blueCount int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM sentences_words
+		WHERE sentence_id = $1
+			AND word_id = $2;
+		`,
+		sentenceId,
+		blueWordId,
+	).Scan(&blueCount)
+	assert.Equal(t, 1, blueCount)
+}
+
+
+// func TestDeleteSentence_UpdateAssociation(t *testing.T) {
+// 	TODO つくる
+// }

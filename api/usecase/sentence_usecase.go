@@ -88,6 +88,8 @@ func (su *SentenceUsecase) UpdateSentence(sentenceUpdate model.SentenceUpdate) (
 		return model.Sentence{}, err
 	}
 
+	su.ReAssociateSentenceWithAllWords(sentenceUpdate.LoginUserId, sentenceUpdate.Id)
+
 	return updatedSentence, nil
 }
 
@@ -139,7 +141,7 @@ func (su *SentenceUsecase) GetAssociatedWordsBySentenceId(loginUserId uint64, se
 	return userWords, nil
 }
 
-func (su *SentenceUsecase) AssociateSentenceWithAllWords(loginUserId uint64, sentenceId uint64) ([]model.Word, error) {
+func (su *SentenceUsecase) AssociateSentenceWithAllWords(loginUserId , sentenceId uint64) ([]model.Word, error) {
 	// loginUserIdに紐づく全Wordに対し、
 	// sentenceIdのSentence中にWordまたはNotationが含まれればsentences_wordsにレコード追加
 
@@ -201,4 +203,26 @@ func (su *SentenceUsecase) AssociateSentenceWithAllWords(loginUserId uint64, sen
 	return associatedWords, nil
 }
 
-// todo: ReAssociateSentenceWithAllWords() {}
+func (su *SentenceUsecase) ReAssociateSentenceWithAllWords(loginUserId, sentenceId uint64) error {
+	// sentenceIdと全Wordのsentences_wordsを再構築
+	// sentences_wordsからsentenceIdのレコードを全削除し、もう一度追加しなおす
+
+	// sentenceIdの所有者がloginUserIdでない場合何もしない
+	isSentenceOwner, err := su.sr.IsSentenceOwner(sentenceId, loginUserId)
+	if err != nil {
+		return err
+	}
+	if !isSentenceOwner {
+		return nil
+	}
+
+	// TODO: 削除～再追加はトランザクション内で行う
+
+	// sentences_wordsからsentenceIdのレコードを全削除
+	err = su.swr.DeleteAllAssociationBySentenceId(sentenceId)
+
+	// sentences_wordsに再追加
+	su.AssociateSentenceWithAllWords(loginUserId, sentenceId)
+
+	return nil
+}
