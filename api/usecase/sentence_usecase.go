@@ -164,7 +164,8 @@ func (su *SentenceUsecase) AssociateSentenceWithAllWords(loginUserId uint64, sen
 
 	var associatedWords []model.Word
 	for _, word := range userWords {
-		// Sentence中にWordが含まれるか判定
+		// Sentence中にWordが含まれる場合
+		// sentences_wordsにレコード追加
 		if strings.Contains(sentence.Sentence, word.Word) {
 			err = su.swr.AssociateSentenceWithWord(sentence.Id, word.Id)
 			if err != nil {
@@ -176,7 +177,8 @@ func (su *SentenceUsecase) AssociateSentenceWithAllWords(loginUserId uint64, sen
 			continue
 		}
 
-		// Sentence中にNotationが含まれるか判定
+		// Sentence中にNotationが含まれる場合
+		// sentences_wordsにレコード追加
 		notations, err := su.nr.GetAllNotations(word.Id)
 		if err != nil {
 			return []model.Word{}, err
@@ -198,3 +200,5 @@ func (su *SentenceUsecase) AssociateSentenceWithAllWords(loginUserId uint64, sen
 
 	return associatedWords, nil
 }
+
+// todo: ReAssociateSentenceWithAllWords() {}
