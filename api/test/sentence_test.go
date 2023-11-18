@@ -972,7 +972,7 @@ func TestUpdateSentence_UpdatedAssociation(t *testing.T) {
 
 	redWordRes := createTestWord(t, "赤い", "")
 	redWordId := redWordRes.Id
-	
+
 	blueWordRes := createTestWord(t, "青い", "")
 	blueWordId := blueWordRes.Id
 
@@ -996,29 +996,11 @@ func TestUpdateSentence_UpdatedAssociation(t *testing.T) {
 	// Sentenceを変更したことで、
 	// 単語「赤い」がSentence中に含まれなくなるため
 	// sentences_wordsからも削除される
-	var redCount int
-	db.QueryRow(`
-		SELECT COUNT(*) FROM sentences_words
-		WHERE sentence_id = $1
-			AND word_id = $2;
-		`,
-		sentenceId,
-		redWordId,
-	).Scan(&redCount)
-	assert.Equal(t, 0, redCount)
+	assert.Equal(t, 0, getSentencesWordsCount(sentenceId, redWordId))
 
 	// 単語「青い」がSentence中に含まれるようになるため
 	// sentences_wordsに追加される
-	var blueCount int
-	db.QueryRow(`
-		SELECT COUNT(*) FROM sentences_words
-		WHERE sentence_id = $1
-			AND word_id = $2;
-		`,
-		sentenceId,
-		blueWordId,
-	).Scan(&blueCount)
-	assert.Equal(t, 1, blueCount)
+	assert.Equal(t, 1, getSentencesWordsCount(sentenceId, blueWordId))
 }
 
 
