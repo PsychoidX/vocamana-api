@@ -18,15 +18,15 @@ func DeleteAllFromWords() {
 	db.Exec("SELECT setval('word_id_seq', 1);")
 }
 
-func GetCurrentWordsSequenceValue() int {
-	var currval int
+func GetCurrentWordsSequenceValue() uint64 {
+	var currval uint64
 	db.QueryRow(
 		"SELECT currval('word_id_seq');",
 	).Scan(&currval)
 	return currval
 }
 
-func GetNextWordsSequenceValue() int {
+func GetNextWordsSequenceValue() uint64 {
 	// インデックスのカウンタを進めず参照のみするための実装
 	return GetCurrentWordsSequenceValue() + 1
 }
@@ -37,15 +37,15 @@ func DeleteAllFromSentences() {
 	db.Exec("SELECT setval('sentence_id_seq', 1);")
 }
 
-func GetCurrentSentencesSequenceValue() int {
-	var currval int
+func GetCurrentSentencesSequenceValue() uint64 {
+	var currval uint64
 	db.QueryRow(
 		"SELECT currval('sentence_id_seq');",
 	).Scan(&currval)
 	return currval
 }
 
-func GetNextSentencesSequenceValue() int {
+func GetNextSentencesSequenceValue() uint64 {
 	// インデックスのカウンタを進めず参照のみするための実装
 	return GetCurrentSentencesSequenceValue() + 1
 }
@@ -58,15 +58,15 @@ func DeleteAllFromNotations() {
 	db.Exec("SELECT setval('notation_id_seq', 1);")
 }
 
-func GetCurrentNotationsSequenceValue() int {
-	var currval int
+func GetCurrentNotationsSequenceValue() uint64 {
+	var currval uint64
 	db.QueryRow(
 		"SELECT currval('notation_id_seq');",
 	).Scan(&currval)
 	return currval
 }
 
-func GetNextNotationsSequenceValue() int {
+func GetNextNotationsSequenceValue() uint64 {
 	// インデックスのカウンタを進めず参照のみするための実装
 	return GetCurrentNotationsSequenceValue() + 1
 }
@@ -235,4 +235,35 @@ func getCountFromNotations[T uint64|string](notationId T) int {
 	).Scan(&count)
 
 	return count
+}
+
+func insertIntoWords(word, memo string, userId uint64) uint64 {
+	var wordId uint64
+	db.QueryRow(`
+		INSERT INTO words
+		(id, word, memo, user_id)
+		VALUES(nextval('word_id_seq'), $1, $2, $3)
+		RETURNING id;
+		`,
+		word,
+		memo,
+		userId,
+	).Scan(&wordId)
+
+	return wordId
+}
+
+func insertIntoNotations(wordId uint64, notation string) uint64 {
+	var notationId uint64
+	db.QueryRow(`
+		INSERT INTO notations
+		(id, word_id, notation)
+		VALUES(nextval('word_id_seq'), $1, $2)
+		RETURNING id;
+		`,
+		wordId,
+		notation,
+	).Scan(&notationId)
+
+	return notationId
 }

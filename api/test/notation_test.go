@@ -16,44 +16,20 @@ func TestGetAllNotations(t *testing.T) {
 	DeleteAllFromWords()
 	DeleteAllFromNotations()
 
-	var wordId string
-	db.QueryRow(`
-		INSERT INTO words
-		(id, word, memo, user_id)
-		VALUES(nextval('word_id_seq'), 'testword', 'testmemo', 1)
-		RETURNING id;
-	`).Scan(&wordId)
-
-	var notationId1 string
-	db.QueryRow(`
-		INSERT INTO notations
-		(id, word_id, notation)
-		VALUES(nextval('word_id_seq'), $1, 'test notation1')
-		RETURNING id;
-	`,
-		wordId,
-	).Scan(&notationId1)
-
-	var notationId2 string
-	db.QueryRow(`
-		INSERT INTO notations
-		(id, word_id, notation)
-		VALUES(nextval('word_id_seq'), $1, 'test notation2')
-		RETURNING id;
-	`,
-		wordId,
-	).Scan(&notationId2)
+	wordId := insertIntoWords("test word", "test memo", 1)
+	notationId1 := insertIntoNotations(wordId, "test notation1")
+	notationId2 := insertIntoNotations(wordId, "test notation2")
 
 	expectedResponse := fmt.Sprintf(`
 		[
 			{
-				"id": %s,
-				"word_id": %s,
+				"id": %d,
+				"word_id": %d,
 				"notation": "test notation1"
 			},
 			{
-				"id": %s,
-				"word_id": %s,
+				"id": %d,
+				"word_id": %d,
 				"notation": "test notation2"
 			}
 		]`,
@@ -68,7 +44,7 @@ func TestGetAllNotations(t *testing.T) {
 		http.MethodGet,
 		"/words/:wordId/notations",
 		[]string{"wordId"},
-		[]string{wordId},
+		[]string{strconv.FormatUint(wordId, 10)},
 		"",
 		nc.GetAllNotations,
 		http.StatusOK,
