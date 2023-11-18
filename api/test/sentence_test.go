@@ -662,6 +662,47 @@ func TestUpdateSentence(t *testing.T) {
 	assert.Equal(t, "updated sentence", sentence)
 }
 
+func TestUpdateSentence_UpdatedAssociation(t *testing.T) {
+	// ログイン中のUserに紐づくSentenceを更新した時、
+	// sentences_wordsが正常に再構築されることをテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のSentenceのみ更新可能とする
+	DeleteAllFromSentences()
+	DeleteAllFromWords()
+
+	redWordRes := createTestWord(t, "赤い", "")
+	redWordId := redWordRes.Id
+
+	blueWordRes := createTestWord(t, "青い", "")
+	blueWordId := blueWordRes.Id
+
+	sentenceRes := createTestSentence(t, "赤いりんごを食べた")
+	sentenceId := sentenceRes.Id
+
+	updateSentenceReqBody := `{
+		"sentence": "青いりんごを食べた"
+	}`
+	
+	ExecController(
+		t,
+		http.MethodPut,
+		"/words/:sentenceId",
+		[]string{"sentenceId"},
+		[]string{strconv.FormatUint(sentenceId, 10)},
+		updateSentenceReqBody,
+		sc.UpdateSentence,
+	)
+
+	// Sentenceを変更したことで、
+	// 単語「赤い」がSentence中に含まれなくなるため
+	// sentences_wordsからも削除される
+	assert.Equal(t, 0, getCountFromSentencesWords(sentenceId, redWordId))
+
+	// 単語「青い」がSentence中に含まれるようになるため
+	// sentences_wordsに追加される
+	assert.Equal(t, 1, getCountFromSentencesWords(sentenceId, blueWordId))
+}
+
 func TestUpdateSentence_WithInvalidUser(t *testing.T) {
 	// ログイン中のUserに紐づかないSentenceを更新できないことをテスト
 	// TODO ログイン機能
@@ -750,6 +791,35 @@ func TestDeleteSentence(t *testing.T) {
 	).Scan(&count)
 
 	assert.Equal(t, 0, count)
+}
+
+func TestDeleteSentence_UpdateAssociation(t *testing.T) {
+	// ログイン中のUserに紐づくSentenceを削除した時、
+	// sentences_wordsから、削除されたSentenceに関するレコードが正常に削除されることをテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のSentenceのみ削除可能とする
+	DeleteAllFromSentences()
+	DeleteAllFromWords()
+
+	wordRes := createTestWord(t, "赤い", "")
+	wordId := wordRes.Id
+
+	sentenceRes := createTestSentence(t, "赤いりんごを食べた")
+	sentenceId := sentenceRes.Id
+	
+	ExecController(
+		t,
+		http.MethodDelete,
+		"/words/:sentenceId",
+		[]string{"sentenceId"},
+		[]string{strconv.FormatUint(sentenceId, 10)},
+		"",
+		sc.DeleteSentence,
+	)
+
+	// Sentenceを変更した時、
+	// sentences_wordsからも削除される
+	assert.Equal(t, 0, getCountFromSentencesWords(sentenceId, wordId))
 }
 
 func TestDeleteSentence_WithInvalidUser(t *testing.T) {
@@ -961,49 +1031,3 @@ func TestGetAssociatedWords_WithInvalidWordId(t *testing.T) {
 		"null",
 	)
 }
-
-func TestUpdateSentence_UpdatedAssociation(t *testing.T) {
-	// ログイン中のUserに紐づくSentenceを更新した時、
-	// sentences_wordsが正常に再構築されることをテスト
-	// TODO ログイン機能
-	// とりあえずuser_id=1のSentenceのみ更新可能とする
-	DeleteAllFromSentences()
-	DeleteAllFromWords()
-
-	redWordRes := createTestWord(t, "赤い", "")
-	redWordId := redWordRes.Id
-
-	blueWordRes := createTestWord(t, "青い", "")
-	blueWordId := blueWordRes.Id
-
-	sentenceRes := createTestSentence(t, "赤いりんごを食べた")
-	sentenceId := sentenceRes.Id
-
-	updateSentenceReqBody := `{
-		"sentence": "青いりんごを食べた"
-	}`
-	
-	ExecController(
-		t,
-		http.MethodPut,
-		"/words/:sentenceId",
-		[]string{"sentenceId"},
-		[]string{strconv.FormatUint(sentenceId, 10)},
-		updateSentenceReqBody,
-		sc.UpdateSentence,
-	)
-
-	// Sentenceを変更したことで、
-	// 単語「赤い」がSentence中に含まれなくなるため
-	// sentences_wordsからも削除される
-	assert.Equal(t, 0, getSentencesWordsCount(sentenceId, redWordId))
-
-	// 単語「青い」がSentence中に含まれるようになるため
-	// sentences_wordsに追加される
-	assert.Equal(t, 1, getSentencesWordsCount(sentenceId, blueWordId))
-}
-
-
-// func TestDeleteSentence_UpdateAssociation(t *testing.T) {
-// 	TODO つくる
-// }

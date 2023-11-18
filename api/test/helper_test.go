@@ -169,7 +169,7 @@ func createTestWord(t *testing.T, word, memo string) model.WordResponse {
 	return toWordResponse(rec)
 }
 
-func getSentencesWordsCount[T uint64|string](sentenceId, wordId T) int {
+func getCountFromSentencesWords[T uint64|string](sentenceId, wordId T) int {
 	var count int
 
 	db.QueryRow(`
