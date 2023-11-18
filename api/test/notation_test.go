@@ -60,20 +60,14 @@ func TestGetAllNotations_WithNoRows(t *testing.T) {
 	DeleteAllFromWords()
 	DeleteAllFromNotations()
 
-	var wordId string
-	db.QueryRow(`
-		INSERT INTO words
-		(id, word, memo, user_id)
-		VALUES(nextval('word_id_seq'), 'testword', 'testmemo', 1)
-		RETURNING id;
-	`).Scan(&wordId)
+	wordId := insertIntoWords("test word", "test memo", 1)
 
 	DoSimpleTest(
 		t,
 		http.MethodGet,
 		"/words/:wordId/notations",
 		[]string{"wordId"},
-		[]string{wordId},
+		[]string{strconv.FormatUint(wordId, 10)},
 		"",
 		nc.GetAllNotations,
 		http.StatusOK,
@@ -88,47 +82,16 @@ func TestGetAllNotations_WithInvalidWordId(t *testing.T) {
 	DeleteAllFromWords()
 	DeleteAllFromNotations()
 
-	var wordIdWithUserId1 string
-	db.QueryRow(`
-		INSERT INTO words
-		(id, word, memo, user_id)
-		VALUES(nextval('word_id_seq'), 'testword', 'testmemo', 1)
-		RETURNING id;
-	`).Scan(&wordIdWithUserId1)
-
-	var wordIdWithUserId2 string
-	db.QueryRow(`
-		INSERT INTO words
-		(id, word, memo, user_id)
-		VALUES(nextval('word_id_seq'), 'testword', 'testmemo', 2)
-		RETURNING id;
-	`).Scan(&wordIdWithUserId2)
-
-	var notationIdWithUserId1 string
-	db.QueryRow(`
-		INSERT INTO notations
-		(id, word_id, notation)
-		VALUES(nextval('word_id_seq'), $1, 'test notation1')
-		RETURNING id;
-	`,
-		wordIdWithUserId1,
-	).Scan(&notationIdWithUserId1)
-
-	var notationIdWithUserId2 string
-	db.QueryRow(`
-		INSERT INTO notations
-		(id, word_id, notation)
-		VALUES(nextval('word_id_seq'), $1, 'test notation2')
-		RETURNING id;
-	`,
-		wordIdWithUserId2,
-	).Scan(&notationIdWithUserId2)
+	wordIdWithUserId1 := insertIntoWords("test word", "test memo", 1)
+	wordIdWithUserId2 := insertIntoWords("test word", "test memo", 2)
+	notationIdWithUserId1 := insertIntoNotations(wordIdWithUserId1, "test notation1")
+	insertIntoNotations(wordIdWithUserId2, "test notation2")
 
 	expectedResponse := fmt.Sprintf(`
 		[
 			{
-				"id": %s,
-				"word_id": %s,
+				"id": %d,
+				"word_id": %d,
 				"notation": "test notation1"
 			}
 		]`,
@@ -141,7 +104,7 @@ func TestGetAllNotations_WithInvalidWordId(t *testing.T) {
 		http.MethodGet,
 		"/words/:wordId/notations",
 		[]string{"wordId"},
-		[]string{wordIdWithUserId1},
+		[]string{strconv.FormatUint(wordIdWithUserId1, 10)},
 		"",
 		nc.GetAllNotations,
 		http.StatusOK,
@@ -153,7 +116,7 @@ func TestGetAllNotations_WithInvalidWordId(t *testing.T) {
 		http.MethodGet,
 		"/words/:wordId/notations",
 		[]string{"wordId"},
-		[]string{wordIdWithUserId2},
+		[]string{strconv.FormatUint(wordIdWithUserId2, 10)},
 		"",
 		nc.GetAllNotations,
 		http.StatusOK,
@@ -168,28 +131,22 @@ func TestCreateNotation(t *testing.T) {
 	DeleteAllFromWords()
 	DeleteAllFromNotations()
 
-	var wordId string
-	db.QueryRow(`
-		INSERT INTO words
-		(id, word, memo, user_id)
-		VALUES(nextval('word_id_seq'), 'testword', 'testmemo', 1)
-		RETURNING id;
-	`).Scan(&wordId)
+	wordId := insertIntoWords("test word", "test memo", 1)
 
-	id := GetNextNotationsSequenceValue()
+	notationId := GetNextNotationsSequenceValue()
 
 	reqBody := `{
-		"notation": "testnotation"
+		"notation": "test notation"
 	}`
 
 	// 登録されたレコードが返る
 	expectedResponse := fmt.Sprintf(`
 		{
 			"id": %d,
-			"word_id": %s,
-			"notation": "testnotation"
+			"word_id": %d,
+			"notation": "test notation"
 		}`,
-		id,
+		notationId,
 		wordId,
 	)
 
@@ -198,7 +155,7 @@ func TestCreateNotation(t *testing.T) {
 		http.MethodPost,
 		"/words/:wordId/notations",
 		[]string{"wordId"},
-		[]string{wordId},
+		[]string{strconv.FormatUint(wordId, 10)},
 		reqBody,
 		nc.CreateNotation,
 		http.StatusCreated,
@@ -212,11 +169,11 @@ func TestCreateNotation(t *testing.T) {
 		WHERE id = $1
 			AND word_id = $2;
 	`,
-		id,
+		notationId,
 		wordId,
 	).Scan(&notation)
 
-	assert.Equal(t, "testnotation", notation)
+	assert.Equal(t, "test notation", notation)
 }
 
 func TestCreateNotation_WithInvalidUser(t *testing.T) {
@@ -226,15 +183,9 @@ func TestCreateNotation_WithInvalidUser(t *testing.T) {
 	DeleteAllFromWords()
 	DeleteAllFromNotations()
 
-	var wordId string
-	db.QueryRow(`
-		INSERT INTO words
-		(id, word, memo, user_id)
-		VALUES(nextval('word_id_seq'), 'testword', 'testmemo', 2)
-		RETURNING id;
-	`).Scan(&wordId)
+	wordId := insertIntoWords("test word", "test memo", 2)
 
-	id := GetNextNotationsSequenceValue()
+	notationId := GetNextNotationsSequenceValue()
 
 	reqBody := `{
 		"notation": "testnotation"
@@ -245,7 +196,7 @@ func TestCreateNotation_WithInvalidUser(t *testing.T) {
 		http.MethodPost,
 		"/words/:wordId/notations",
 		[]string{"wordId"},
-		[]string{wordId},
+		[]string{strconv.FormatUint(wordId, 10)},
 		reqBody,
 		nc.CreateNotation,
 		http.StatusUnauthorized,
@@ -253,17 +204,7 @@ func TestCreateNotation_WithInvalidUser(t *testing.T) {
 	)
 
 	// DBにレコードが追加されない
-	var count int
-	db.QueryRow(`
-		SELECT COUNT(*) FROM notations
-		WHERE id = $1
-			AND word_id = $2;
-	`,
-		id,
-		wordId,
-	).Scan(&count)
-
-	assert.Equal(t, 0, count)
+	assert.Equal(t, 0, getCountFromNotations(notationId))
 }
 
 func TestCreateNotation_InSentence(t *testing.T) {
@@ -277,29 +218,9 @@ func TestCreateNotation_InSentence(t *testing.T) {
 	DeleteAllFromSentences()
 	DeleteAllFromNotations()
 
-	var wordId string
-	db.QueryRow(`
-		INSERT INTO words
-		(id, word, memo, user_id)
-		VALUES(nextval('word_id_seq'), 'りんご', 'test memo', 1)
-		RETURNING id;
-	`).Scan(&wordId)
-
-	var appleSentenceId string
-	db.QueryRow(`
-		INSERT INTO sentences
-		(id, sentence, user_id)
-		VALUES(nextval('sentence_id_seq'), '赤い林檎を食べた', 1)
-		RETURNING id;
-	`).Scan(&appleSentenceId)
-
-	var lemonSentenceId string
-	db.QueryRow(`
-		INSERT INTO sentences
-		(id, sentence, user_id)
-		VALUES(nextval('sentence_id_seq'), '黄色い檸檬を食べた', 1)
-		RETURNING id;
-	`).Scan(&lemonSentenceId)
+	wordId := insertIntoWords("りんご", "", 1)
+	appleSentenceId := insertIntoSentences("赤い林檎を食べた", 1)
+	lemonSentenceId := insertIntoSentences("黄色い檸檬を食べた", 1)
 
 	reqBody := `{
 		"notation": "林檎"
@@ -310,38 +231,18 @@ func TestCreateNotation_InSentence(t *testing.T) {
 		http.MethodPost,
 		"/words/:wordId/notations",
 		[]string{"wordId"},
-		[]string{wordId},
+		[]string{strconv.FormatUint(wordId, 10)},
 		reqBody,
 		nc.CreateNotation,
 	)
 
 	// 「赤い林檎を食べた」には「林檎」が含まれるため、
 	// sentences_wordsに追加される
-	var appleCount int
-	db.QueryRow(`
-		SELECT COUNT(*) FROM sentences_words
-		WHERE sentence_id = $1
-			AND word_id = $2;
-		`,
-		appleSentenceId,
-		wordId,
-	).Scan(&appleCount)
-
-	assert.Equal(t, 1, appleCount)
+	assert.Equal(t, 1, getCountFromSentencesWords(appleSentenceId, wordId))
 
 	// 「黄色い檸檬を食べた」には「林檎」が含まれないため、
 	// sentences_wordsに追加されない
-	var lemonCount int
-	db.QueryRow(`
-		SELECT COUNT(*) FROM sentences_words
-		WHERE sentence_id = $1
-			AND word_id = $2;
-		`,
-		lemonSentenceId,
-		wordId,
-	).Scan(&lemonCount)
-
-	assert.Equal(t, 0, lemonCount)
+	assert.Equal(t, 0, getCountFromSentencesWords(lemonSentenceId, wordId))
 }
 
 func TestCreateNotation_InInvalidSentence(t *testing.T) {
@@ -356,21 +257,8 @@ func TestCreateNotation_InInvalidSentence(t *testing.T) {
 	DeleteAllFromSentences()
 	DeleteAllFromNotations()
 
-	var wordId string
-	db.QueryRow(`
-		INSERT INTO words
-		(id, word, memo, user_id)
-		VALUES(nextval('word_id_seq'), 'りんご', 'test memo', 1)
-		RETURNING id;
-	`).Scan(&wordId)
-
-	var sentenceId string
-	db.QueryRow(`
-		INSERT INTO sentences
-		(id, sentence, user_id)
-		VALUES(nextval('sentence_id_seq'), '赤い林檎を食べた', 2)
-		RETURNING id;
-	`).Scan(&sentenceId)
+	wordId := insertIntoWords("りんご", "", 1)
+	sentenceId := insertIntoSentences("赤い林檎を食べた", 2)
 
 	reqBody := `{
 		"notation": "林檎"
@@ -381,7 +269,7 @@ func TestCreateNotation_InInvalidSentence(t *testing.T) {
 		http.MethodPost,
 		"/words/:wordId/notations",
 		[]string{"wordId"},
-		[]string{wordId},
+		[]string{strconv.FormatUint(wordId, 10)},
 		reqBody,
 		nc.CreateNotation,
 	)
@@ -389,17 +277,7 @@ func TestCreateNotation_InInvalidSentence(t *testing.T) {
 	// 「赤い林檎を食べた」には「林檎」が含まれるが、
 	// user_idが異なるため、
 	// sentences_wordsに追加されない
-	var count int
-	db.QueryRow(`
-		SELECT COUNT(*) FROM sentences_words
-		WHERE sentence_id = $1
-			AND word_id = $2;
-		`,
-		sentenceId,
-		wordId,
-	).Scan(&count)
-
-	assert.Equal(t, 0, count)
+	assert.Equal(t, 0, getCountFromSentencesWords(sentenceId, wordId))
 }
 
 func TestUpdateNotation(t *testing.T) {
@@ -409,23 +287,8 @@ func TestUpdateNotation(t *testing.T) {
 	DeleteAllFromWords()
 	DeleteAllFromNotations()
 
-	var wordId string
-	db.QueryRow(`
-		INSERT INTO words
-		(id, word, memo, user_id)
-		VALUES(nextval('word_id_seq'), 'testword', 'testmemo', 1)
-		RETURNING id;
-	`).Scan(&wordId)
-
-	var notationId string
-	db.QueryRow(`
-		INSERT INTO notations
-		(id, word_id, notation)
-		VALUES(nextval('word_id_seq'), $1, 'test notation')
-		RETURNING id;
-	`,
-		wordId,
-	).Scan(&notationId)
+	wordId := insertIntoWords("test word", "test memo", 1)
+	notationId := insertIntoNotations(wordId, "test notation")
 
 	reqBody := `{
 		"notation": "updated notation"
@@ -434,8 +297,8 @@ func TestUpdateNotation(t *testing.T) {
 	// 更新されたレコードが返る
 	expectedResponse := fmt.Sprintf(`
 		{
-			"id": %s,
-			"word_id": %s,
+			"id": %d,
+			"word_id": %d,
 			"notation": "updated notation"
 		}`,
 		notationId,
@@ -447,7 +310,7 @@ func TestUpdateNotation(t *testing.T) {
 		http.MethodPut,
 		"/notations/:notationId",
 		[]string{"notationId"},
-		[]string{notationId},
+		[]string{strconv.FormatUint(notationId, 10)},
 		reqBody,
 		nc.UpdateNotation,
 		http.StatusAccepted,
@@ -475,13 +338,7 @@ func TestUpdateNotation_WithNoRows(t *testing.T) {
 	DeleteAllFromWords()
 	DeleteAllFromNotations()
 
-	var wordId string
-	db.QueryRow(`
-		INSERT INTO words
-		(id, word, memo, user_id)
-		VALUES(nextval('word_id_seq'), 'testword', 'testmemo', 1)
-		RETURNING id;
-	`).Scan(&wordId)
+	insertIntoWords("test word", "test memo", 1)
 
 	reqBody := `{
 		"notation": "updated notation"
@@ -498,119 +355,6 @@ func TestUpdateNotation_WithNoRows(t *testing.T) {
 		http.StatusUnauthorized,
 		"{}",
 	)
-}
-
-func TestDeleteNotation(t *testing.T) {
-	// ログイン中のUserに紐づくWordに対し、Notationを削除できることをテスト
-	// TODO ログイン機能
-	// とりあえずログインUserはuser_id=1とする
-	DeleteAllFromWords()
-	DeleteAllFromNotations()
-
-	var wordId string
-	db.QueryRow(`
-		INSERT INTO words
-		(id, word, memo, user_id)
-		VALUES(nextval('word_id_seq'), 'testword', 'testmemo', 1)
-		RETURNING id;
-	`).Scan(&wordId)
-
-	var notationId string
-	db.QueryRow(`
-		INSERT INTO notations
-		(id, word_id, notation)
-		VALUES(nextval('word_id_seq'), $1, 'test notation')
-		RETURNING id;
-	`,
-		wordId,
-	).Scan(&notationId)
-
-	// 削除されたレコードが返る
-	expectedResponse := fmt.Sprintf(`
-		{
-			"id": %s,
-			"word_id": %s,
-			"notation": "test notation"
-		}`,
-		notationId,
-		wordId,
-	)
-
-	DoSimpleTest(
-		t,
-		http.MethodDelete,
-		"/notations/:notationId",
-		[]string{"notationId"},
-		[]string{notationId},
-		"",
-		nc.DeleteNotation,
-		http.StatusAccepted,
-		expectedResponse,
-	)
-
-	// DBのレコードが削除される
-	var count int
-	db.QueryRow(`
-		SELECT COUNT(*) FROM notations
-		WHERE id = $1
-			AND word_id = $2;
-	`,
-		notationId,
-		wordId,
-	).Scan(&count)
-
-	assert.Equal(t, 0, count)
-}
-
-func TestDeleteNotation_WithInvalidUser(t *testing.T) {
-	// ログイン中のUserに紐づかないWordに対し、Notationを削除できないことをテスト
-	// TODO ログイン機能
-	// とりあえずログインUserはuser_id=1とする
-	DeleteAllFromWords()
-	DeleteAllFromNotations()
-
-	var wordId string
-	db.QueryRow(`
-		INSERT INTO words
-		(id, word, memo, user_id)
-		VALUES(nextval('word_id_seq'), 'testword', 'testmemo', 2)
-		RETURNING id;
-	`).Scan(&wordId)
-
-	var notationId string
-	db.QueryRow(`
-		INSERT INTO notations
-		(id, word_id, notation)
-		VALUES(nextval('word_id_seq'), $1, 'test notation')
-		RETURNING id;
-	`,
-		wordId,
-	).Scan(&notationId)
-
-	DoSimpleTest(
-		t,
-		http.MethodDelete,
-		"/notations/:notationId",
-		[]string{"notationId"},
-		[]string{wordId, notationId},
-		"",
-		nc.DeleteNotation,
-		http.StatusUnauthorized,
-		"{}",
-	)
-
-	// DBのレコードが削除される
-	var count int
-	db.QueryRow(`
-		SELECT COUNT(*) FROM notations
-		WHERE id = $1
-			AND word_id = $2;
-	`,
-		notationId,
-		wordId,
-	).Scan(&count)
-
-	assert.Equal(t, 1, count)
 }
 
 func TestUpdateNotation_UpdatedAssociation_AllNotationsDeleted(t *testing.T) {
@@ -674,6 +418,69 @@ func TestUpdateNotation_UpdatedAssociation_SomeNotationRemaining(t *testing.T) {
 	// Notation「リンゴ」を「RINGO」に更新しても、Wordは「林檎」でマッチし続けるため、
 	// sentences_wordsから削除されない
 	assert.Equal(t, 1, getCountFromSentencesWords(sentenceId, wordId))
+}
+
+func TestDeleteNotation(t *testing.T) {
+	// ログイン中のUserに紐づくWordに対し、Notationを削除できることをテスト
+	// TODO ログイン機能
+	// とりあえずログインUserはuser_id=1とする
+	DeleteAllFromWords()
+	DeleteAllFromNotations()
+
+	wordId := insertIntoWords("test word", "test memo", 1)
+	notationId := insertIntoNotations(wordId, "test notation")
+
+	// 削除されたレコードが返る
+	expectedResponse := fmt.Sprintf(`
+		{
+			"id": %d,
+			"word_id": %d,
+			"notation": "test notation"
+		}`,
+		notationId,
+		wordId,
+	)
+
+	DoSimpleTest(
+		t,
+		http.MethodDelete,
+		"/notations/:notationId",
+		[]string{"notationId"},
+		[]string{strconv.FormatUint(notationId, 10)},
+		"",
+		nc.DeleteNotation,
+		http.StatusAccepted,
+		expectedResponse,
+	)
+
+	// DBのレコードが削除される
+	assert.Equal(t, 0, getCountFromNotations(notationId))
+}
+
+func TestDeleteNotation_WithInvalidUser(t *testing.T) {
+	// ログイン中のUserに紐づかないWordに対し、Notationを削除できないことをテスト
+	// TODO ログイン機能
+	// とりあえずログインUserはuser_id=1とする
+	DeleteAllFromWords()
+	DeleteAllFromNotations()
+
+	wordId := insertIntoWords("test word", "test memo", 2)
+	notationId := insertIntoNotations(wordId, "test notation")
+	assert.Equal(t, 1, getCountFromNotations(notationId))
+	DoSimpleTest(
+		t,
+		http.MethodDelete,
+		"/notations/:notationId",
+		[]string{"notationId"},
+		[]string{strconv.FormatUint(notationId, 10)},
+		"",
+		nc.DeleteNotation,
+		http.StatusUnauthorized,
+		"{}",
+	)
+
+	// DBのレコードが削除されない
+	assert.Equal(t, 1, getCountFromNotations(notationId))
 }
 
 func TestDeleteNotation_UpdatedAssociation_AllNotationsDeleted(t *testing.T) {

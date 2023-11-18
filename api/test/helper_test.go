@@ -229,7 +229,7 @@ func getCountFromNotations[T uint64|string](notationId T) int {
 
 	db.QueryRow(`
 		SELECT COUNT(*) FROM notations
-		WHERE notation_id = $1
+		WHERE id = $1
 		`,
 		notationId,
 	).Scan(&count)
@@ -258,7 +258,7 @@ func insertIntoNotations(wordId uint64, notation string) uint64 {
 	db.QueryRow(`
 		INSERT INTO notations
 		(id, word_id, notation)
-		VALUES(nextval('word_id_seq'), $1, $2)
+		VALUES(nextval('notation_id_seq'), $1, $2)
 		RETURNING id;
 		`,
 		wordId,
@@ -266,4 +266,19 @@ func insertIntoNotations(wordId uint64, notation string) uint64 {
 	).Scan(&notationId)
 
 	return notationId
+}
+
+func insertIntoSentences(sentence string, userId uint64) uint64 {
+	var sentenceId uint64
+	db.QueryRow(`
+		INSERT INTO sentences
+		(id, sentence, user_id)
+		VALUES(nextval('sentence_id_seq'), $1, $2)
+		RETURNING id;
+		`,
+		sentence,
+		userId,
+	).Scan(&sentenceId)
+
+	return sentenceId
 }
