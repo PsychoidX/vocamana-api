@@ -67,14 +67,20 @@ func GetNextNotationsSequenceValue() int {
 	return GetCurrentNotationsSequenceValue() + 1
 }
 
-func getBodyValueFromRecorder(rec *httptest.ResponseRecorder, key string) string {
-	// recに記録されたリクエストボディ内の、keyの値を取得
-
+func toMap(rec *httptest.ResponseRecorder) map[string]interface{} {
 	// io.ReadAll(rec.Body)を使うと、内部でrec.Body.Readが呼ばれ、バッファが解放される
 	// これにより、ReadAllでは最初の1回しかリクエストボディを取得できないため、Bytes()を使用
 	var bodyMap map[string]interface{}
 	json.Unmarshal(rec.Body.Bytes(), &bodyMap)
-
-	// interface型のbody[key]をstring型に変換
-	return fmt.Sprintf("%v", bodyMap[key])
+	return bodyMap
 }
+
+func getBodyValueFromRecorder(rec *httptest.ResponseRecorder, key string) string {
+	// recに記録されたリクエストボディ内の、keyの値を取得
+	// interface型のbody[key]をstring型に変換
+	return fmt.Sprintf("%v", toMap(rec)[key])
+}
+
+// func toSentenceResponse(rec *httptest.ResponseRecorder) model.SentenceResponse {
+
+// }
