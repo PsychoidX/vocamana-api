@@ -3,6 +3,7 @@ package test
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -1002,23 +1003,10 @@ func TestUpdateSentence_UpdatedAssociation(t *testing.T) {
 		wc.CreateWord,
 	)
 
-	createSentenceReqBody := `{
-		"sentence": "赤いりんごを食べた"
-	}`
-
 	blueWordId := getBodyValueFromRecorder(rec, "id")
-	
-	_, rec = ExecController(
-		t,
-		http.MethodPost,
-		"/sentences",
-		nil,
-		nil,
-		createSentenceReqBody,
-		sc.CreateSentence,
-	)
 
-	sentenceId := getBodyValueFromRecorder(rec, "id")
+	sentenceRes := createTestSentence(t, "赤いりんごを食べた")
+	sentenceId := sentenceRes.Id
 
 	updateSentenceReqBody := `{
 		"sentence": "青いりんごを食べた"
@@ -1029,7 +1017,7 @@ func TestUpdateSentence_UpdatedAssociation(t *testing.T) {
 		http.MethodPut,
 		"/words/:sentenceId",
 		[]string{"sentenceId"},
-		[]string{sentenceId},
+		[]string{strconv.FormatUint(sentenceId, 10)},
 		updateSentenceReqBody,
 		sc.UpdateSentence,
 	)

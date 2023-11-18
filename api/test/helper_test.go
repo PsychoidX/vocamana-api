@@ -1,9 +1,13 @@
 package test
 
 import (
+	"api/model"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/http/httptest"
+	"strconv"
+	"testing"
 )
 
 func DeleteAllFromWords() {
@@ -81,6 +85,42 @@ func getBodyValueFromRecorder(rec *httptest.ResponseRecorder, key string) string
 	return fmt.Sprintf("%v", toMap(rec)[key])
 }
 
-// func toSentenceResponse(rec *httptest.ResponseRecorder) model.SentenceResponse {
+func toSentenceResponse(rec *httptest.ResponseRecorder) model.SentenceResponse {
+	bodyMap := toMap(rec)
+	id := fmt.Sprintf("%v", bodyMap["id"])
+	sentence := fmt.Sprintf("%v", bodyMap["sentence"])
+	userId := fmt.Sprintf("%v", bodyMap["user_id"])
 
-// }
+	intId, _ := strconv.ParseUint(id, 10, 32)
+	intUserId, _ := strconv.ParseUint(userId, 10, 32)
+
+	return model.SentenceResponse{
+		Id: intId,
+		Sentence: sentence,
+		UserId: intUserId,
+	}
+}
+
+func createTestSentence(t *testing.T, sentence string) model.SentenceResponse {
+	// CreateSentenceを呼び出す
+	// 他メソッドのテスト用データを作る用途で使用
+	body := fmt.Sprintf(`
+			{
+				"sentence": "%s"
+			}
+		`,
+		sentence,
+	)
+
+	_, rec := ExecController(
+		t,
+		http.MethodPost,
+		"/sentences",
+		nil,
+		nil,
+		body,
+		sc.CreateSentence,
+	)
+
+	return toSentenceResponse(rec)
+}
