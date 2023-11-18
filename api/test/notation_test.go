@@ -637,8 +637,10 @@ func TestDeleteNotation_WithInvalidUser(t *testing.T) {
 	assert.Equal(t, 1, count)
 }
 
-func TestUpdateNotation_UpdatedAssociation(t *testing.T) {
-	// Notationを更新した時、entences_wordsが正常に再構築されることをテスト
+func TestUpdateNotation_UpdatedAssociation_AllNotationsDeleted(t *testing.T) {
+	// Notationを更新した時、それによってSentence中にWordが含まれないことになったら、
+	// sentences_wordsから値が削除されることをテスト
+
 	DeleteAllFromWords()
 	DeleteAllFromNotations()
 
@@ -664,6 +666,38 @@ func TestUpdateNotation_UpdatedAssociation(t *testing.T) {
 	// Notationを「林檎」から「リンゴ」に変更したことで、「林檎」にはマッチしなくなり
 	// sentences_wordsから削除される
 	assert.Equal(t, 0, getCountFromSentencesWords(sentenceId, wordId))
+}
+
+func TestUpdateNotation_UpdatedAssociation_SomeNotationRemaining(t *testing.T) {
+	// Notationを更新した時、それでもSentence中にWordが含まれている場合、
+	// sentences_wordsから値が削除されないことをテスト
+
+	DeleteAllFromWords()
+	DeleteAllFromNotations()
+
+	wordId := createTestWord(t, "りんご", "").Id
+	createTestNotation(t, wordId, "林檎")
+	notationId := createTestNotation(t, wordId, "リンゴ").Id
+	sentenceId := createTestSentence(t, "林檎はリンゴと読むらしい").Id
+
+	body := `{
+		"notation": "RINGO"
+	}`
+
+	ExecController(
+		t,
+		http.MethodPut,
+		"/notations/:notationId",
+		[]string{"notationId"},
+		[]string{strconv.FormatUint(notationId, 10)},
+		body,
+		nc.UpdateNotation,
+	)
+
+	// Word「りんご」が、追加されていたNotationにより「林檎」「リンゴ」にもマッチしているので、
+	// Notation「リンゴ」を「RINGO」に更新しても、Wordは「林檎」でマッチし続けるため、
+	// sentences_wordsから削除されない
+	assert.Equal(t, 1, getCountFromSentencesWords(sentenceId, wordId))
 }
 
 func TestDeleteNotation_UpdatedAssociation_AllNotationsDeleted(t *testing.T) {
@@ -716,7 +750,7 @@ func TestDeleteNotation_UpdatedAssociation_SomeNotationRemaining(t *testing.T) {
 	)
 
 	// Word「りんご」が、追加されていたNotationにより「林檎」「リンゴ」にもマッチしているので、
-	// Notation「林檎」を削除しても、Wordは「リンゴ」にマッチし続けるため、
+	// Notation「林檎」を削除しても、Wordは「リンゴ」でマッチし続けるため、
 	// sentences_wordsから削除されない
 	assert.Equal(t, 1, getCountFromSentencesWords(sentenceId, wordId))
 }
