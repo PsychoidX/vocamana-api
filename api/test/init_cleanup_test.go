@@ -51,7 +51,7 @@ func TestMain(m *testing.M) {
 
 	// Controller
 	wc = controller.NewWordController(wu, au)
-	sc = controller.NewSentenceController(su)
+	sc = controller.NewSentenceController(su, au)
 	nc = controller.NewNotationController(nu)
 
 	setupUserData()

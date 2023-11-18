@@ -21,10 +21,14 @@ type ISentenceController interface {
 
 type SentenceController struct {
 	su *usecase.SentenceUsecase
+	au *usecase.AssociationUsecase
 }
 
-func NewSentenceController(su *usecase.SentenceUsecase) ISentenceController {
-	return &SentenceController{su}
+func NewSentenceController(
+	su *usecase.SentenceUsecase,
+	au *usecase.AssociationUsecase,
+) ISentenceController {
+	return &SentenceController{su, au}
 }
 
 func (sc *SentenceController) GetAllSentences(c echo.Context) error {
@@ -184,13 +188,27 @@ func (sc *SentenceController) UpdateSentence(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, make(map[string]interface{}))
 	}
 
-	sentenceRes := model.SentenceResponse{
-		Id:       sentence.Id,
-		Sentence: sentence.Sentence,
-		UserId:   sentence.UserId,
-	}
+	// クエリパラメータ ?with-link=true の場合、
+	// レスポンスにリンク付きSentenceを含める
+	if(c.QueryParam("with-link") == "true") {
+		// sentenceResWithLink := model.SentenceWIthLinkResponse
+		// TODO
+		sentenceRes := model.SentenceResponse{
+			Id:       sentence.Id,
+			Sentence: sentence.Sentence,
+			UserId:   sentence.UserId,
+		}
 
-	return c.JSON(http.StatusAccepted, sentenceRes)
+		return c.JSON(http.StatusAccepted, sentenceRes)
+	} else {
+		sentenceRes := model.SentenceResponse{
+			Id:       sentence.Id,
+			Sentence: sentence.Sentence,
+			UserId:   sentence.UserId,
+		}
+
+		return c.JSON(http.StatusAccepted, sentenceRes)
+	}
 }
 
 func (sc *SentenceController) DeleteSentence(c echo.Context) error {
