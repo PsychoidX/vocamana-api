@@ -970,40 +970,11 @@ func TestUpdateSentence_UpdatedAssociation(t *testing.T) {
 	DeleteAllFromSentences()
 	DeleteAllFromWords()
 
-	// Word「赤い」「青い」とSentence「赤いりんごを食べた」を作成
-	createWordReqBodyRed := `{
-		"word": "赤い",
-		"memo": ""
-	}`
-
-	_, rec := ExecController(
-		t,
-		http.MethodPost,
-		"/words",
-		nil,
-		nil,
-		createWordReqBodyRed,
-		wc.CreateWord,
-	)
-
-	redWordId := getBodyValueFromRecorder(rec, "id")
-
-	createWordReqBodyBlue := `{
-		"word": "青い",
-		"memo": ""
-	}`
-
-	_, rec = ExecController(
-		t,
-		http.MethodPost,
-		"/words",
-		nil,
-		nil,
-		createWordReqBodyBlue,
-		wc.CreateWord,
-	)
-
-	blueWordId := getBodyValueFromRecorder(rec, "id")
+	redWordRes := createTestWord(t, "赤い", "")
+	redWordId := redWordRes.Id
+	
+	blueWordRes := createTestWord(t, "青い", "")
+	blueWordId := blueWordRes.Id
 
 	sentenceRes := createTestSentence(t, "赤いりんごを食べた")
 	sentenceId := sentenceRes.Id

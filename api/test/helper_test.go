@@ -101,6 +101,24 @@ func toSentenceResponse(rec *httptest.ResponseRecorder) model.SentenceResponse {
 	}
 }
 
+func toWordResponse(rec *httptest.ResponseRecorder) model.WordResponse {
+	bodyMap := toMap(rec)
+	id := fmt.Sprintf("%v", bodyMap["id"])
+	word := fmt.Sprintf("%v", bodyMap["word"])
+	memo := fmt.Sprintf("%v", bodyMap["memo"])
+	userId := fmt.Sprintf("%v", bodyMap["user_id"])
+
+	intId, _ := strconv.ParseUint(id, 10, 32)
+	intUserId, _ := strconv.ParseUint(userId, 10, 32)
+
+	return model.WordResponse{
+		Id: intId,
+		Word: word,
+		Memo: memo,
+		UserId: intUserId,
+	}
+}
+
 func createTestSentence(t *testing.T, sentence string) model.SentenceResponse {
 	// CreateSentenceを呼び出す
 	// 他メソッドのテスト用データを作る用途で使用
@@ -123,4 +141,30 @@ func createTestSentence(t *testing.T, sentence string) model.SentenceResponse {
 	)
 
 	return toSentenceResponse(rec)
+}
+
+func createTestWord(t *testing.T, word, memo string) model.WordResponse {
+	// CreateWordを呼び出す
+	// 他メソッドのテスト用データを作る用途で使用
+	body := fmt.Sprintf(`
+			{
+				"word": "%s",
+				"memo": "%s"
+			}
+		`,
+		word,
+		memo,
+	)
+
+	_, rec := ExecController(
+		t,
+		http.MethodPost,
+		"/words",
+		nil,
+		nil,
+		body,
+		wc.CreateWord,
+	)
+
+	return toWordResponse(rec)
 }
