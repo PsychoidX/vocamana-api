@@ -74,3 +74,34 @@ func AssociateWordWithAllSentences(
 
 	return associatedSentences, nil
 }
+
+func ReAssociateWordWithAllSentences(
+	loginUserId uint64,
+	wordId uint64,
+	wr repository.IWordRepository,
+	sr repository.ISentenceRepository,
+	swr repository.ISentencesWordsRepository,
+	nr repository.INotationRepository,
+) error {
+	// wordIdで指定されるWordと、全Sentenceのsentences_wordsを再構築
+	// sentences_wordsからwordIdのレコードを全削除し、もう一度追加しなおす
+
+	// sentenceIdの所有者がloginUserIdでない場合何もしない
+	isWordOwner, err := wr.IsWordOwner(wordId, loginUserId)
+	if err != nil {
+		return err
+	}
+	if !isWordOwner {
+		return nil
+	}
+
+	// TODO: 削除～再追加はトランザクション内で行う
+
+	// sentences_wordsからwordIdのレコードを全削除
+	err = swr.DeleteAllAssociationByWordId(wordId)
+
+	// sentences_wordsに再追加
+	AssociateWordWithAllSentences(loginUserId, wordId, wr, sr, swr, nr)
+
+	return nil
+}

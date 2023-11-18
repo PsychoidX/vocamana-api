@@ -3,6 +3,7 @@ package test
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -634,4 +635,33 @@ func TestDeleteNotation_WithInvalidUser(t *testing.T) {
 	).Scan(&count)
 
 	assert.Equal(t, 1, count)
+}
+
+func TestDeleteNotation_UpdatedAssociation(t *testing.T) {
+	// Notationを更新した時、entences_wordsが正常に再構築されることをテスト
+	DeleteAllFromWords()
+	DeleteAllFromNotations()
+
+	wordId := createTestWord(t, "りんご", "").Id
+	notationId := createTestNotation(t, wordId, "林檎").Id
+	sentenceId := createTestSentence(t, "林檎を食べた").Id
+
+	body := `{
+		"notation": "リンゴ"
+	}`
+
+	ExecController(
+		t,
+		http.MethodPut,
+		"/notations/:notationId",
+		[]string{"notationId"},
+		[]string{strconv.FormatUint(notationId, 10)},
+		body,
+		nc.UpdateNotation,
+	)
+
+	// Word「りんご」が、追加されていたNotationにより「林檎」にもマッチしていたが、
+	// Notationを「林檎」から「リンゴ」に変更したことで、「林檎」にはマッチしなくなり
+	// sentences_wordsから削除される
+	assert.Equal(t, 0, getCountFromSentencesWords(sentenceId, wordId))
 }

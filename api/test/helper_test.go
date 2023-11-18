@@ -183,3 +183,56 @@ func getCountFromSentencesWords[T uint64|string](sentenceId, wordId T) int {
 
 	return count
 }
+
+func toNotationResponse(rec *httptest.ResponseRecorder) model.NotationResponse {
+	bodyMap := toMap(rec)
+	id := fmt.Sprintf("%v", bodyMap["id"])
+	wordId := fmt.Sprintf("%v", bodyMap["word_id"])
+	notation := fmt.Sprintf("%v", bodyMap["notation"])
+
+	intId, _ := strconv.ParseUint(id, 10, 32)
+	intWordId, _ := strconv.ParseUint(wordId, 10, 32)
+	
+	return model.NotationResponse{
+		Id: intId,
+		WordId: intWordId,
+		Notation: notation,
+	}
+}
+
+func createTestNotation(t *testing.T, wordId uint64, notation string) model.NotationResponse {
+	// CreateNotationを呼び出す
+	// 他メソッドのテスト用データを作る用途で使用
+	body := fmt.Sprintf(`
+			{
+				"notation": "%s"
+			}
+		`,
+		notation,
+	)
+
+	_, rec := ExecController(
+		t,
+		http.MethodPost,
+		"/words/:wordId/notations",
+		[]string{"wordId"},
+		[]string{strconv.FormatUint(wordId, 10)},
+		body,
+		nc.CreateNotation,
+	)
+
+	return toNotationResponse(rec)	
+}
+
+func getCountFromNotations[T uint64|string](notationId T) int {
+	var count int
+
+	db.QueryRow(`
+		SELECT COUNT(*) FROM notations
+		WHERE notation_id = $1
+		`,
+		notationId,
+	).Scan(&count)
+
+	return count
+}

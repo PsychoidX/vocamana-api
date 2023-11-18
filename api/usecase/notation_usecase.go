@@ -102,6 +102,8 @@ func (nu *NotationUsecase) UpdateNotation(notationUpdate model.NotationUpdate) (
 		return model.Notation{}, err
 	}
 
+	ReAssociateWordWithAllSentences(notationUpdate.LoginUserId, notation.WordId, nu.wr, nu.sr, nu.swr, nu.nr)
+
 	return updatedNotation, nil
 }
 

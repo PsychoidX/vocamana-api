@@ -10,6 +10,7 @@ type ISentencesWordsRepository interface {
 	GetAssociatedSentencesByWordId(userId uint64, wordId uint64) ([]model.Sentence, error)
 	GetAssociatedWordsBySentenceId(userId uint64, sentenceId uint64) ([]model.Word, error)
 	DeleteAllAssociationBySentenceId(sentenceId uint64) error
+	DeleteAllAssociationByWordId(sentenceId uint64) error
 }
 
 type SentencesWordsRepository struct {
@@ -125,6 +126,20 @@ func (swr *SentencesWordsRepository) DeleteAllAssociationBySentenceId(sentenceId
 		WHERE sentence_id = $1;
 		`,
 		sentenceId,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (swr *SentencesWordsRepository) DeleteAllAssociationByWordId(wordId uint64) error {
+	_, err := swr.db.Exec(`
+		DELETE FROM sentences_words
+		WHERE word_id = $1;
+		`,
+		wordId,
 	)
 	if err != nil {
 		return err

@@ -110,7 +110,7 @@ func (nc *NotationController) UpdateNotation(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
-
+	
 	notationUpdate := model.NotationUpdate{
 		Id: notationId,
 		Notation: req.Notation,
