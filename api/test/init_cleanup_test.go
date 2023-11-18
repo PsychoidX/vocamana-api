@@ -20,8 +20,9 @@ var wr repository.IWordRepository
 var wu *usecase.WordUsecase
 var wc controller.IWordController
 
-// SentencesWords
+// SentencesWords, Association
 var swr repository.ISentencesWordsRepository
+var au *usecase.AssociationUsecase
 
 // Sentence
 var sr repository.ISentenceRepository
@@ -46,9 +47,10 @@ func TestMain(m *testing.M) {
 	wu = usecase.NewWordUsecase(wr, sr, swr, nr)
 	su = usecase.NewSentenceUsecase(sr, wr, swr, nr)
 	nu = usecase.NewNotationUsecase(wr, sr, swr, nr)
+	au = usecase.NewAssociationUsecase(wr, sr, swr, nr)
 
 	// Controller
-	wc = controller.NewWordController(wu)
+	wc = controller.NewWordController(wu, au)
 	sc = controller.NewSentenceController(su)
 	nc = controller.NewNotationController(nu)
 

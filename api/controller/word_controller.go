@@ -21,10 +21,14 @@ type IWordController interface {
 
 type WordController struct {
 	wu *usecase.WordUsecase
+	au *usecase.AssociationUsecase
 }
 
-func NewWordController(wu *usecase.WordUsecase) IWordController {
-	return &WordController{wu}
+func NewWordController(
+	wu *usecase.WordUsecase,
+	au *usecase.AssociationUsecase,
+) IWordController {
+	return &WordController{wu, au}
 }
 
 func (wc *WordController) GetAllWords(c echo.Context) error {
@@ -244,7 +248,7 @@ func (wc *WordController) GetAssociatedSentencesWithLink(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	sentenceWithLinks, err := wc.wu.GetAssociatedSentencesWithLinkByWordId(loginUserId, wordId)
+	sentenceWithLinks, err := wc.au.GetAssociatedSentencesWithLinkByWordId(loginUserId, wordId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}

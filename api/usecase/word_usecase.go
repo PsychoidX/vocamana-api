@@ -4,8 +4,6 @@ import (
 	"api/model"
 	"api/repository"
 	"database/sql"
-	"fmt"
-	"strings"
 )
 
 type WordUsecase struct {
@@ -115,102 +113,4 @@ func (wu *WordUsecase) UpdateWord(wordUpdate model.WordUpdate) (model.Word, erro
 	ReAssociateWordWithAllSentences(wordUpdate.LoginUserId, wordUpdate.Id, wu.wr, wu.sr, wu.swr, wu.nr)
 
 	return updatedWord, nil
-}
-
-func (wu *WordUsecase) GetAssociatedSentencesByWordId(loginUserId, wordId uint64) ([]model.Sentence, error) {
-	// wordIdの所有者がloginUserIdでない場合ゼロ値を返す
-	isWordOwner, err := wu.wr.IsWordOwner(wordId, loginUserId)
-	if err != nil {
-		return []model.Sentence{}, err
-	}
-	if !isWordOwner {
-		return []model.Sentence{}, nil
-	}
-
-	sentences, err := wu.swr.GetAssociatedSentencesByWordId(loginUserId, wordId)
-	if err != nil {
-		return []model.Sentence{}, err
-	}
-
-	// リポジトリの返り値のuserIdを検証
-	userSentences := []model.Sentence{}
-	for _, sentence := range sentences {
-		// sentenceの所有者がloginUserIdでない場合continue
-		isSentenceOwner, err := wu.sr.IsSentenceOwner(sentence.Id, loginUserId)
-		if err != nil {
-			return []model.Sentence{}, err
-		}
-		if !isSentenceOwner {
-			continue
-		}
-
-		userSentences = append(userSentences, sentence)
-	}
-
-	return userSentences, nil
-}
-
-func (wu *WordUsecase) GetAssociatedSentencesWithLinkByWordId(loginUserId, wordId uint64) ([]model.SentenceWithLink, error) {
-	userAssociatedSentences, err := wu.GetAssociatedSentencesByWordId(loginUserId, wordId)
-	if err != nil {
-		return []model.SentenceWithLink{}, err
-	}
-
-	sentenceWithLinks := []model.SentenceWithLink{}
-	for _, sentence := range userAssociatedSentences {
-		sentenceText := sentence.Sentence
-
-		// sentenceに紐づくWordを全件取得し、sentence中におけるそのWordの出現箇所をリンクに変換
-		words, err := wu.swr.GetAssociatedWordsBySentenceId(loginUserId, sentence.Id)
-		if err != nil {
-			return []model.SentenceWithLink{}, err
-		}
-
-		for _, word := range words {
-			// sentenceText中に含まれるword.Wordをaタグに置換
-			sentenceText = strings.Replace(
-				sentenceText,
-				word.Word,
-				createWordLink(word.Id, word.Word),
-				-1,
-			)
-
-			// sentenceText中に含まれるnotation.Notationをaタグに置換
-			notations, err := wu.nr.GetAllNotations(word.Id)
-			if err != nil {
-				return []model.SentenceWithLink{}, err
-			}
-
-			for _, notation := range notations {
-				sentenceText = strings.Replace(
-					sentenceText,
-					notation.Notation,
-					createWordLink(word.Id, notation.Notation),
-					-1,
-				)
-			}
-		}
-
-		// 置換後のsentenceTextからSentenceWithLinkを作成
-		sentenceWithLink := model.SentenceWithLink{
-			Id:               sentence.Id,
-			Sentence:         sentence.Sentence,
-			SentenceWithLink: sentenceText,
-			UserId:           sentence.UserId,
-			CreatedAt:        sentence.CreatedAt,
-			UpdatedAt:        sentence.UpdatedAt,
-		}
-		sentenceWithLinks = append(sentenceWithLinks, sentenceWithLink)
-	}
-
-	return sentenceWithLinks, nil
-}
-
-func createWordLink(wordId uint64, notation string) string {
-	// wordに遷移する<a>を作成
-	return fmt.Sprintf(
-		"<a href=\"/words/%d\">%s</a>",
-		wordId,
-		notation,
-	)
 }
