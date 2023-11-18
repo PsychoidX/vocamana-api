@@ -670,14 +670,9 @@ func TestUpdateSentence_UpdatedAssociation(t *testing.T) {
 	DeleteAllFromSentences()
 	DeleteAllFromWords()
 
-	redWordRes := createTestWord(t, "赤い", "")
-	redWordId := redWordRes.Id
-
-	blueWordRes := createTestWord(t, "青い", "")
-	blueWordId := blueWordRes.Id
-
-	sentenceRes := createTestSentence(t, "赤いりんごを食べた")
-	sentenceId := sentenceRes.Id
+	redWordId := createTestWord(t, "赤い", "").Id
+	blueWordId := createTestWord(t, "青い", "").Id
+	sentenceId := createTestSentence(t, "赤いりんごを食べた").Id
 
 	updateSentenceReqBody := `{
 		"sentence": "青いりんごを食べた"
@@ -801,11 +796,8 @@ func TestDeleteSentence_UpdateAssociation(t *testing.T) {
 	DeleteAllFromSentences()
 	DeleteAllFromWords()
 
-	wordRes := createTestWord(t, "赤い", "")
-	wordId := wordRes.Id
-
-	sentenceRes := createTestSentence(t, "赤いりんごを食べた")
-	sentenceId := sentenceRes.Id
+	wordId := createTestWord(t, "赤い", "").Id
+	sentenceId := createTestSentence(t, "赤いりんごを食べた").Id
 	
 	ExecController(
 		t,
