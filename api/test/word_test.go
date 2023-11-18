@@ -3,6 +3,7 @@ package test
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -444,6 +445,43 @@ func TestUpdateWord(t *testing.T) {
 	assert.Equal(t, "updated memo", memo)
 }
 
+func TestUpdateWord_UpdatedAssociation(t *testing.T) {
+	// ログイン中のUserに紐づくWordを更新した時、
+	// sentences_wordsが正常に再構築されることをテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のSentenceのみ更新可能とする
+	DeleteAllFromSentences()
+	DeleteAllFromWords()
+
+	wordId := createTestWord(t, "赤い", "").Id
+	appleSentenceId := createTestSentence(t, "赤いリンゴを食べた").Id
+	lemonSentenceId := createTestSentence(t, "黄色いレモンを食べた").Id
+
+	reqBody := `{
+		"word": "黄色い",
+		"memo": ""
+	}`
+
+	ExecController(
+		t,
+		http.MethodPut,
+		"/words/:wordeId",
+		[]string{"wordId"},
+		[]string{strconv.FormatUint(wordId, 10)},
+		reqBody,
+		wc.UpdateWord,
+	)
+
+	// Wordを変更したことで、
+	// 「赤いリンゴを食べた」の中にWordが含まれなくなるため
+	// sentences_wordsから削除される
+	assert.Equal(t, 0, getCountFromSentencesWords(appleSentenceId, wordId))
+
+	// 「黄色いレモンを食べた」の中にWordが含まれるようになるため
+	// sentences_wordsに追加される
+	assert.Equal(t, 1, getCountFromSentencesWords(lemonSentenceId, wordId))
+}
+
 func TestUpdateWord_WithInvalidUser(t *testing.T) {
 	// ログイン中のUserに紐づかないWordをUpdateできないことをテスト
 	// TODO ログイン機能
@@ -576,6 +614,33 @@ func TestDeleteWord_WithInvalidUser(t *testing.T) {
 	assert.Equal(t, 1, count)
 }
 
+func TestDeleteWord_UpdatedAssociation(t *testing.T) {
+	// ログイン中のUserに紐づくWordを削除した時、
+	// sentences_wordsが正常に再構築されることをテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のSentenceのみ更新可能とする
+	DeleteAllFromSentences()
+	DeleteAllFromWords()
+
+	wordId := createTestWord(t, "赤い", "").Id
+	sentenceId := createTestSentence(t, "赤いリンゴを食べた").Id
+
+	ExecController(
+		t,
+		http.MethodDelete,
+		"/words/:wordeId",
+		[]string{"wordId"},
+		[]string{strconv.FormatUint(wordId, 10)},
+		"",
+		wc.DeleteWord,
+	)
+
+	// Wordを削除したことで、
+	// 「赤いリンゴを食べた」の中にWordが含まれなくなるため
+	// sentences_wordsから削除される
+	assert.Equal(t, 0, getCountFromSentencesWords(sentenceId, wordId))
+}
+
 func TestGetAssociatedSentencesWithLink(t *testing.T) {
 	// WordとSentenceがどちらもログイン中のuser_idに紐づく場合、
 	// Sentenceを、WordとNotationがaタグに変換された状態で取得できることをテスト
@@ -669,3 +734,5 @@ func TestGetAssociatedSentencesWithLink(t *testing.T) {
 		expectedResponse,
 	)
 }
+
+

@@ -112,6 +112,8 @@ func (wu *WordUsecase) UpdateWord(wordUpdate model.WordUpdate) (model.Word, erro
 		return model.Word{}, err
 	}
 
+	ReAssociateWordWithAllSentences(wordUpdate.LoginUserId, wordUpdate.Id, wu.wr, wu.sr, wu.swr, wu.nr)
+
 	return updatedWord, nil
 }
 
