@@ -139,5 +139,7 @@ func (nu *NotationUsecase) DeleteNotation(loginUserId, notationId uint64) (model
 		return model.Notation{}, err
 	}
 
+	ReAssociateWordWithAllSentences(loginUserId, notation.WordId, nu.wr, nu.sr, nu.swr, nu.nr)
+
 	return deletedNotation, nil
 }
