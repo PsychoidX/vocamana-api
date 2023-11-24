@@ -397,10 +397,8 @@ func TestCreateWord_RootWordCreated(t *testing.T) {
 	DeleteAllFromWords()
 	DeleteAllFromSentences()
 
-	var wordId uint64
-
 	// 「買う」の語幹「買」が追加される
-	wordId = createTestWord(t, "買う", "").Id
+	wordId := createTestWord(t, "買う", "").Id
 	assert.Equal(t, 1, getCountFromNotationsByNotation(wordId, "買"))
 }
 
@@ -550,10 +548,8 @@ func TestUpdateWord_RootWordCreated(t *testing.T) {
 	DeleteAllFromWords()
 	DeleteAllFromSentences()
 
-	var wordId uint64
-
 	// 「買う」の語幹「買」が追加される
-	wordId = createTestWord(t, "買う", "").Id
+	wordId := createTestWord(t, "買う", "").Id
 	assert.Equal(t, 1, getCountFromNotationsByNotation(wordId, "買"))
 
 	reqBody := `{
@@ -573,6 +569,36 @@ func TestUpdateWord_RootWordCreated(t *testing.T) {
 
 	// 「買う」の語幹「買」が削除される
 	assert.Equal(t, 0, getCountFromNotationsByNotation(wordId, "買"))
+	// 「赤い」の語幹「赤」が追加される
+	assert.Equal(t, 1, getCountFromNotationsByNotation(wordId, "赤"))
+}
+
+func TestUpdateWord_RootWordCreated_OldRootWordNotExists(t *testing.T) {
+	// Wordを更新したとき、更新前のWordの語幹のNotationが存在しなくても、正常に更新されることをテスト
+
+	// TODO ログイン機能
+	// とりあえずuser_id=1のSentenceのみ作成可能とする
+	DeleteAllFromWords()
+	DeleteAllFromSentences()
+
+	wordId := insertIntoWords("買う", "", 1)
+	assert.Equal(t, 0, getCountFromNotationsByNotation(wordId, "買"))
+
+	reqBody := `{
+		"word": "赤い",
+		"memo": ""
+	}`
+
+	ExecController(
+		t,
+		http.MethodPut,
+		"/words/:wordeId",
+		[]string{"wordId"},
+		[]string{strconv.FormatUint(wordId, 10)},
+		reqBody,
+		wc.UpdateWord,
+	)
+
 	// 「赤い」の語幹「赤」が追加される
 	assert.Equal(t, 1, getCountFromNotationsByNotation(wordId, "赤"))
 }
