@@ -189,17 +189,21 @@ func (sc *SentenceController) UpdateSentence(c echo.Context) error {
 	}
 
 	// クエリパラメータ ?with-link=true の場合、
-	// レスポンスにリンク付きSentenceを含める
+	// レスポンスをリンク付きSentenceにする
 	if(c.QueryParam("with-link") == "true") {
-		// sentenceResWithLink := model.SentenceWIthLinkResponse
-		// TODO
-		sentenceRes := model.SentenceResponse{
-			Id:       sentence.Id,
-			Sentence: sentence.Sentence,
-			UserId:   sentence.UserId,
+		sentenceWithLink, err := sc.au.GetSentencesWithLinkById(loginUserId, sentenceId)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, err.Error())
 		}
 
-		return c.JSON(http.StatusAccepted, sentenceRes)
+		sentenceWithLinkRes := model.SentenceWIthLinkResponse{
+			Id: sentenceWithLink.Id,
+			Sentence: sentenceWithLink.Sentence,
+			SentenceWithLink: sentenceWithLink.SentenceWithLink,
+			UserId: sentenceWithLink.UserId,
+		}
+
+		return c.JSON(http.StatusAccepted, sentenceWithLinkRes)
 	} else {
 		sentenceRes := model.SentenceResponse{
 			Id:       sentence.Id,
