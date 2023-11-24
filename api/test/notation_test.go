@@ -280,6 +280,49 @@ func TestCreateNotation_InInvalidSentence(t *testing.T) {
 	assert.Equal(t, 0, getCountFromSentencesWords(sentenceId, wordId))
 }
 
+func TestCreateNotation_Duplicate(t *testing.T) {
+	// ログイン中のUserに紐づくWordに対し、Notationを追加をした時、
+	// 既に同じNotationが存在する場合には、新規追加されないことをテスト
+
+	// TODO ログイン機能
+	// とりあえずログインUserはuser_id=1とする
+	DeleteAllFromWords()
+	DeleteAllFromSentences()
+	DeleteAllFromNotations()
+
+	wordId := insertIntoWords("りんご", "", 1)
+	insertIntoNotations(wordId, "林檎")
+
+	reqBody := `{
+		"notation": "林檎"
+	}`
+
+	DoSimpleTest(
+		t,
+		http.MethodPost,
+		"/words/:wordId/notations",
+		[]string{"wordId"},
+		[]string{strconv.FormatUint(wordId, 10)},
+		reqBody,
+		nc.CreateNotation,
+		http.StatusConflict,
+		"{}",
+	)
+
+	// DBにNotationは追加されない
+	var count int
+	db.QueryRow(`
+		SELECT COUNT(*) FROM notations
+		WHERE notation = $1
+			AND word_id = $2;
+	`,
+		"林檎",
+		wordId,
+	).Scan(&count)
+
+	assert.Equal(t, 1, count)
+}
+
 func TestUpdateNotation(t *testing.T) {
 	// ログイン中のUserに紐づくWordに対し、Notationを更新できることをテスト
 	// TODO ログイン機能

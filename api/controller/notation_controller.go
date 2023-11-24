@@ -3,6 +3,7 @@ package controller
 import (
 	"api/model"
 	"api/usecase"
+	"database/sql"
 	"net/http"
 	"strconv"
 
@@ -77,6 +78,12 @@ func (nc *NotationController) CreateNotation(c echo.Context) error {
 
 	notation, err := nc.wu.CreateNotation(notationCreation)
 	if err != nil {
+		// TODO：Notationが既に存在する意外の要因でErrNoRowsが発生する可能性も否定できないため、
+		// 独自エラーを発生させるなどし、重複の場合にだけStatusConflictを返すよう修正
+		if err == sql.ErrNoRows {
+			return c.JSON(http.StatusConflict, make(map[string]interface{}))
+		}
+
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
