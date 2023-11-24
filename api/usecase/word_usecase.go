@@ -4,6 +4,7 @@ import (
 	"api/model"
 	"api/repository"
 	"database/sql"
+	"strings"
 )
 
 type WordUsecase struct {
@@ -54,14 +55,7 @@ func (wu *WordUsecase) CreateWord(wordCreation model.WordCreation) (model.Word, 
 	}
 
 	// 既存のSentenceに追加されたWord含まれればsentences_wordsに追加
-	AssociateWordWithAllSentences(
-		loginUserId,
-		createdWord.Id,
-		wu.wr,
-		wu.sr,
-		wu.swr,
-		wu.nr,
-	)
+	wu.AssociateWordWithAllSentences(loginUserId, createdWord.Id)
 
 	return createdWord, nil
 }
@@ -110,7 +104,7 @@ func (wu *WordUsecase) UpdateWord(wordUpdate model.WordUpdate) (model.Word, erro
 		return model.Word{}, err
 	}
 
-	ReAssociateWordWithAllSentences(wordUpdate.LoginUserId, wordUpdate.Id, wu.wr, wu.sr, wu.swr, wu.nr)
+	wu.ReAssociateWordWithAllSentences(wordUpdate.LoginUserId, wordUpdate.Id)
 
 	return updatedWord, nil
 }
@@ -151,14 +145,7 @@ func (wu *WordUsecase) CreateNotation(notationCreation model.NotationCreation) (
 	}
 
 	// 既存のSentenceに追加されたWord含まれればsentences_wordsに追加
-	AssociateWordWithAllSentences(
-		loginUserId,
-		createdNotation.WordId,
-		wu.wr,
-		wu.sr,
-		wu.swr,
-		wu.nr,
-	)
+	wu.AssociateWordWithAllSentences(loginUserId, createdNotation.WordId)
 
 	return createdNotation, nil
 }
@@ -195,7 +182,7 @@ func (wu *WordUsecase) UpdateNotation(notationUpdate model.NotationUpdate) (mode
 		return model.Notation{}, err
 	}
 
-	ReAssociateWordWithAllSentences(notationUpdate.LoginUserId, notation.WordId, wu.wr, wu.sr, wu.swr, wu.nr)
+	wu.ReAssociateWordWithAllSentences(notationUpdate.LoginUserId, notation.WordId)
 
 	return updatedNotation, nil
 }
@@ -232,7 +219,93 @@ func (wu *WordUsecase) DeleteNotation(loginUserId, notationId uint64) (model.Not
 		return model.Notation{}, err
 	}
 
-	ReAssociateWordWithAllSentences(loginUserId, notation.WordId, wu.wr, wu.sr, wu.swr, wu.nr)
+	wu.ReAssociateWordWithAllSentences(loginUserId, notation.WordId)
 
 	return deletedNotation, nil
+}
+
+func (wu *WordUsecase)AssociateWordWithAllSentences(userId, wordId uint64) ([]model.Sentence, error) {
+	// userIdに紐づく全Sentenceに対し、
+	// Sentenceの中にwordIdのWordまたはNotationが含まれればsentences_wordsにレコード追加
+
+	// TODO: userIdがログイン中のものと一致することを確認
+
+	// wordIdの所有者がuserIdでない場合何もしない
+	isWordOwner, err := wu.wr.IsWordOwner(wordId, userId)
+	if err != nil {
+		return []model.Sentence{}, err
+	}
+	if !isWordOwner {
+		return []model.Sentence{}, nil
+	}
+
+	word, err := wu.GetWordById(userId, wordId)
+	if err != nil {
+		return []model.Sentence{}, err
+	}
+
+	userSentences, err := wu.sr.GetAllSentences(userId)
+	if err != nil {
+		return []model.Sentence{}, err
+	}
+
+	var associatedSentences []model.Sentence
+	for _, sentence := range userSentences {
+		// Sentence中にWordが含まれるか判定
+		if strings.Contains(sentence.Sentence, word.Word) {
+			err = wu.swr.AssociateSentenceWithWord(sentence.Id, word.Id)
+			if err != nil {
+				return []model.Sentence{}, err
+			}
+			associatedSentences = append(associatedSentences, sentence)
+			// Sentenceの中にWordが含まれる場合、
+			// continueし、Notationが含まれるかの判定はしない
+			continue
+		}
+
+		// Sentence中にNotationが含まれるか判定
+		notations, err := wu.nr.GetAllNotations(word.Id)
+		if err != nil {
+			return []model.Sentence{}, err
+		}
+
+		for _, notation := range notations {
+			if strings.Contains(sentence.Sentence, notation.Notation) {
+				err = wu.swr.AssociateSentenceWithWord(sentence.Id, word.Id)
+				if err != nil {
+					return []model.Sentence{}, err
+				}
+				associatedSentences = append(associatedSentences, sentence)
+				// Sentenceの中にNotationが含まれる場合、
+				// sentences_wordsに2つ目のレコードが追加されないようbreak
+				break
+			}
+		}
+	}
+
+	return associatedSentences, nil
+}
+
+func (wu *WordUsecase)ReAssociateWordWithAllSentences(loginUserId, wordId uint64) error {
+	// wordIdで指定されるWordと、全Sentenceのsentences_wordsを再構築
+	// sentences_wordsからwordIdのレコードを全削除し、もう一度追加しなおす
+
+	// sentenceIdの所有者がloginUserIdでない場合何もしない
+	isWordOwner, err := wu.wr.IsWordOwner(wordId, loginUserId)
+	if err != nil {
+		return err
+	}
+	if !isWordOwner {
+		return nil
+	}
+
+	// TODO: 削除～再追加はトランザクション内で行う
+
+	// sentences_wordsからwordIdのレコードを全削除
+	err = wu.swr.DeleteAllAssociationByWordId(wordId)
+
+	// sentences_wordsに再追加
+	wu.AssociateWordWithAllSentences(loginUserId, wordId)
+
+	return nil
 }
