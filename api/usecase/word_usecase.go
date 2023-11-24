@@ -54,7 +54,10 @@ func (wu *WordUsecase) CreateWord(wordCreation model.WordCreation) (model.Word, 
 		return model.Word{}, err
 	}
 
-	// 既存のSentenceに追加されたWord含まれればsentences_wordsに追加
+	// 語幹をnotationに追加
+	wu.createRootNotation(loginUserId, createdWord)
+
+	// 既存のSentence中に追加したWordを含むものがあれば、sentences_wordsに追加
 	wu.AssociateWordWithAllSentences(loginUserId, createdWord.Id)
 
 	return createdWord, nil
@@ -91,7 +94,18 @@ func (wu *WordUsecase) DeleteWord(loginUserId, wordId uint64) (model.Word, error
 }
 
 func (wu *WordUsecase) UpdateWord(wordUpdate model.WordUpdate) (model.Word, error) {
-	// TODO: userIdがログイン中のものと一致することを確認
+	// TODO: 語幹Notation削除、Word更新、語幹Notation追加、まではトランザクション内で実行
+	
+	// Word更新前に更新前のWordの語幹のNotationを削除
+	wordBeforeUpdate, err := wu.GetWordById(wordUpdate.LoginUserId, wordUpdate.Id)
+	if err != nil {
+		return model.Word{}, err
+	}
+
+	err = wu.deleteRootNotation(wordUpdate.LoginUserId, wordBeforeUpdate)
+	if err != nil {
+		return model.Word{}, err
+	}
 
 	updatedWord, err := wu.wr.UpdateWord(wordUpdate)
 	if err != nil {
@@ -101,6 +115,12 @@ func (wu *WordUsecase) UpdateWord(wordUpdate model.WordUpdate) (model.Word, erro
 			return model.Word{}, nil
 		}
 
+		return model.Word{}, err
+	}
+
+	// 更新後の語幹のNotationを追加
+	err = wu.createRootNotation(wordUpdate.LoginUserId, updatedWord)
+	if err != nil {
 		return model.Word{}, err
 	}
 
@@ -181,7 +201,7 @@ func (wu *WordUsecase) UpdateNotation(notationUpdate model.NotationUpdate) (mode
 
 		return model.Notation{}, err
 	}
-
+	
 	wu.ReAssociateWordWithAllSentences(notationUpdate.LoginUserId, notation.WordId)
 
 	return updatedNotation, nil
@@ -306,6 +326,64 @@ func (wu *WordUsecase)ReAssociateWordWithAllSentences(loginUserId, wordId uint64
 
 	// sentences_wordsに再追加
 	wu.AssociateWordWithAllSentences(loginUserId, wordId)
+
+	return nil
+}
+
+func (wu *WordUsecase) getIgnoringWordEnding() []string {
+	// 無視する語尾のリスト
+	// wordが以下の語尾で終わる場合、語尾を抜いた語をNotationに追加
+
+	// Word「買う」を追加するとき、「買わない」「買いたい」などにもマッチさせるため、
+	// 最初から「買」をNotationに追加させておく用途で使用。
+	
+	ignoringWordEnding := []string{
+		"う", // 買う -> 買
+		"く", // 聞く -> 聞
+		"す", // 直す -> 直
+		"つ", // 打つ -> 打
+		"む", // 霞む -> 霞
+		"る", // 走る -> 走
+		"い", // 暗い -> 暗
+	}
+
+	return ignoringWordEnding
+}
+
+func (wu *WordUsecase) createRootNotation(loginUserId uint64, word model.Word) error {
+	// wordの語幹をnotationに追加
+
+	for _, wordEnding := range wu.getIgnoringWordEnding() {
+		if strings.HasSuffix(word.Word, wordEnding) {
+			notationCreation := model.NotationCreation{
+				WordId: word.Id,
+				Notation: word.Word[:len(word.Word) - len(wordEnding)],
+				LoginUserId: word.UserId,
+			}
+			
+			_, err := wu.CreateNotation(notationCreation)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (wu *WordUsecase) deleteRootNotation(loginUserId uint64, word model.Word) error {
+	// wordの語幹をnotationから削除
+
+	for _, wordEnding := range wu.getIgnoringWordEnding() {
+		if strings.HasSuffix(word.Word, wordEnding) {
+			notation := word.Word[:len(word.Word) - len(wordEnding)]
+
+			_, err := wu.nr.DeleteNotationIfExists(word.Id, notation)
+			if err != nil {
+				return err
+			}
+		}
+	}
 
 	return nil
 }

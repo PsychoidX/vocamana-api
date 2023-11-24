@@ -12,6 +12,7 @@ type INotationRepository interface {
 	InsertNotation(model.NotationCreation) (model.Notation, error)
 	UpdateNotation(model.NotationUpdate) (model.Notation, error)
 	DeleteNotationById(uint64) (model.Notation, error)
+	DeleteNotationIfExists(wordId uint64, notation string) (model.Notation, error)
 }
 
 type NotationRepository struct {
@@ -165,6 +166,35 @@ func (nr *NotationRepository) DeleteNotationById(notationId uint64) (model.Notat
 		&deletedNotation.UpdatedAt,
 	)
 	if err != nil {
+		return model.Notation{}, err
+	}
+
+	return deletedNotation, nil
+}
+
+func (nr *NotationRepository) DeleteNotationIfExists(wordId uint64, notation string) (model.Notation, error) {
+	deletedNotation := model.Notation{}
+	
+	err := nr.db.QueryRow(`
+		DELETE FROM notations
+		WHERE word_id = $1
+		AND notation = $2
+		RETURNING id, word_id, notation, created_at, updated_at;
+		`, 
+		wordId,
+		notation,
+	).Scan(
+		&deletedNotation.Id,
+		&deletedNotation.WordId,
+		&deletedNotation.Notation,
+		&deletedNotation.CreatedAt,
+		&deletedNotation.UpdatedAt,
+	)
+	if err != nil {
+		// 削除されなかった場合、エラーを発生させない
+		if err == sql.ErrNoRows {
+			return model.Notation{}, nil
+		}
 		return model.Notation{}, err
 	}
 
