@@ -114,3 +114,125 @@ func (wu *WordUsecase) UpdateWord(wordUpdate model.WordUpdate) (model.Word, erro
 
 	return updatedWord, nil
 }
+
+func (wu *WordUsecase) GetAllNotations(loginUserId, wordId uint64) ([]model.Notation, error) {
+	// wordIdの所有者がloginUserIdの場合ゼロ値を返す
+	isWordOwner, err := wu.wr.IsWordOwner(wordId, loginUserId)
+	if err != nil {
+		return []model.Notation{}, err
+	}
+	if !isWordOwner {
+		return []model.Notation{}, nil
+	}
+
+	notations, err := wu.nr.GetAllNotations(wordId)
+	if err != nil {
+		return []model.Notation{}, err
+	}
+
+	return notations, nil
+}
+
+func (wu *WordUsecase) CreateNotation(notationCreation model.NotationCreation) (model.Notation, error) {
+	loginUserId := notationCreation.LoginUserId
+
+	// 追加先のWordIdの所有者がloginUserIdでない場合何もしない
+	isWordOwner, err := wu.wr.IsWordOwner(notationCreation.WordId, loginUserId)
+	if err != nil {
+		return model.Notation{}, err
+	}
+	if !isWordOwner {
+		return model.Notation{}, nil
+	}
+
+	createdNotation, err := wu.nr.InsertNotation(notationCreation)
+	if err != nil {
+		return model.Notation{}, err
+	}
+
+	// 既存のSentenceに追加されたWord含まれればsentences_wordsに追加
+	AssociateWordWithAllSentences(
+		loginUserId,
+		createdNotation.WordId,
+		wu.wr,
+		wu.sr,
+		wu.swr,
+		wu.nr,
+	)
+
+	return createdNotation, nil
+}
+
+func (wu *WordUsecase) UpdateNotation(notationUpdate model.NotationUpdate) (model.Notation, error) {
+	notation, err := wu.nr.GetNotationById(notationUpdate.Id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// 更新対象のNotationが存在しない場合
+			// Notationのゼロ値を返す
+			return model.Notation{}, nil
+		}
+
+		return model.Notation{}, err
+	}
+
+	// WordIdの所有者がuserIdでない場合何もしない
+	isWordOwner, err := wu.wr.IsWordOwner(notation.WordId, notationUpdate.LoginUserId)
+	if err != nil {
+		return model.Notation{}, err
+	}
+	if !isWordOwner {
+		return model.Notation{}, nil
+	}
+
+	updatedNotation, err := wu.nr.UpdateNotation(notationUpdate)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// レコードが更新されなかった場合
+			// Notationのゼロ値を返す
+			return model.Notation{}, nil
+		}
+
+		return model.Notation{}, err
+	}
+
+	ReAssociateWordWithAllSentences(notationUpdate.LoginUserId, notation.WordId, wu.wr, wu.sr, wu.swr, wu.nr)
+
+	return updatedNotation, nil
+}
+
+func (wu *WordUsecase) DeleteNotation(loginUserId, notationId uint64) (model.Notation, error) {
+	notation, err := wu.nr.GetNotationById(notationId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// 削除対象のNotationが存在しない場合
+			// Notationのゼロ値を返す
+			return model.Notation{}, nil
+		}
+
+		return model.Notation{}, err
+	}
+
+	// WordIdの所有者がuserIdでない場合何もしない
+	isWordOwner, err := wu.wr.IsWordOwner(notation.WordId, loginUserId)
+	if err != nil {
+		return model.Notation{}, err
+	}
+	if !isWordOwner {
+		return model.Notation{}, nil
+	}
+
+	deletedNotation, err := wu.nr.DeleteNotationById(notationId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// レコードが削除されなかった場合
+			// Notationのゼロ値を返す
+			return model.Notation{}, nil
+		}
+
+		return model.Notation{}, err
+	}
+
+	ReAssociateWordWithAllSentences(loginUserId, notation.WordId, wu.wr, wu.sr, wu.swr, wu.nr)
+
+	return deletedNotation, nil
+}

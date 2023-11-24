@@ -86,12 +86,23 @@ func (nr *NotationRepository) GetNotationById(id uint64) (model.Notation, error)
 }
 
 func (nr *NotationRepository) InsertNotation(notationCreation model.NotationCreation) (model.Notation, error) {
+	// (wordId, notation)の組が存在しない場合にだけ新規追加
+
 	createdNotation := model.Notation{}
 
+	// WHERE NOT EXISTSを付けると、goのstringがPostgreSQLのTEXT型に推論され、
+	// VARCHARの型推論がうまくいかず、エラーが発生する
+	// これを回避するため、明示的にキャストしている
 	err := nr.db.QueryRow(fmt.Sprintf(`
 		INSERT INTO notations
 		(id, word_id, notation)
-		VALUES(%s, $1, $2)
+		SELECT %s, $1, CAST($2 AS VARCHAR)
+		WHERE NOT EXISTS(
+			SELECT 1
+			FROM notations
+			WHERE word_id = $1
+			AND notation = CAST($2 AS VARCHAR)
+		)
 		RETURNING id, word_id, notation, created_at, updated_at;
 		`, 
 		nr.getSequenceNextvalQuery(),

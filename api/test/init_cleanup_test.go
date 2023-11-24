@@ -31,7 +31,6 @@ var sc controller.ISentenceController
 
 // Notation
 var nr repository.INotationRepository
-var nu *usecase.NotationUsecase
 var nc controller.INotationController
 
 func TestMain(m *testing.M) {
@@ -46,13 +45,12 @@ func TestMain(m *testing.M) {
 	// Usecase
 	wu = usecase.NewWordUsecase(wr, sr, swr, nr)
 	su = usecase.NewSentenceUsecase(sr, wr, swr, nr)
-	nu = usecase.NewNotationUsecase(wr, sr, swr, nr)
 	au = usecase.NewAssociationUsecase(wr, sr, swr, nr)
 
 	// Controller
 	wc = controller.NewWordController(wu, au)
 	sc = controller.NewSentenceController(su, au)
-	nc = controller.NewNotationController(nu)
+	nc = controller.NewNotationController(wu)
 
 	setupUserData()
 

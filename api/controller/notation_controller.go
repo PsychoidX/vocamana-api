@@ -17,11 +17,11 @@ type INotationController interface {
 }
 
 type NotationController struct {
-	nu *usecase.NotationUsecase
+	wu *usecase.WordUsecase
 }
 
-func NewNotationController(nu *usecase.NotationUsecase) INotationController {
-	return &NotationController{nu}
+func NewNotationController(wu *usecase.WordUsecase) INotationController {
+	return &NotationController{wu}
 }
 
 func (nc *NotationController) GetAllNotations(c echo.Context) error {
@@ -35,7 +35,7 @@ func (nc *NotationController) GetAllNotations(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	notations, err := nc.nu.GetAllNotations(loginUserId, wordId)
+	notations, err := nc.wu.GetAllNotations(loginUserId, wordId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -75,7 +75,7 @@ func (nc *NotationController) CreateNotation(c echo.Context) error {
 		LoginUserId: loginUserId,
 	}
 
-	notation, err := nc.nu.CreateNotation(notationCreation)
+	notation, err := nc.wu.CreateNotation(notationCreation)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -117,7 +117,7 @@ func (nc *NotationController) UpdateNotation(c echo.Context) error {
 		LoginUserId: loginUserId,
 	}
 
-	notation, err := nc.nu.UpdateNotation(notationUpdate)
+	notation, err := nc.wu.UpdateNotation(notationUpdate)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
@@ -148,7 +148,7 @@ func (nc *NotationController) DeleteNotation(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	notation, err := nc.nu.DeleteNotation(loginUserId, notationId)
+	notation, err := nc.wu.DeleteNotation(loginUserId, notationId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
