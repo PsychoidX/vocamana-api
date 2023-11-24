@@ -389,6 +389,21 @@ func TestCreateWord_InInvalidSentences(t *testing.T) {
 	assert.Equal(t, 0, count)
 }
 
+func TestCreateWord_RootWordCreated(t *testing.T) {
+	// 新規Wordを追加したとき、語幹のNotationも追加されることをテスト
+
+	// TODO ログイン機能
+	// とりあえずuser_id=1のSentenceのみ作成可能とする
+	DeleteAllFromWords()
+	DeleteAllFromSentences()
+
+	var wordId uint64
+
+	// 「買う」の語幹「買」が追加される
+	wordId = createTestWord(t, "買う", "").Id
+	assert.Equal(t, 1, getCountFromNotationsByNotation(wordId, "買"))
+}
+
 func TestUpdateWord(t *testing.T) {
 	// ログイン中のUserに紐づくWordをUpdateできることをテスト
 	// TODO ログイン機能
@@ -525,6 +540,41 @@ func TestUpdateWord_WithInvalidUser(t *testing.T) {
 
 	assert.Equal(t, "word", word)
 	assert.Equal(t, "memo", memo)
+}
+
+func TestUpdateWord_RootWordCreated(t *testing.T) {
+	// Wordを更新したとき、語幹のNotationも更新されることをテスト
+
+	// TODO ログイン機能
+	// とりあえずuser_id=1のSentenceのみ作成可能とする
+	DeleteAllFromWords()
+	DeleteAllFromSentences()
+
+	var wordId uint64
+
+	// 「買う」の語幹「買」が追加される
+	wordId = createTestWord(t, "買う", "").Id
+	assert.Equal(t, 1, getCountFromNotationsByNotation(wordId, "買"))
+
+	reqBody := `{
+		"word": "赤い",
+		"memo": ""
+	}`
+
+	ExecController(
+		t,
+		http.MethodPut,
+		"/words/:wordeId",
+		[]string{"wordId"},
+		[]string{strconv.FormatUint(wordId, 10)},
+		reqBody,
+		wc.UpdateWord,
+	)
+
+	// 「買う」の語幹「買」が削除される
+	assert.Equal(t, 0, getCountFromNotationsByNotation(wordId, "買"))
+	// 「赤い」の語幹「赤」が追加される
+	assert.Equal(t, 1, getCountFromNotationsByNotation(wordId, "赤"))
 }
 
 func TestDeleteWord(t *testing.T) {

@@ -237,6 +237,22 @@ func getCountFromNotations[T uint64|string](notationId T) int {
 	return count
 }
 
+func getCountFromNotationsByNotation[T uint64|string](wordId T, notation string) int {
+	var count int
+
+	db.QueryRow(`
+		SELECT COUNT(*) FROM notations
+		WHERE word_id = $1
+			AND notation = $2
+		`,
+		wordId,
+		notation,
+	).Scan(&count)
+
+	return count
+}
+
+
 func insertIntoWords(word, memo string, userId uint64) uint64 {
 	var wordId uint64
 	db.QueryRow(`
