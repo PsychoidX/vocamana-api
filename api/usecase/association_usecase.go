@@ -38,7 +38,7 @@ func (au *AssociationUsecase) GetAssociatedSentencesByWordId(loginUserId, wordId
 		return []model.Sentence{}, nil
 	}
 
-	associatedUserSentences, err := au.swr.GetAssociatedSentencesByWordId(wordId)
+	associatedUserSentences, err := au.swr.GetUserAssociatedSentencesByWordId(wordId)
 	if err != nil {
 		return []model.Sentence{}, err
 	}
@@ -89,7 +89,7 @@ func (au *AssociationUsecase) toSentenceWithLink(loginUserId uint64, sentence mo
 	// sentenceに紐づくWordを全件取得し、sentence中におけるそのWordの出現箇所をリンクに変換
 	sentenceText := sentence.Sentence
 
-	words, err := au.swr.GetAssociatedWordsBySentenceId(sentence.Id)
+	words, err := au.swr.GetUserAssociatedWordsBySentenceId(sentence.Id)
 	if err != nil {
 		return model.SentenceWithLink{}, err
 	}

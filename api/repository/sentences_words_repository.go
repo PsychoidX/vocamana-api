@@ -7,8 +7,8 @@ import (
 
 type ISentencesWordsRepository interface {
 	AssociateSentenceWithWord(sentenceId uint64, wordId uint64) error
-	GetAssociatedSentencesByWordId(wordId uint64) ([]model.Sentence, error)
-	GetAssociatedWordsBySentenceId(sentenceId uint64) ([]model.Word, error)
+	GetUserAssociatedSentencesByWordId(wordId uint64) ([]model.Sentence, error)
+	GetUserAssociatedWordsBySentenceId(sentenceId uint64) ([]model.Word, error)
 	DeleteAllAssociationBySentenceId(sentenceId uint64) error
 	DeleteAllAssociationByWordId(sentenceId uint64) error
 }
@@ -47,8 +47,11 @@ func (swr *SentencesWordsRepository) AssociateSentenceWithWord(sentenceId uint64
 	return nil
 }
 
-func (swr *SentencesWordsRepository) GetAssociatedSentencesByWordId(wordId uint64) ([]model.Sentence, error) {
-	// wordIdに紐づくSentenceのIdを全件取得
+func (swr *SentencesWordsRepository) GetUserAssociatedSentencesByWordId(wordId uint64) ([]model.Sentence, error) {
+	// wordIdに紐づくSentenceを全件取得
+	// sentenceIdのSentenceとwordIdのWordのuserIdは一致する（SentenceとWordの所有者は同じである）ことを前提とするため、
+	// 参照時にはuserIdの検証を行わない
+
 	var sentences []model.Sentence
 
 	rows, err := swr.db.Query(`
@@ -84,7 +87,11 @@ func (swr *SentencesWordsRepository) GetAssociatedSentencesByWordId(wordId uint6
 	return sentences, nil
 }
 
-func (swr *SentencesWordsRepository) GetAssociatedWordsBySentenceId(sentenceId uint64) ([]model.Word, error) {
+func (swr *SentencesWordsRepository) GetUserAssociatedWordsBySentenceId(sentenceId uint64) ([]model.Word, error) {
+	// sentenceIdに紐づくWordのを全件取得
+	// sentenceIdのSentenceとwordIdのWordのuserIdは一致する（SentenceとWordの所有者は同じである）ことを前提とするため、
+	// 参照時にはuserIdの検証を行わない
+	
 	var words []model.Word
 
 	rows, err := swr.db.Query(`

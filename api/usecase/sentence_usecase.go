@@ -118,7 +118,7 @@ func (su *SentenceUsecase) GetAssociatedWordsBySentenceId(loginUserId uint64, se
 		return []model.Word{}, nil
 	}
 
-	words, err := su.swr.GetAssociatedWordsBySentenceId(sentenceId)
+	words, err := su.swr.GetUserAssociatedWordsBySentenceId(sentenceId)
 	if err != nil {
 		return []model.Word{}, err
 	}
