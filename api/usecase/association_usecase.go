@@ -38,14 +38,14 @@ func (au *AssociationUsecase) GetAssociatedSentencesByWordId(loginUserId, wordId
 		return []model.Sentence{}, nil
 	}
 
-	sentences, err := au.swr.GetAssociatedSentencesByWordId(loginUserId, wordId)
+	associatedSentences, err := au.swr.GetAssociatedSentencesByWordId(loginUserId, wordId)
 	if err != nil {
 		return []model.Sentence{}, err
 	}
 
 	// リポジトリの返り値のuserIdを検証
-	userSentences := []model.Sentence{}
-	for _, sentence := range sentences {
+	associatedUserSentences := []model.Sentence{}
+	for _, sentence := range associatedSentences {
 		// sentenceの所有者がloginUserIdでない場合continue
 		isSentenceOwner, err := au.sr.IsSentenceOwner(sentence.Id, loginUserId)
 		if err != nil {
@@ -55,10 +55,10 @@ func (au *AssociationUsecase) GetAssociatedSentencesByWordId(loginUserId, wordId
 			continue
 		}
 
-		userSentences = append(userSentences, sentence)
+		associatedUserSentences = append(associatedUserSentences, sentence)
 	}
 
-	return userSentences, nil
+	return associatedUserSentences, nil
 }
 
 func (au *AssociationUsecase) GetAssociatedSentencesWithLinkByWordId(loginUserId, wordId uint64) ([]model.SentenceWithLink, error) {
