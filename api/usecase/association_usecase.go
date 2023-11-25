@@ -13,6 +13,8 @@ type AssociationUsecase struct {
 	sr  repository.ISentenceRepository
 	swr repository.ISentencesWordsRepository
 	nr  repository.INotationRepository
+	wu  *WordUsecase
+	su  *SentenceUsecase
 }
 
 func NewAssociationUsecase(
@@ -21,7 +23,9 @@ func NewAssociationUsecase(
 	swr repository.ISentencesWordsRepository,
 	nr repository.INotationRepository,
 ) *AssociationUsecase {
-	return &AssociationUsecase{wr, sr, swr, nr}
+	wu := NewWordUsecase(wr, sr, swr, nr)
+	su := NewSentenceUsecase(sr, wr, swr, nr)
+	return &AssociationUsecase{wr, sr, swr, nr, wu, su}
 }
 
 func (au *AssociationUsecase) GetAssociatedSentencesByWordId(loginUserId, wordId uint64) ([]model.Sentence, error) {
