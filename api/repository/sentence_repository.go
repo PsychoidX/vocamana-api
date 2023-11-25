@@ -7,12 +7,12 @@ import (
 )
 
 type ISentenceRepository interface {
-	GetAllSentences(uint64) ([]model.Sentence, error)
-	GetSentenceById(uint64, uint64) (model.Sentence, error)
+	GetAllSentences(userId uint64) ([]model.Sentence, error)
+	GetSentenceById(userId uint64, sentenceId uint64) (model.Sentence, error)
 	InsertSentence(model.SentenceCreation) (model.Sentence, error)
 	UpdateSentence(model.SentenceUpdate) (model.Sentence, error)
-	DeleteSentenceById(uint64, uint64) (model.Sentence, error)
-	IsSentenceOwner(uint64, uint64) (bool, error)
+	DeleteSentenceById(userId uint64, sentenceId uint64) (model.Sentence, error)
+	IsSentenceOwner(sentenceId uint64, userId uint64) (bool, error)
 }
 
 type SentenceRepository struct {
