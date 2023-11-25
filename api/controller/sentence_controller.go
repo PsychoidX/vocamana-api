@@ -289,7 +289,7 @@ func (sc *SentenceController) GetSentencesCount(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	sentenceCountRes := model.SentenceCountResponse{
+	sentenceCountRes := model.SentencesCountResponse{
 		Count: count,
 	}
 
