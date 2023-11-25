@@ -54,7 +54,7 @@ func (au *AssociationUsecase) GetAssociatedSentencesWithLinkByWordId(loginUserId
 
 	sentenceWithLinks := []model.SentenceWithLink{}
 	for _, sentence := range userAssociatedSentences {
-		sentenceWithLink, err := au.ToSentenceWithLink(loginUserId, sentence)
+		sentenceWithLink, err := au.toSentenceWithLink(loginUserId, sentence)
 		if err != nil {
 			return []model.SentenceWithLink{}, err
 		}
@@ -77,7 +77,7 @@ func (au *AssociationUsecase) GetSentencesWithLinkById(loginUserId, sentenceId u
 		return model.SentenceWithLink{}, err
 	}
 
-	sentenceWithLink, err := au.ToSentenceWithLink(loginUserId, sentence)
+	sentenceWithLink, err := au.toSentenceWithLink(loginUserId, sentence)
 	if err != nil {
 		return model.SentenceWithLink{}, err
 	}
@@ -85,7 +85,7 @@ func (au *AssociationUsecase) GetSentencesWithLinkById(loginUserId, sentenceId u
 	return sentenceWithLink, nil
 }
 
-func (au *AssociationUsecase) ToSentenceWithLink(loginUserId uint64, sentence model.Sentence) (model.SentenceWithLink, error) {
+func (au *AssociationUsecase) toSentenceWithLink(loginUserId uint64, sentence model.Sentence) (model.SentenceWithLink, error) {
 	// sentenceに紐づくWordを全件取得し、sentence中におけるそのWordの出現箇所をリンクに変換
 	sentenceText := sentence.Sentence
 
