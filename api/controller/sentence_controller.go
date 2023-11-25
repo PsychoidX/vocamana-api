@@ -42,9 +42,9 @@ func (sc *SentenceController) GetAllSentences(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	var sentenceWithLinkResponses []model.SentenceWIthLinkResponse
+	var sentenceWithLinkResponses []model.SentenceWithLinkResponse
 	for _, sentenceWithLink := range sentencesWithLink {
-		res := model.SentenceWIthLinkResponse{
+		res := model.SentenceWithLinkResponse{
 			Id:       sentenceWithLink.Id,
 			Sentence: sentenceWithLink.Sentence,
 			SentenceWithLink: sentenceWithLink.SentenceWithLink,
@@ -197,7 +197,7 @@ func (sc *SentenceController) UpdateSentence(c echo.Context) error {
 			return c.JSON(http.StatusBadRequest, err.Error())
 		}
 
-		sentenceWithLinkRes := model.SentenceWIthLinkResponse{
+		sentenceWithLinkRes := model.SentenceWithLinkResponse{
 			Id: sentenceWithLink.Id,
 			Sentence: sentenceWithLink.Sentence,
 			SentenceWithLink: sentenceWithLink.SentenceWithLink,

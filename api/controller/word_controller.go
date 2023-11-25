@@ -253,9 +253,9 @@ func (wc *WordController) GetAssociatedSentencesWithLink(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	var sentenceWithLinkResponses []model.SentenceWIthLinkResponse
+	var sentenceWithLinkResponses []model.SentenceWithLinkResponse
 	for _, sentenceWithLink := range sentenceWithLinks {
-		sentenceWithLinkRes := model.SentenceWIthLinkResponse{
+		sentenceWithLinkRes := model.SentenceWithLinkResponse{
 			Id:               sentenceWithLink.Id,
 			Sentence:         sentenceWithLink.Sentence,
 			SentenceWithLink: sentenceWithLink.SentenceWithLink,

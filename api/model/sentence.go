@@ -49,7 +49,7 @@ type SentenceWithLink struct {
 	UpdatedAt        time.Time
 }
 
-type SentenceWIthLinkResponse struct {
+type SentenceWithLinkResponse struct {
 	Id               uint64 `json:"id"`
 	Sentence         string `json:"sentence"`
 	SentenceWithLink string `json:"sentence_with_link"`
