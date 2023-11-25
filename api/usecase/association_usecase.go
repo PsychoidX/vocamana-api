@@ -3,7 +3,6 @@ package usecase
 import (
 	"api/model"
 	"api/repository"
-	"database/sql"
 	"fmt"
 	"strings"
 )
@@ -66,14 +65,8 @@ func (au *AssociationUsecase) GetAssociatedSentencesWithLinkByWordId(loginUserId
 }
 
 func (au *AssociationUsecase) GetSentencesWithLinkById(loginUserId, sentenceId uint64) (model.SentenceWithLink, error) {
-	sentence, err := au.sr.GetSentenceById(loginUserId, sentenceId)
+	sentence, err := au.su.GetSentenceById(loginUserId, sentenceId)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			// マッチするレコードが無い場合
-			// Sentenceのゼロ値を返す
-			return model.SentenceWithLink{}, nil
-		}
-
 		return model.SentenceWithLink{}, err
 	}
 
