@@ -7,8 +7,8 @@ import (
 
 type ISentencesWordsRepository interface {
 	AssociateSentenceWithWord(sentenceId uint64, wordId uint64) error
-	GetAssociatedUserSentencesByWordId(userId uint64, wordId uint64) ([]model.Sentence, error)
-	GetAssociatedUserWordsBySentenceId(userId uint64, sentenceId uint64) ([]model.Word, error)
+	GetAssociatedSentencesByWordId(wordId uint64) ([]model.Sentence, error)
+	GetAssociatedWordsBySentenceId(sentenceId uint64) ([]model.Word, error)
 	DeleteAllAssociationBySentenceId(sentenceId uint64) error
 	DeleteAllAssociationByWordId(sentenceId uint64) error
 }
@@ -23,15 +23,20 @@ func NewSentencesWordsRepository(db *sql.DB) ISentencesWordsRepository {
 
 func (swr *SentencesWordsRepository) AssociateSentenceWithWord(sentenceId uint64, wordId uint64) error {
 	// テーブルにレコードが存在しない場合にだけ追加
-	_, err := swr.db.Exec(
-		"INSERT INTO sentences_words"+
-			" (sentence_id, word_id)"+
-			" SELECT $1, $2"+
-			" WHERE NOT EXISTS("+
-			"   SELECT 1"+
-			"   FROM sentences_words"+
-			"   WHERE sentence_id = $1 AND word_id = $2"+
-			" );",
+	
+	// sentenceIdのSentenceとwordIdのWordのuserIdは一致する（SentenceとWordの所有者は同じである）ことを前提とする
+	// AssociateSentenceWithWord() 呼び出し時に常軌を前提とするため、
+	// GetAssociatedSentencesByWordId(), GetAssociatedWordsBySentenceId() 等の取得メソッドではuserIdの検証を行わない
+
+	_, err := swr.db.Exec(`
+		INSERT INTO sentences_words
+		(sentence_id, word_id)
+		SELECT $1, $2
+		WHERE NOT EXISTS(
+			SELECT 1
+			FROM sentences_words
+			WHERE sentence_id = $1 AND word_id = $2
+		);`,
 		sentenceId,
 		wordId,
 	)
@@ -42,8 +47,8 @@ func (swr *SentencesWordsRepository) AssociateSentenceWithWord(sentenceId uint64
 	return nil
 }
 
-func (swr *SentencesWordsRepository) GetAssociatedUserSentencesByWordId(userId uint64, wordId uint64) ([]model.Sentence, error) {
-	// wordIdに紐づき、所有者がuserIdであるSentenceのIdを全件取得
+func (swr *SentencesWordsRepository) GetAssociatedSentencesByWordId(wordId uint64) ([]model.Sentence, error) {
+	// wordIdに紐づくSentenceのIdを全件取得
 	var sentences []model.Sentence
 
 	rows, err := swr.db.Query(`
@@ -58,11 +63,9 @@ func (swr *SentencesWordsRepository) GetAssociatedUserSentencesByWordId(userId u
 			ON sentences_words.word_id = words.id
 		LEFT JOIN sentences
 			ON sentences_words.sentence_id = sentences.id
-		WHERE sentences_words.word_id = $1
-			AND words.user_id = $2;
+		WHERE sentences_words.word_id = $1;
 		`,
 		wordId,
-		userId,
 	)
 	if err != nil {
 		return []model.Sentence{}, err
@@ -81,7 +84,7 @@ func (swr *SentencesWordsRepository) GetAssociatedUserSentencesByWordId(userId u
 	return sentences, nil
 }
 
-func (swr *SentencesWordsRepository) GetAssociatedUserWordsBySentenceId(userId uint64, sentenceId uint64) ([]model.Word, error) {
+func (swr *SentencesWordsRepository) GetAssociatedWordsBySentenceId(sentenceId uint64) ([]model.Word, error) {
 	var words []model.Word
 
 	rows, err := swr.db.Query(`
@@ -98,10 +101,8 @@ func (swr *SentencesWordsRepository) GetAssociatedUserWordsBySentenceId(userId u
 		LEFT JOIN sentences
 			ON sentences_words.sentence_id = sentences.id
 		WHERE sentences_words.sentence_id = $1
-			AND sentences.user_id = $2;
 		`,
 		sentenceId,
-		userId,
 	)
 	if err != nil {
 		return []model.Word{}, err
