@@ -55,3 +55,7 @@ type SentenceWithLinkResponse struct {
 	SentenceWithLink string `json:"sentence_with_link"`
 	UserId           uint64 `json:"user_id"`
 }
+
+type SentenceCountResponse struct {
+	Count uint64 `json:"count"`
+}

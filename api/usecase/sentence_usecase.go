@@ -226,3 +226,7 @@ func (su *SentenceUsecase) ReAssociateSentenceWithAllWords(loginUserId, sentence
 
 	return nil
 }
+
+func (su *SentenceUsecase) GetSentencesCount(loginUserId uint64) (uint64, error) {
+	return su.sr.GetSentencesCount(loginUserId)
+}

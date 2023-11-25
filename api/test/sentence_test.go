@@ -1061,3 +1061,51 @@ func TestGetAssociatedWords_WithInvalidWordId(t *testing.T) {
 		"null",
 	)
 }
+
+func TestGetSentencesCount(t *testing.T) {
+	// ログイン中のユーザの単語数を取得できることをテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のWordのみ取得可能とする
+	DeleteAllFromSentences()
+
+	DoSimpleTest(
+		t,
+		http.MethodGet,
+		"/sentences/count",
+		nil,
+		nil,
+		"",
+		sc.GetSentencesCount,
+		http.StatusOK,
+		`{ "count": 0 }`,
+	)
+
+	createTestSentence(t, "test sentence")
+
+	DoSimpleTest(
+		t,
+		http.MethodGet,
+		"/sentences/count",
+		nil,
+		nil,
+		"",
+		sc.GetSentencesCount,
+		http.StatusOK,
+		`{ "count": 1 }`,
+	)
+
+	createTestSentence(t, "test sentence")
+	createTestSentence(t, "test sentence")
+
+	DoSimpleTest(
+		t,
+		http.MethodGet,
+		"/sentences/count",
+		nil,
+		nil,
+		"",
+		sc.GetSentencesCount,
+		http.StatusOK,
+		`{ "count": 3 }`,
+	)
+}

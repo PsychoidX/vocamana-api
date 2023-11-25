@@ -17,6 +17,7 @@ type ISentenceController interface {
 	UpdateSentence(c echo.Context) error
 	DeleteSentence(c echo.Context) error
 	GetAssociatedWords(c echo.Context) error
+	GetSentencesCount(c echo.Context) error
 }
 
 type SentenceController struct {
@@ -275,4 +276,22 @@ func (sc *SentenceController) GetAssociatedWords(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, wordResponses)
+}
+
+func (sc *SentenceController) GetSentencesCount(c echo.Context) error {
+	loginUserId, err := GetLoginUserId()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	count, err := sc.su.GetSentencesCount(loginUserId)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	sentenceCountRes := model.SentenceCountResponse{
+		Count: count,
+	}
+
+	return c.JSON(http.StatusOK, sentenceCountRes)
 }

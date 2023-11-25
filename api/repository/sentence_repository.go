@@ -13,6 +13,7 @@ type ISentenceRepository interface {
 	UpdateSentence(model.SentenceUpdate) (model.Sentence, error)
 	DeleteSentenceById(userId uint64, sentenceId uint64) (model.Sentence, error)
 	IsSentenceOwner(sentenceId uint64, userId uint64) (bool, error)
+	GetSentencesCount(userId uint64) (uint64, error)
 }
 
 type SentenceRepository struct {
@@ -166,4 +167,21 @@ func (sr *SentenceRepository) IsSentenceOwner(sentenceId uint64, userId uint64) 
 	}
 	
 	return count == 1, nil
+}
+
+func (sr *SentenceRepository) GetSentencesCount(userId uint64) (uint64, error) {
+	var count uint64
+
+	err := sr.db.QueryRow(`
+		SELECT COUNT(*)
+		FROM sentences
+		WHERE user_id = $1
+		`,
+		userId,
+	).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }

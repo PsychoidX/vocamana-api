@@ -58,6 +58,7 @@ func main() {
 	s := e.Group("/sentences")
 	s.GET("", sc.GetAllSentences)
 	s.GET("/:sentenceId", sc.GetSentenceById)
+	s.GET("/count", sc.GetSentencesCount)
 	s.POST("", sc.CreateSentence)
 	s.POST("/multiple", sc.CreateMultipleSentences)
 	s.PUT("/:sentenceId", sc.UpdateSentence)
