@@ -64,7 +64,7 @@ func (au *AssociationUsecase) GetAssociatedSentencesWithLinkByWordId(loginUserId
 	return sentenceWithLinks, nil
 }
 
-func (au *AssociationUsecase) GetSentencesWithLinkById(loginUserId, sentenceId uint64) (model.SentenceWithLink, error) {
+func (au *AssociationUsecase) GetSentenceWithLinkById(loginUserId, sentenceId uint64) (model.SentenceWithLink, error) {
 	sentence, err := au.su.GetSentenceById(loginUserId, sentenceId)
 	if err != nil {
 		return model.SentenceWithLink{}, err
@@ -76,6 +76,25 @@ func (au *AssociationUsecase) GetSentencesWithLinkById(loginUserId, sentenceId u
 	}
 
 	return sentenceWithLink, nil
+}
+
+func (au *AssociationUsecase) GetAllSentencesWithLink(loginUserId uint64) ([]model.SentenceWithLink, error) {
+	sentences, err := au.su.GetAllSentences(loginUserId)
+	if err != nil {
+		return []model.SentenceWithLink{}, err
+	}
+
+	sentenceWithLinks := []model.SentenceWithLink{}
+	for _, sentence := range sentences {
+		sentenceWithLink, err := au.toSentenceWithLink(loginUserId, sentence)
+		if err != nil {
+			return []model.SentenceWithLink{}, err
+		}
+
+		sentenceWithLinks = append(sentenceWithLinks, sentenceWithLink)
+	}
+
+	return sentenceWithLinks, nil
 }
 
 func (au *AssociationUsecase) toSentenceWithLink(loginUserId uint64, sentence model.Sentence) (model.SentenceWithLink, error) {

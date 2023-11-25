@@ -39,7 +39,7 @@ func TestGetAllSentences(t *testing.T) {
 	db.QueryRow(`
 		INSERT INTO sentences
 		(id, sentence, user_id)
-		VALUES(nextval('sentence_id_seq'), 'testsentence', 1)
+		VALUES(nextval('sentence_id_seq'), 'test sentence', 1)
 		RETURNING id;
 	`).Scan(&idWithUserId1)
 
@@ -47,7 +47,7 @@ func TestGetAllSentences(t *testing.T) {
 	db.QueryRow(`
 		INSERT INTO sentences
 		(id, sentence, user_id)
-		VALUES(nextval('sentence_id_seq'), 'testsentence', 2)
+		VALUES(nextval('sentence_id_seq'), 'test sentence', 2)
 		RETURNING id;
 	`).Scan(&idWithUserId2)
 
@@ -55,11 +55,49 @@ func TestGetAllSentences(t *testing.T) {
 		[
 			{
 				"id": %d,
-				"sentence": "testsentence",
+				"sentence": "test sentence",
+				"sentence_with_link": "test sentence",
 				"user_id": 1
 			}
 		]`,
 		idWithUserId1,
+	)
+
+	DoSimpleTest(
+		t,
+		http.MethodGet,
+		"/sentences",
+		nil,
+		nil,
+		"",
+		sc.GetAllSentences,
+		http.StatusOK,
+		expectedResponse,
+	)
+}
+
+func TestGetAllSentences_IncludingWords(t *testing.T) {
+	// 取得したSentenceに正しくリンクが含まれていることをテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のSentenceのみ取得可能とする
+	DeleteAllFromSentences()
+
+	appleWordId := createTestWord(t, "林檎", "").Id
+	ateWordId := createTestWord(t, "食べた", "").Id
+	sentenceId := createTestSentence(t, "林檎を食べた").Id
+
+	expectedResponse := fmt.Sprintf(`
+		[
+			{
+				"id": %d,
+				"sentence": "林檎を食べた",
+				"sentence_with_link": "<a href=\"/words/%d\">林檎</a>を<a href=\"/words/%d\">食べた</a>",
+				"user_id": 1
+			}
+		]`,
+		sentenceId,
+		appleWordId,
+		ateWordId,
 	)
 
 	DoSimpleTest(

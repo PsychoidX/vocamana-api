@@ -37,22 +37,23 @@ func (sc *SentenceController) GetAllSentences(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	sentences, err := sc.su.GetAllSentences(loginUserId)
+	sentencesWithLink, err := sc.au.GetAllSentencesWithLink(loginUserId)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	var sentenceResponses []model.SentenceResponse
-	for _, sentence := range sentences {
-		sentenceRes := model.SentenceResponse{
-			Id:       sentence.Id,
-			Sentence: sentence.Sentence,
-			UserId:   sentence.UserId,
+	var sentenceWithLinkResponses []model.SentenceWIthLinkResponse
+	for _, sentenceWithLink := range sentencesWithLink {
+		res := model.SentenceWIthLinkResponse{
+			Id:       sentenceWithLink.Id,
+			Sentence: sentenceWithLink.Sentence,
+			SentenceWithLink: sentenceWithLink.SentenceWithLink,
+			UserId:   sentenceWithLink.UserId,
 		}
-		sentenceResponses = append(sentenceResponses, sentenceRes)
+		sentenceWithLinkResponses = append(sentenceWithLinkResponses, res)
 	}
 
-	return c.JSON(http.StatusOK, sentenceResponses)
+	return c.JSON(http.StatusOK, sentenceWithLinkResponses)
 }
 
 func (sc *SentenceController) GetSentenceById(c echo.Context) error {
@@ -191,7 +192,7 @@ func (sc *SentenceController) UpdateSentence(c echo.Context) error {
 	// クエリパラメータ ?with-link=true の場合、
 	// レスポンスをリンク付きSentenceにする
 	if(c.QueryParam("with-link") == "true") {
-		sentenceWithLink, err := sc.au.GetSentencesWithLinkById(loginUserId, sentenceId)
+		sentenceWithLink, err := sc.au.GetSentenceWithLinkById(loginUserId, sentenceId)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err.Error())
 		}
