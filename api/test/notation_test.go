@@ -41,14 +41,14 @@ func TestGetAllNotations(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodGet,
 		"/words/:wordId/notations",
-		[]string{"wordId"},
-		[]string{strconv.FormatUint(wordId, 10)},
-		"",
 		nc.GetAllNotations,
 		http.StatusOK,
 		expectedResponse,
+		Params(
+			[]string{"wordId"},
+			[]string{strconv.FormatUint(wordId, 10)},
+		),
 	)
 }
 
@@ -63,15 +63,15 @@ func TestGetAllNotations_WithNoRows(t *testing.T) {
 	wordId := insertIntoWords("test word", "test memo", 1)
 
 	DoSimpleTest(
-		t,
-		http.MethodGet,
+		t,		
 		"/words/:wordId/notations",
-		[]string{"wordId"},
-		[]string{strconv.FormatUint(wordId, 10)},
-		"",
 		nc.GetAllNotations,
 		http.StatusOK,
 		"null",
+		Params(
+			[]string{"wordId"},
+			[]string{strconv.FormatUint(wordId, 10)},
+		),
 	)
 }
 
@@ -100,27 +100,27 @@ func TestGetAllNotations_WithInvalidWordId(t *testing.T) {
 	)
 
 	DoSimpleTest(
-		t,
-		http.MethodGet,
+		t,		
 		"/words/:wordId/notations",
-		[]string{"wordId"},
-		[]string{strconv.FormatUint(wordIdWithUserId1, 10)},
-		"",
 		nc.GetAllNotations,
 		http.StatusOK,
 		expectedResponse,
+		Params(
+			[]string{"wordId"},
+			[]string{strconv.FormatUint(wordIdWithUserId1, 10)},
+		),
 	)
 
 	DoSimpleTest(
-		t,
-		http.MethodGet,
+		t,		
 		"/words/:wordId/notations",
-		[]string{"wordId"},
-		[]string{strconv.FormatUint(wordIdWithUserId2, 10)},
-		"",
 		nc.GetAllNotations,
 		http.StatusOK,
 		"null",
+		Params(
+			[]string{"wordId"},
+			[]string{strconv.FormatUint(wordIdWithUserId2, 10)},
+		),
 	)
 }
 
@@ -152,14 +152,16 @@ func TestCreateNotation(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodPost,
 		"/words/:wordId/notations",
-		[]string{"wordId"},
-		[]string{strconv.FormatUint(wordId, 10)},
-		reqBody,
 		nc.CreateNotation,
 		http.StatusCreated,
 		expectedResponse,
+		Body(reqBody),
+		HttpMethod(http.MethodPost),
+		Params(
+			[]string{"wordId"},
+			[]string{strconv.FormatUint(wordId, 10)},
+		),		
 	)
 
 	// DBにレコードが追加される
@@ -193,14 +195,16 @@ func TestCreateNotation_WithInvalidUser(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodPost,
 		"/words/:wordId/notations",
-		[]string{"wordId"},
-		[]string{strconv.FormatUint(wordId, 10)},
-		reqBody,
 		nc.CreateNotation,
 		http.StatusUnauthorized,
 		"{}",
+		HttpMethod(http.MethodPost),
+		Params(
+			[]string{"wordId"},
+			[]string{strconv.FormatUint(wordId, 10)},
+		),
+		Body(reqBody),
 	)
 
 	// DBにレコードが追加されない
@@ -228,12 +232,14 @@ func TestCreateNotation_InSentence(t *testing.T) {
 
 	ExecController(
 		t,
-		http.MethodPost,
 		"/words/:wordId/notations",
-		[]string{"wordId"},
-		[]string{strconv.FormatUint(wordId, 10)},
-		reqBody,
 		nc.CreateNotation,
+		Params(
+			[]string{"wordId"},
+			[]string{strconv.FormatUint(wordId, 10)},
+		),
+		HttpMethod(http.MethodPost),
+		Body(reqBody),
 	)
 
 	// 「赤い林檎を食べた」には「林檎」が含まれるため、
@@ -266,12 +272,14 @@ func TestCreateNotation_InInvalidSentence(t *testing.T) {
 
 	ExecController(
 		t,
-		http.MethodPost,
 		"/words/:wordId/notations",
-		[]string{"wordId"},
-		[]string{strconv.FormatUint(wordId, 10)},
-		reqBody,
 		nc.CreateNotation,
+		HttpMethod(http.MethodPost),
+		Params(
+			[]string{"wordId"},
+			[]string{strconv.FormatUint(wordId, 10)},
+		),		
+		Body(reqBody),
 	)
 
 	// 「赤い林檎を食べた」には「林檎」が含まれるが、
@@ -299,14 +307,16 @@ func TestCreateNotation_Duplicate(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodPost,
 		"/words/:wordId/notations",
-		[]string{"wordId"},
-		[]string{strconv.FormatUint(wordId, 10)},
-		reqBody,
 		nc.CreateNotation,
 		http.StatusConflict,
 		"{}",
+		HttpMethod(http.MethodPost),
+		Body(reqBody),
+		Params(
+			[]string{"wordId"},
+			[]string{strconv.FormatUint(wordId, 10)},
+		),
 	)
 
 	// DBにNotationは追加されない
@@ -350,14 +360,16 @@ func TestUpdateNotation(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodPut,
 		"/notations/:notationId",
-		[]string{"notationId"},
-		[]string{strconv.FormatUint(notationId, 10)},
-		reqBody,
 		nc.UpdateNotation,
 		http.StatusAccepted,
 		expectedResponse,
+		Params(
+			[]string{"notationId"},
+			[]string{strconv.FormatUint(notationId, 10)},
+		),
+		HttpMethod(http.MethodPut),
+		Body(reqBody),
 	)
 
 	// DBのレコードが更新される
@@ -389,14 +401,16 @@ func TestUpdateNotation_WithNoRows(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodPut,
 		"/notations/:notationId",
-		[]string{"notationId"},
-		[]string{"1"},
-		reqBody,
 		nc.UpdateNotation,
 		http.StatusUnauthorized,
 		"{}",
+		Params(
+			[]string{"notationId"},
+			[]string{"1"},
+		),
+		HttpMethod(http.MethodPut),		
+		Body(reqBody),
 	)
 }
 
@@ -417,14 +431,16 @@ func TestUpdateNotation_UpdatedAssociation_AllNotationsDeleted(t *testing.T) {
 
 	ExecController(
 		t,
-		http.MethodPut,
 		"/notations/:notationId",
-		[]string{"notationId"},
-		[]string{strconv.FormatUint(notationId, 10)},
-		body,
 		nc.UpdateNotation,
+		Params(
+			[]string{"notationId"},
+			[]string{strconv.FormatUint(notationId, 10)},
+		),		
+		HttpMethod(http.MethodPut),
+		Body(body),
 	)
-
+	
 	// Word「りんご」が、追加されていたNotationにより「林檎」にもマッチしていたが、
 	// Notationを「林檎」から「リンゴ」に変更したことで、「林檎」にはマッチしなくなり
 	// sentences_wordsから削除される
@@ -449,12 +465,14 @@ func TestUpdateNotation_UpdatedAssociation_SomeNotationRemaining(t *testing.T) {
 
 	ExecController(
 		t,
-		http.MethodPut,
 		"/notations/:notationId",
-		[]string{"notationId"},
-		[]string{strconv.FormatUint(notationId, 10)},
-		body,
 		nc.UpdateNotation,
+		Params(
+			[]string{"notationId"},
+			[]string{strconv.FormatUint(notationId, 10)},
+		),
+		HttpMethod(http.MethodPut),
+		Body(body),
 	)
 
 	// Word「りんご」が、追加されていたNotationにより「林檎」「リンゴ」にもマッチしているので、
@@ -486,14 +504,15 @@ func TestDeleteNotation(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodDelete,
 		"/notations/:notationId",
-		[]string{"notationId"},
-		[]string{strconv.FormatUint(notationId, 10)},
-		"",
 		nc.DeleteNotation,
 		http.StatusAccepted,
 		expectedResponse,
+		HttpMethod(http.MethodDelete),
+		Params(
+			[]string{"notationId"},
+			[]string{strconv.FormatUint(notationId, 10)},
+		),
 	)
 
 	// DBのレコードが削除される
@@ -512,14 +531,15 @@ func TestDeleteNotation_WithInvalidUser(t *testing.T) {
 	assert.Equal(t, 1, getCountFromNotations(notationId))
 	DoSimpleTest(
 		t,
-		http.MethodDelete,
 		"/notations/:notationId",
-		[]string{"notationId"},
-		[]string{strconv.FormatUint(notationId, 10)},
-		"",
 		nc.DeleteNotation,
 		http.StatusUnauthorized,
 		"{}",
+		Params(
+			[]string{"notationId"},
+			[]string{strconv.FormatUint(notationId, 10)},
+		),
+		HttpMethod(http.MethodDelete),
 	)
 
 	// DBのレコードが削除されない
@@ -539,12 +559,13 @@ func TestDeleteNotation_UpdatedAssociation_AllNotationsDeleted(t *testing.T) {
 
 	ExecController(
 		t,
-		http.MethodDelete,
 		"/notations/:notationId",
-		[]string{"notationId"},
-		[]string{strconv.FormatUint(notationId, 10)},
-		"",
 		nc.DeleteNotation,
+		Params(
+			[]string{"notationId"},
+			[]string{strconv.FormatUint(notationId, 10)},
+		),
+		HttpMethod(http.MethodDelete),
 	)
 
 	// Word「りんご」が、追加されていたNotationにより「林檎」にもマッチしていたが、
@@ -567,12 +588,13 @@ func TestDeleteNotation_UpdatedAssociation_SomeNotationRemaining(t *testing.T) {
 
 	ExecController(
 		t,
-		http.MethodDelete,
 		"/notations/:notationId",
-		[]string{"notationId"},
-		[]string{strconv.FormatUint(notationId1, 10)},
-		"",
 		nc.DeleteNotation,
+		Params(
+			[]string{"notationId"},
+			[]string{strconv.FormatUint(notationId1, 10)},
+		),
+		HttpMethod(http.MethodDelete),
 	)
 
 	// Word「りんご」が、追加されていたNotationにより「林檎」「リンゴ」にもマッチしているので、

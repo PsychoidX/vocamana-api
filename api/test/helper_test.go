@@ -132,12 +132,10 @@ func createTestSentence(t *testing.T, sentence string) model.SentenceResponse {
 
 	_, rec := ExecController(
 		t,
-		http.MethodPost,
 		"/sentences",
-		nil,
-		nil,
-		body,
 		sc.CreateSentence,
+		HttpMethod(http.MethodPost),
+		Body(body),
 	)
 
 	return toSentenceResponse(rec)
@@ -158,12 +156,10 @@ func createTestWord(t *testing.T, word, memo string) model.WordResponse {
 
 	_, rec := ExecController(
 		t,
-		http.MethodPost,
 		"/words",
-		nil,
-		nil,
-		body,
 		wc.CreateWord,
+		HttpMethod(http.MethodPost),
+		Body(body),
 	)
 
 	return toWordResponse(rec)
@@ -213,12 +209,14 @@ func createTestNotation(t *testing.T, wordId uint64, notation string) model.Nota
 
 	_, rec := ExecController(
 		t,
-		http.MethodPost,
 		"/words/:wordId/notations",
-		[]string{"wordId"},
-		[]string{strconv.FormatUint(wordId, 10)},
-		body,
 		nc.CreateNotation,
+		HttpMethod(http.MethodPost),
+		Params(
+			[]string{"wordId"},
+			[]string{strconv.FormatUint(wordId, 10)},
+		),
+		Body(body),
 	)
 
 	return toNotationResponse(rec)	

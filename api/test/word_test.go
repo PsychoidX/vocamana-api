@@ -18,11 +18,7 @@ func TestGetAllWords_WithNoRows(t *testing.T) {
 	// レコードが1つも無い場合、[]ではなくnullが返る
 	DoSimpleTest(
 		t,
-		http.MethodGet,
 		"/words",
-		nil,
-		nil,
-		"",
 		wc.GetAllWords,
 		http.StatusOK,
 		"null",
@@ -65,11 +61,7 @@ func TestGetAllWords(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodGet,
 		"/words",
-		nil,
-		nil,
-		"",
 		wc.GetAllWords,
 		http.StatusOK,
 		expectedResponse,
@@ -102,14 +94,14 @@ func TestGetWordById(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodGet,
 		"/words/:wordId",
-		[]string{"wordId"},
-		[]string{id},
-		"",
 		wc.GetWordById,
 		http.StatusOK,
 		expectedResponse,
+		Params(
+			[]string{"wordId"},
+			[]string{id},
+		),
 	)
 }
 
@@ -129,14 +121,14 @@ func TestGetWordById_WithInvalidUser(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodGet,
 		"/words/:wordId",
-		[]string{"wordId"},
-		[]string{id},
-		"",
 		wc.GetWordById,
 		http.StatusOK,
 		"{}",
+		Params(
+			[]string{"wordId"},
+			[]string{id},
+		),
 	)
 }
 
@@ -166,14 +158,12 @@ func TestCreateWord(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodPost,
 		"/words",
-		nil,
-		nil,
-		reqBody,
 		wc.CreateWord,
 		http.StatusCreated,
 		expectedResponse,
+		HttpMethod(http.MethodPost),
+		Body(reqBody),
 	)
 
 	// DBにレコードが追加される
@@ -234,14 +224,12 @@ func TestCreateMultipleWords(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodPost,
 		"/words/multiple",
-		nil,
-		nil,
-		reqBody,
 		wc.CreateMultipleWords,
 		http.StatusCreated,
 		expectedResponse,
+		HttpMethod(http.MethodPost),
+		Body(reqBody),
 	)
 
 	// DBにレコードが追加される
@@ -304,12 +292,10 @@ func TestCreateWord_InSentences(t *testing.T) {
 
 	ExecController(
 		t,
-		http.MethodPost,
 		"/words",
-		nil,
-		nil,
-		reqBody,
 		wc.CreateWord,
+		HttpMethod(http.MethodPost),
+		Body(reqBody),
 	)
 
 	// 「赤いりんごを食べた」には「赤い」が含まれるため、
@@ -368,12 +354,10 @@ func TestCreateWord_InInvalidSentences(t *testing.T) {
 
 	ExecController(
 		t,
-		http.MethodPost,
 		"/words",
-		nil,
-		nil,
-		reqBody,
 		wc.CreateWord,
+		HttpMethod(http.MethodPost),
+		Body(reqBody),
 	)
 
 	var count int
@@ -434,14 +418,16 @@ func TestUpdateWord(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodPut,
 		"/words/:wordId",
-		[]string{"wordId"},
-		[]string{id},
-		reqBody,
 		wc.UpdateWord,
 		http.StatusAccepted,
 		expectedResponse,
+		Params(
+			[]string{"wordId"},
+			[]string{id},
+		),
+		HttpMethod(http.MethodPut),
+		Body(reqBody),
 	)
 
 	// DBのレコードが更新される
@@ -477,12 +463,14 @@ func TestUpdateWord_UpdatedAssociation(t *testing.T) {
 
 	ExecController(
 		t,
-		http.MethodPut,
 		"/words/:wordeId",
-		[]string{"wordId"},
-		[]string{strconv.FormatUint(wordId, 10)},
-		reqBody,
 		wc.UpdateWord,
+		HttpMethod(http.MethodPut),
+		Params(
+			[]string{"wordId"},
+			[]string{strconv.FormatUint(wordId, 10)},
+		),
+		Body(reqBody),
 	)
 
 	// Wordを変更したことで、
@@ -516,14 +504,16 @@ func TestUpdateWord_WithInvalidUser(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodPut,
 		"/words/:wordId",
-		[]string{"wordId"},
-		[]string{id},
-		reqBody,
 		wc.UpdateWord,
 		http.StatusUnauthorized,
 		"{}",
+		HttpMethod(http.MethodPut),
+		Params(
+			[]string{"wordId"},
+			[]string{id},
+		),
+		Body(reqBody),
 	)
 
 	// DBのレコードが更新されない
@@ -559,12 +549,14 @@ func TestUpdateWord_RootWordCreated(t *testing.T) {
 
 	ExecController(
 		t,
-		http.MethodPut,
 		"/words/:wordeId",
-		[]string{"wordId"},
-		[]string{strconv.FormatUint(wordId, 10)},
-		reqBody,
 		wc.UpdateWord,
+		Params(
+			[]string{"wordId"},
+			[]string{strconv.FormatUint(wordId, 10)},
+		),
+		Body(reqBody),
+		HttpMethod(http.MethodPut),
 	)
 
 	// 「買う」の語幹「買」が削除される
@@ -591,12 +583,14 @@ func TestUpdateWord_RootWordCreated_OldRootWordNotExists(t *testing.T) {
 
 	ExecController(
 		t,
-		http.MethodPut,
 		"/words/:wordeId",
-		[]string{"wordId"},
-		[]string{strconv.FormatUint(wordId, 10)},
-		reqBody,
 		wc.UpdateWord,
+		Params(
+			[]string{"wordId"},
+			[]string{strconv.FormatUint(wordId, 10)},
+		),
+		Body(reqBody),
+		HttpMethod(http.MethodPut),
 	)
 
 	// 「赤い」の語幹「赤」が追加される
@@ -630,14 +624,15 @@ func TestDeleteWord(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodDelete,
 		"/words/:wordId",
-		[]string{"wordId"},
-		[]string{id},
-		"",
 		wc.DeleteWord,
 		http.StatusAccepted,
 		expectedResponse,
+		Params(
+			[]string{"wordId"},
+			[]string{id},
+		),
+		HttpMethod(http.MethodDelete),
 	)
 
 	// DBからレコードが削除されている
@@ -668,14 +663,15 @@ func TestDeleteWord_WithInvalidUser(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodDelete,
 		"/words/:wordId",
-		[]string{"wordId"},
-		[]string{id},
-		"",
 		wc.DeleteWord,
 		http.StatusUnauthorized,
 		"{}",
+		HttpMethod(http.MethodDelete),
+		Params(
+			[]string{"wordId"},
+			[]string{id},
+		),
 	)
 
 	// DBからレコードが削除されていない
@@ -703,12 +699,13 @@ func TestDeleteWord_UpdatedAssociation(t *testing.T) {
 
 	ExecController(
 		t,
-		http.MethodDelete,
 		"/words/:wordeId",
-		[]string{"wordId"},
-		[]string{strconv.FormatUint(wordId, 10)},
-		"",
 		wc.DeleteWord,
+		Params(
+			[]string{"wordId"},
+			[]string{strconv.FormatUint(wordId, 10)},
+		),
+		HttpMethod(http.MethodDelete),
 	)
 
 	// Wordを削除したことで、
@@ -800,15 +797,13 @@ func TestGetAssociatedSentencesWithLink(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodGet,
 		"/words/:wordId/associated-sentences",
-		[]string{"wordId"},
-		[]string{appleWordId},
-		"",
 		wc.GetAssociatedSentencesWithLink,
 		http.StatusOK,
 		expectedResponse,
+		Params(
+			[]string{"wordId"},
+			[]string{appleWordId},
+		),
 	)
 }
-
-

@@ -2,7 +2,9 @@ package test
 
 import (
 	"io"
+	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -12,25 +14,63 @@ import (
 
 // 複数のテストで共通して使うパターンを切り出しまとめたファイル
 
+// controllerの呼び出し方法を指定するオプション
+type CallControllerOption struct {
+	httpMethod string
+	paramNames []string
+	paramValues []string
+	queryParamNames []string
+	queryParamValues [][]string
+	body string
+}
+
+// CallControllerOptionを破壊的に変更するメソッド
+type CallControllerOptionBuildFunc func(*CallControllerOption)
+
+func Params(paramNames, paramValues []string) CallControllerOptionBuildFunc {
+	return func(opt *CallControllerOption) {
+		if(len(paramNames) == len(paramValues)) {
+			opt.paramNames = paramNames
+			opt.paramValues = paramValues
+		}
+	}
+}
+
+func QueryParams(queryParamNames []string, queryParamValues [][]string) CallControllerOptionBuildFunc {
+	return func(opt *CallControllerOption) {
+		if(len(queryParamNames) == len(queryParamValues)) {
+			opt.queryParamNames = queryParamNames
+			opt.queryParamValues = queryParamValues
+		}
+	}
+}
+
+func HttpMethod(method string) CallControllerOptionBuildFunc {
+	return func(opt *CallControllerOption) {
+		opt.httpMethod = method
+	}
+}
+
+func Body(body string) CallControllerOptionBuildFunc {
+	return func(opt *CallControllerOption) {
+		opt.body = body
+	}
+}
+
+
 func DoSimpleTest(
 	t *testing.T,
-	httpMethod string,
 	path string,
-	paramNames []string,
-	paramValues []string,
-	body string,
 	controllerMethod func(echo.Context) error,
 	expectedStatusCode int,
 	expectedJSON string,
+	buildFuncs ...CallControllerOptionBuildFunc,
 ) {
 	isNoError, rec := ExecController(
 		t,
-		httpMethod,
 		path,
-		paramNames,
-		paramValues,
-		body,
 		controllerMethod,
+		buildFuncs...
 	)
 
 	if isNoError {
@@ -41,12 +81,9 @@ func DoSimpleTest(
 
 func ExecController(
 	t *testing.T,
-	httpMethod string,
 	path string,
-	paramNames []string,
-	paramValues []string,
-	body string,
 	controllerMethod func(echo.Context) error,
+	buildFuncs ...CallControllerOptionBuildFunc,
 ) (
 	bool,
 	*httptest.ResponseRecorder,
@@ -54,15 +91,35 @@ func ExecController(
 	// 返り値の検証をせず、Controllerの呼び出しのみを実行
 	e := echo.New()
 
-	var bodyReader io.Reader
-	if body != "" {
-		bodyReader = strings.NewReader(body)
+	option := CallControllerOption{
+		httpMethod: http.MethodGet, // HTTPメソッドが指定されていなければGETを使用
 	}
 
-	req := httptest.NewRequest(httpMethod, "/", bodyReader)
+	// 引数で指定されたオプションをoptionに反映
+	for _, f := range buildFuncs{
+		f(&option)
+	}
+
+	var bodyReader io.Reader
+	if option.body != "" {
+		bodyReader = strings.NewReader(option.body)
+	}
+
+	var req *http.Request
+	if option.queryParamNames != nil && option.queryParamValues != nil {
+		queryParams := make(url.Values)
+		
+		for i:=0; i<len(option.queryParamNames); i++ {
+			queryParams[option.queryParamNames[i]] = option.queryParamValues[i]
+		}
+		
+		req = httptest.NewRequest(option.httpMethod, "/?"+ queryParams.Encode(), bodyReader)
+	} else {
+		req = httptest.NewRequest(option.httpMethod, "/", bodyReader)
+	}
 
 	// リクエストボディがある場合、JSON形式であるとする
-	if body != "" {
+	if option.body != "" {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	}
 
@@ -70,9 +127,9 @@ func ExecController(
 	c := e.NewContext(req, rec)
 
 	c.SetPath(path)
-	if paramNames != nil && paramValues != nil {
-		c.SetParamNames(paramNames...)
-		c.SetParamValues(paramValues...)
+	if option.paramNames != nil && option.paramValues != nil {
+		c.SetParamNames(option.paramNames...)
+		c.SetParamValues(option.paramValues...)
 	}
 	
 	return assert.NoError(t, controllerMethod(c)), rec

@@ -18,11 +18,7 @@ func TestGetAllSentences_WithNoRows(t *testing.T) {
 	// レコードが1つも無い場合、[]ではなくnullが返る
 	DoSimpleTest(
 		t,
-		http.MethodGet,
 		"/sentences",
-		nil,
-		nil,
-		"",
 		sc.GetAllSentences,
 		http.StatusOK,
 		"null",
@@ -65,11 +61,7 @@ func TestGetAllSentences(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodGet,
 		"/sentences",
-		nil,
-		nil,
-		"",
 		sc.GetAllSentences,
 		http.StatusOK,
 		expectedResponse,
@@ -80,6 +72,7 @@ func TestGetAllSentences_IncludingWords(t *testing.T) {
 	// 取得したSentenceに正しくリンクが含まれていることをテスト
 	// TODO ログイン機能
 	// とりあえずuser_id=1のSentenceのみ取得可能とする
+	DeleteAllFromWords()
 	DeleteAllFromSentences()
 
 	appleWordId := createTestWord(t, "林檎", "").Id
@@ -102,14 +95,52 @@ func TestGetAllSentences_IncludingWords(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodGet,
 		"/sentences",
-		nil,
-		nil,
-		"",
 		sc.GetAllSentences,
 		http.StatusOK,
 		expectedResponse,
+	)
+}
+
+func TestGetAllSentences_WithLimit(t *testing.T) {
+	// ログイン中のUserに紐づくSentenceを、LIMIT付きで取得できることをテテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のSentenceのみ取得可能とする
+	DeleteAllFromSentences()
+
+	sentenceId1 := createTestSentence(t, "test sentence 1").Id
+	sentenceId2 := createTestSentence(t, "test sentence 2").Id
+	createTestSentence(t, "test sentence 3")
+
+	expectedResponse := fmt.Sprintf(`
+		[
+			{
+				"id": %d,
+				"sentence": "test sentence 1",
+				"sentence_with_link": "test sentence 1",
+				"user_id": 1
+			},
+			{
+				"id": %d,
+				"sentence": "test sentence 2",
+				"sentence_with_link": "test sentence 2",
+				"user_id": 1
+			}
+		]`,
+		sentenceId1,
+		sentenceId2,
+	)
+
+	DoSimpleTest(
+		t,
+		"/sentences",
+		sc.GetAllSentences,
+		http.StatusOK,
+		expectedResponse,
+		QueryParams(
+			[]string{"limit"},
+			[][]string{{"2"}},
+		),
 	)
 }
 
@@ -138,14 +169,14 @@ func TestGetSentenceById(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodGet,
 		"/sentences/:sentenceId",
-		[]string{"sentenceId"},
-		[]string{id},
-		"",
 		sc.GetSentenceById,
 		http.StatusOK,
 		expectedResponse,
+		Params(
+			[]string{"sentenceId"},
+			[]string{id},
+		),
 	)
 }
 
@@ -165,14 +196,14 @@ func TestGetSentenceById_WithInvalidUser(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodGet,
 		"/sentences/:sentenceId",
-		[]string{"sentenceId"},
-		[]string{id},
-		"",
 		sc.GetSentenceById,
 		http.StatusOK,
 		"{}",
+		Params(
+			[]string{"sentenceId"},
+			[]string{id},
+		),
 	)
 }
 
@@ -199,15 +230,13 @@ func TestCreateSentence(t *testing.T) {
 	)
 
 	DoSimpleTest(
-		t,
-		http.MethodPost,
+		t,		
 		"/sentences",
-		nil,
-		nil,
-		reqBody,
 		sc.CreateSentence,
 		http.StatusCreated,
 		expectedResponse,
+		Body(reqBody),
+		HttpMethod(http.MethodPost),
 	)
 
 	// DBにレコードが追加される
@@ -271,12 +300,10 @@ func TestCreateSentence_IncludingWords(t *testing.T) {
 
 	ExecController(
 		t,
-		http.MethodPost,
 		"/sentences",
-		nil,
-		nil,
-		reqBody,
 		sc.CreateSentence,
+		HttpMethod(http.MethodPost),
+		Body(reqBody),
 	)
 
 	// 該当するWordがsentences_wordsに追加されることをテスト：
@@ -366,12 +393,10 @@ func TestCreateSentence_IncludingInvalidWords(t *testing.T) {
 
 	ExecController(
 		t,
-		http.MethodPost,
 		"/sentences",
-		nil,
-		nil,
-		reqBody,
 		sc.CreateSentence,
+		HttpMethod(http.MethodPost),
+		Body(reqBody),
 	)
 
 	// 「赤いりんごを食べた」には「りんご」が含まれるが、
@@ -464,12 +489,10 @@ func TestCreateSentence_IncludingNotations(t *testing.T) {
 
 	ExecController(
 		t,
-		http.MethodPost,
 		"/sentences",
-		nil,
-		nil,
-		reqBody,
 		sc.CreateSentence,
+		HttpMethod(http.MethodPost),
+		Body(reqBody),
 	)
 
 	// 「赤い林檎を食う」には「りんご」の別表記「林檎」が含まれるため、
@@ -552,12 +575,10 @@ func TestCreateSentence_IncludingInvalidNotations(t *testing.T) {
 
 	ExecController(
 		t,
-		http.MethodPost,
 		"/sentences",
-		nil,
-		nil,
-		reqBody,
 		sc.CreateSentence,
+		HttpMethod(http.MethodPost),
+		Body(reqBody),
 	)
 
 	// 「赤い林檎を食う」には「りんご」の別表記「林檎」が含まれるが、
@@ -616,14 +637,12 @@ func TestCreateMultipleSentences(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodPost,
 		"/sentences/multiple",
-		nil,
-		nil,
-		reqBody,
 		sc.CreateMultipleSentences,
 		http.StatusCreated,
 		expectedResponse,
+		HttpMethod(http.MethodPost),
+		Body(reqBody),
 	)
 
 	// DBにレコードが追加される
@@ -678,14 +697,16 @@ func TestUpdateSentence(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodPut,
 		"/words/:sentenceId",
-		[]string{"sentenceId"},
-		[]string{id},
-		reqBody,
 		sc.UpdateSentence,
 		http.StatusAccepted,
 		expectedResponse,
+		HttpMethod(http.MethodPut),
+		Params(
+			[]string{"sentenceId"},
+			[]string{id},
+		),
+		Body(reqBody),
 	)
 
 	// DBのレコードが更新される
@@ -715,15 +736,17 @@ func TestUpdateSentence_UpdatedAssociation(t *testing.T) {
 	updateSentenceReqBody := `{
 		"sentence": "青いりんごを食べた"
 	}`
-	
+
 	ExecController(
 		t,
-		http.MethodPut,
 		"/words/:sentenceId",
-		[]string{"sentenceId"},
-		[]string{strconv.FormatUint(sentenceId, 10)},
-		updateSentenceReqBody,
 		sc.UpdateSentence,
+		Params(
+			[]string{"sentenceId"},
+			[]string{strconv.FormatUint(sentenceId, 10)},
+		),
+		Body(updateSentenceReqBody),
+		HttpMethod(http.MethodPut),
 	)
 
 	// Sentenceを変更したことで、
@@ -756,14 +779,16 @@ func TestUpdateSentence_WithInvalidUser(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodPut,
 		"/words/:sentenceId",
-		[]string{"sentenceId"},
-		[]string{id},
-		reqBody,
 		sc.UpdateSentence,
 		http.StatusUnauthorized,
 		"{}",
+		Params(
+			[]string{"sentenceId"},
+			[]string{id},
+		),	
+		Body(reqBody),
+		HttpMethod(http.MethodPut),
 	)
 
 	// DBのレコードが更新されない
@@ -804,14 +829,15 @@ func TestDeleteSentence(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodDelete,
 		"/sentences/:sentenceId",
-		[]string{"sentenceId"},
-		[]string{id},
-		"",
 		sc.DeleteSentence,
 		http.StatusAccepted,
 		expectedResponse,
+		Params(
+			[]string{"sentenceId"},
+			[]string{id},
+		),
+		HttpMethod(http.MethodDelete),
 	)
 
 	// DBからレコードが削除されている
@@ -836,15 +862,16 @@ func TestDeleteSentence_UpdateAssociation(t *testing.T) {
 
 	wordId := createTestWord(t, "赤い", "").Id
 	sentenceId := createTestSentence(t, "赤いりんごを食べた").Id
-	
+
 	ExecController(
 		t,
-		http.MethodDelete,
 		"/words/:sentenceId",
-		[]string{"sentenceId"},
-		[]string{strconv.FormatUint(sentenceId, 10)},
-		"",
 		sc.DeleteSentence,
+		Params(
+			[]string{"sentenceId"},
+			[]string{strconv.FormatUint(sentenceId, 10)},
+		),
+		HttpMethod(http.MethodDelete),
 	)
 
 	// Sentenceを変更した時、
@@ -868,14 +895,15 @@ func TestDeleteSentence_WithInvalidUser(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodDelete,
 		"/sentences/:sentenceId",
-		[]string{"sentenceId"},
-		[]string{id},
-		"",
 		sc.DeleteSentence,
 		http.StatusUnauthorized,
 		"{}",
+		Params(
+			[]string{"sentenceId"},
+			[]string{id},
+		),
+		HttpMethod(http.MethodDelete),
 	)
 
 	// DBからレコードが削除されていない
@@ -955,14 +983,14 @@ func TestGetAssociatedWords(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodGet,
 		"/sentences/:sentenceId/associated-words",
-		[]string{"sentenceId"},
-		[]string{sentenceId},
-		"",
 		sc.GetAssociatedWords,
 		http.StatusOK,
 		expectedResponse,
+		Params(
+			[]string{"sentenceId"},
+			[]string{sentenceId},
+		),
 	)
 }
 
@@ -1003,14 +1031,14 @@ func TestGetAssociatedWords_WithInvalidSentenceId(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodGet,
 		"/sentences/:sentenceId/associated-words",
-		[]string{"sentenceId"},
-		[]string{sentenceId},
-		"",
 		sc.GetAssociatedWords,
 		http.StatusOK,
 		"null",
+		Params(
+			[]string{"sentenceId"},
+			[]string{sentenceId},
+		),
 	)
 }
 
@@ -1051,14 +1079,14 @@ func TestGetAssociatedWords_WithInvalidWordId(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodGet,
 		"/sentences/:sentenceId/associated-words",
-		[]string{"sentenceId"},
-		[]string{sentenceId},
-		"",
 		sc.GetAssociatedWords,
 		http.StatusOK,
 		"null",
+		Params(
+			[]string{"sentenceId"},
+			[]string{sentenceId},
+		),
 	)
 }
 
@@ -1070,11 +1098,7 @@ func TestGetSentencesCount(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodGet,
 		"/sentences/count",
-		nil,
-		nil,
-		"",
 		sc.GetSentencesCount,
 		http.StatusOK,
 		`{ "count": 0 }`,
@@ -1084,11 +1108,7 @@ func TestGetSentencesCount(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodGet,
 		"/sentences/count",
-		nil,
-		nil,
-		"",
 		sc.GetSentencesCount,
 		http.StatusOK,
 		`{ "count": 1 }`,
@@ -1099,11 +1119,7 @@ func TestGetSentencesCount(t *testing.T) {
 
 	DoSimpleTest(
 		t,
-		http.MethodGet,
 		"/sentences/count",
-		nil,
-		nil,
-		"",
 		sc.GetSentencesCount,
 		http.StatusOK,
 		`{ "count": 3 }`,
