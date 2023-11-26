@@ -28,6 +28,9 @@ type CallControllerOption struct {
 type CallControllerOptionBuildFunc func(*CallControllerOption)
 
 func Params(paramNames, paramValues []string) CallControllerOptionBuildFunc {
+	// https://hoge.com/:foo/:piyo のURLパターンに、https://hoge.com/abc/5 でアクセスしたい場合、
+	// paramNames == ["foo", "piyo"]
+	// paramValues == ["abc", "5"]
 	return func(opt *CallControllerOption) {
 		if(len(paramNames) == len(paramValues)) {
 			opt.paramNames = paramNames
@@ -37,6 +40,9 @@ func Params(paramNames, paramValues []string) CallControllerOptionBuildFunc {
 }
 
 func QueryParams(queryParamNames []string, queryParamValues [][]string) CallControllerOptionBuildFunc {
+	// https://hoge.comのURLパターンに、https://hoge.com?foo=abc&piyo=1&piyo=5 でアクセスしたい場合、
+	// queryParamNames == ["foo", "piyo"]
+	// queryParamValues == [["abc"], ["1", "5"]]
 	return func(opt *CallControllerOption) {
 		if(len(queryParamNames) == len(queryParamValues)) {
 			opt.queryParamNames = queryParamNames
