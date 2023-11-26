@@ -65,6 +65,7 @@ func (sr *SentenceRepository) GetAllSentencesWithLimit(userId, limit, offset uin
 	rows, err := sr.db.Query(`
 		SELECT id, sentence, user_id, created_at, updated_at FROM sentences
 		WHERE user_id = $1
+		ORDER BY updated_at DESC
 		LIMIT $2
 		OFFSET $3;
 		`,
