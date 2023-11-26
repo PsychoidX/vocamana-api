@@ -144,6 +144,83 @@ func TestGetAllSentences_WithLimit(t *testing.T) {
 	)
 }
 
+func TestGetAllSentences_WithOffset(t *testing.T) {
+	// ログイン中のUserに紐づくSentenceを、LIMIT付きで取得できることをテテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のSentenceのみ取得可能とする
+	DeleteAllFromSentences()
+
+	createTestSentence(t, "test sentence 1")
+	sentenceId2 := createTestSentence(t, "test sentence 2").Id
+	sentenceId3 := createTestSentence(t, "test sentence 3").Id
+
+	expectedResponse := fmt.Sprintf(`
+		[
+			{
+				"id": %d,
+				"sentence": "test sentence 2",
+				"sentence_with_link": "test sentence 2",
+				"user_id": 1
+			},
+			{
+				"id": %d,
+				"sentence": "test sentence 3",
+				"sentence_with_link": "test sentence 3",
+				"user_id": 1
+			}
+		]`,
+		sentenceId2,
+		sentenceId3,
+	)
+
+	DoSimpleTest(
+		t,
+		"/sentences",
+		sc.GetAllSentences,
+		http.StatusOK,
+		expectedResponse,
+		QueryParams(
+			[]string{"offset"},
+			[][]string{{"1"}},
+		),
+	)
+}
+
+func TestGetAllSentences_WithLimitAndOffset(t *testing.T) {
+	// ログイン中のUserに紐づくSentenceを、LIMIT付きで取得できることをテテスト
+	// TODO ログイン機能
+	// とりあえずuser_id=1のSentenceのみ取得可能とする
+	DeleteAllFromSentences()
+
+	createTestSentence(t, "test sentence 1")
+	sentenceId2 := createTestSentence(t, "test sentence 2").Id
+	createTestSentence(t, "test sentence 3")
+
+	expectedResponse := fmt.Sprintf(`
+		[
+			{
+				"id": %d,
+				"sentence": "test sentence 2",
+				"sentence_with_link": "test sentence 2",
+				"user_id": 1
+			}
+		]`,
+		sentenceId2,
+	)
+
+	DoSimpleTest(
+		t,
+		"/sentences",
+		sc.GetAllSentences,
+		http.StatusOK,
+		expectedResponse,
+		QueryParams(
+			[]string{"offset", "limit"},
+			[][]string{{"1"}, {"1"}},
+		),
+	)
+}
+
 func TestGetSentenceById(t *testing.T) {
 	// ログイン中のUserに紐づくSentenceを取得できることをテスト
 	// TODO ログイン機能

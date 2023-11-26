@@ -8,6 +8,7 @@ import (
 
 type ISentenceRepository interface {
 	GetAllSentences(userId uint64) ([]model.Sentence, error)
+	GetAllSentencesWithLimit(userId uint64, limit uint64, offset uint64) ([]model.Sentence, error)
 	GetSentenceById(userId uint64, sentenceId uint64) (model.Sentence, error)
 	InsertSentence(model.SentenceCreation) (model.Sentence, error)
 	UpdateSentence(model.SentenceUpdate) (model.Sentence, error)
@@ -35,10 +36,41 @@ func (sr *SentenceRepository) getSequenceNextvalQuery() string {
 func (sr *SentenceRepository) GetAllSentences(userId uint64) ([]model.Sentence, error) {
 	var sentences []model.Sentence
 
-	rows, err := sr.db.Query(
-		"SELECT id, sentence, user_id, created_at, updated_at FROM sentences" +
-		" WHERE user_id = $1",
+	rows, err := sr.db.Query(`
+		SELECT id, sentence, user_id, created_at, updated_at FROM sentences
+		WHERE user_id = $1;
+		`,
 		userId,
+	)
+	if err != nil {
+		return []model.Sentence{}, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		sentence := model.Sentence{}
+		err:= rows.Scan(&sentence.Id, &sentence.Sentence, &sentence.UserId, &sentence.CreatedAt, &sentence.UpdatedAt);
+		if err != nil {
+			return []model.Sentence{}, err
+		}
+		sentences = append(sentences, sentence)
+	}
+
+	return sentences, nil
+}
+
+func (sr *SentenceRepository) GetAllSentencesWithLimit(userId, limit, offset uint64) ([]model.Sentence, error) {
+	var sentences []model.Sentence
+
+	rows, err := sr.db.Query(`
+		SELECT id, sentence, user_id, created_at, updated_at FROM sentences
+		WHERE user_id = $1
+		LIMIT $2
+		OFFSET $3;
+		`,
+		userId,
+		limit,
+		offset,
 	)
 	if err != nil {
 		return []model.Sentence{}, err

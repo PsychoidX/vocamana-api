@@ -23,8 +23,8 @@ func NewSentenceUsecase(
 	return &SentenceUsecase{sr, wr, swr, nr}
 }
 
-func (su *SentenceUsecase) GetAllSentences(loginUserId uint64) ([]model.Sentence, error) {
-	sentences, err := su.sr.GetAllSentences(loginUserId)
+func (su *SentenceUsecase) GetAllSentences(loginUserId, limit, offset uint64) ([]model.Sentence, error) {
+	sentences, err := su.sr.GetAllSentencesWithLimit(loginUserId, limit, offset)
 	if err != nil {
 		return []model.Sentence{}, err
 	}

@@ -78,8 +78,8 @@ func (au *AssociationUsecase) GetSentenceWithLinkById(loginUserId, sentenceId ui
 	return sentenceWithLink, nil
 }
 
-func (au *AssociationUsecase) GetAllSentencesWithLink(loginUserId uint64) ([]model.SentenceWithLink, error) {
-	sentences, err := au.su.GetAllSentences(loginUserId)
+func (au *AssociationUsecase) GetAllSentencesWithLink(loginUserId, limit, offset uint64) ([]model.SentenceWithLink, error) {
+	sentences, err := au.su.GetAllSentences(loginUserId, limit, offset)
 	if err != nil {
 		return []model.SentenceWithLink{}, err
 	}

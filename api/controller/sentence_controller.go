@@ -38,7 +38,19 @@ func (sc *SentenceController) GetAllSentences(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	sentencesWithLink, err := sc.au.GetAllSentencesWithLink(loginUserId)
+	limitParam := c.QueryParam("limit")
+	limit, err := strconv.ParseUint(limitParam, 10, 64)
+	if err != nil {
+		limit = 100
+	}
+
+	offsetParam := c.QueryParam("offset")
+	offset, err := strconv.ParseUint(offsetParam, 10, 64)
+	if err != nil {
+		offset = 0
+	}
+
+	sentencesWithLink, err := sc.au.GetAllSentencesWithLink(loginUserId, limit, offset)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
