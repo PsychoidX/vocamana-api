@@ -1,45 +1,43 @@
 services:
   db:
     build:
-      context: ./docker/db
+      context: ./db-container
       dockerfile: Dockerfile
     container_name: vocamana-db
     env_file:
-      - ./docker/db/.env
+      - ./db-container/docker-config/db/.env
     volumes:
-      - ./db/goose:/root/goose
-      - ./docker/db/initdb:/docker-entrypoint-initdb.d
+      - ./db-container/db/goose:/root/goose
+      - ./db-container/docker-config/db/initdb:/docker-entrypoint-initdb.d
     networks:
       vocamana:
         ipv4_address: 192.168.100.2
   test-db:
     build:
       # dbのDockerfileを使ってビルドする
-      context: ./docker/db
+      context: ./db-container
       dockerfile: Dockerfile
     container_name: vocamana-test-db
     env_file:
-      - ./docker/test-db/.env
+      - ./db-container/docker-config/test-db/.env
     volumes:
-      - ./db/goose:/root/goose
-      - ./docker/db/initdb:/docker-entrypoint-initdb.d
+      - ./db-container/db/goose:/root/goose
+      - ./db-container/docker-config/db/initdb:/docker-entrypoint-initdb.d
     networks:
       vocamana:
         ipv4_address: 192.168.100.4
   api:
     build:
-      context: ./docker/api
+      context: ./api-container
       dockerfile: Dockerfile
     container_name: vocamana-api
     depends_on:
       - db
-    volumes:
-      - ./api:/go/src/api
     ports:
       - "8081:8080"
     env_file:
-      - ./docker/api/.env
-      - ./docker/api/test/.env
+      - ./api-container/docker-config/.env
+      - ./api-container/docker-config/test/.env
     tty: true
     networks:
       vocamana:
